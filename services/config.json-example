@@ -1,0 +1,4 @@
+{
+  "connection_string": "dev:passwdDev123@tcp(mysql:3306)/products",
+  "port": 8080
+}
