@@ -1,0 +1,41 @@
+services:
+  db:
+    container_name: mysql
+    image: mysql:latest
+    restart: always
+    networks:
+      - crud-network
+    environment:
+      MYSQL_ROOT_PASSWORD: passwdRoot123
+      MYSQL_DATABASE: products
+      MYSQL_USER: dev
+      MYSQL_PASSWORD: passwdDev123
+    ports:
+      - "3306:3306"
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
+  web:
+    container_name: crud-api
+    image: zylwin/phl-store
+    restart: always
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config.json:/config/config.json:ro
+    networks:
+      - crud-network
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db-data:
+
+networks:
+  crud-network:
