@@ -5,6 +5,12 @@ locals {
 }
 
 terraform {
+  backend "s3" {
+    bucket  = "phl-dev-s3-tfstate"
+    key     = "phl/deployment/cloud/phl-dev-deployment-cloud.tfstate"
+    region  = "us-west-1"
+    # profile = "phl-dev"
+  }
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -19,7 +25,7 @@ terraform {
 
 # Create AWS provider
 provider "aws" {
-  region  = local.region
+  region = local.region
   # profile = "${var.unit}-${var.env}"
   dynamic "assume_role" {
     # If the current environment is running on EC2 then use instance profile to access AWS resources
