@@ -42,3 +42,46 @@ module "bucket_tfstate" {
 
   tags = merge(local.tags, local.s3_standard, { Name = local.s3_naming_standard })
 }
+
+# Create AWS VPC architecture
+module "vpc_main" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "~> 5.1.2"
+
+  name                  = local.vpc_naming_standard
+  cidr                  = local.vpc_cidr
+  secondary_cidr_blocks = [local.rfc6598_cidr]
+  azs                   = local.azs
+  enable_ipv6           = true
+  private_subnets = concat(
+    [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 2, k)],
+    [for k, v in local.azs : cidrsubnet(local.rfc6598_cidr, 3, k)]
+  )
+  database_subnets                                   = length(local.azs) <= 2 ? [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 5, k + 16)] : [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 5, k + 16)]
+  public_subnets                                     = length(local.azs) <= 2 ? [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 5, k + 18)] : [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 5, k + 19)]
+  enable_nat_gateway                                 = true
+  single_nat_gateway                                 = var.env == "dev"? true : false
+  one_nat_gateway_per_az                             = var.env == "dev"? false : true
+  private_subnet_ipv6_prefixes                       = length(local.azs) <= 2 ? [0, 1, 2, 3] : [0, 1, 2, 3, 4, 5]
+  database_subnet_ipv6_prefixes                      = length(local.azs) <= 2 ? [4, 5] : [6, 7, 8]
+  public_subnet_ipv6_prefixes                        = length(local.azs) <= 2 ? [6, 7] : [9, 10, 11]
+  private_subnet_assign_ipv6_address_on_creation     = true
+  database_subnet_assign_ipv6_address_on_creation    = true
+  public_subnet_assign_ipv6_address_on_creation      = true
+  map_public_ip_on_launch                            = true
+  private_subnet_names = concat(
+    [for k, v in local.azs : "${local.vpc_naming_standard}-node-${v}"],
+    # Custom network VPC CNI
+    [for k, v in local.azs : "${local.vpc_naming_standard}-app-${v}"]
+  )
+  public_subnet_tags = {
+    "kubernetes.io/role/elb" = 1
+  }
+
+  private_subnet_tags = {
+    "kubernetes.io/role/internal-elb" = 1
+    # # Tags subnets for Karpenter auto-discovery
+    # "karpenter.sh/discovery" = local.eks_naming_standard
+  }
+  tags = merge(local.tags, local.vpc_standard)
+}
