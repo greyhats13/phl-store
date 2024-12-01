@@ -52,7 +52,6 @@ module "vpc_main" {
   cidr                  = local.vpc_cidr
   secondary_cidr_blocks = [local.rfc6598_cidr]
   azs                   = local.azs
-  enable_ipv6           = true
   private_subnets = concat(
     [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 2, k)],
     [for k, v in local.azs : cidrsubnet(local.rfc6598_cidr, 3, k)]
@@ -62,12 +61,6 @@ module "vpc_main" {
   enable_nat_gateway                                 = true
   single_nat_gateway                                 = var.env == "dev"? true : false
   one_nat_gateway_per_az                             = var.env == "dev"? false : true
-  private_subnet_ipv6_prefixes                       = length(local.azs) <= 2 ? [0, 1, 2, 3] : [0, 1, 2, 3, 4, 5]
-  database_subnet_ipv6_prefixes                      = length(local.azs) <= 2 ? [4, 5] : [6, 7, 8]
-  public_subnet_ipv6_prefixes                        = length(local.azs) <= 2 ? [6, 7] : [9, 10, 11]
-  private_subnet_assign_ipv6_address_on_creation     = true
-  database_subnet_assign_ipv6_address_on_creation    = true
-  public_subnet_assign_ipv6_address_on_creation      = true
   map_public_ip_on_launch                            = true
   private_subnet_names = concat(
     [for k, v in local.azs : "${local.vpc_naming_standard}-node-${v}"],
