@@ -41,20 +41,12 @@ locals {
   eks_naming_standard = "${local.eks_standard.Unit}-${local.eks_standard.Env}-${local.eks_standard.Code}-${local.eks_standard.Feature}"
   cluster_version     = "1.31"
   eks_workload_type   = "ec2"
-  # VPC CNI Locals
-  vpc_cni_standard = {
+  # Aurora Locals
+  aurora_standard = {
     Unit    = var.unit
     Env     = var.env
-    Code    = "iam"
-    Feature = "vpc-cni-irsa"
+    Code    = "aurora"
+    Feature = "main"
   }
-  vpc_cni_naming_standard = "${local.vpc_cni_standard.Unit}-${local.vpc_cni_standard.Env}-${local.vpc_cni_standard.Code}-${local.vpc_cni_standard.Feature}"
-  # EBS CSI Locals
-  ebs_csi_standard = {
-    Unit    = var.unit
-    Env     = var.env
-    Code    = "iam"
-    Feature = "ebs-csi-irsa"
-  }
-  ebs_csi_naming_standard = "${local.ebs_csi_standard.Unit}-${local.ebs_csi_standard.Env}-${local.ebs_csi_standard.Code}-${local.ebs_csi_standard.Feature}"
+  aurora_naming_standard = "${local.aurora_standard.Unit}-${local.aurora_standard.Env}-${local.aurora_standard.Code}-${local.aurora_standard.Feature}"
 }

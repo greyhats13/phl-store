@@ -81,7 +81,7 @@ module "vpc_main" {
 
 module "eks_main" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "~> 20.30.1"
+  version = "~> 20.31.0"
   vpc_id  = module.vpc_main.vpc_id
   # Only take non RFC 6598 private subnets
   control_plane_subnet_ids = module.vpc_main.intra_subnets
@@ -96,20 +96,16 @@ module "eks_main" {
   }
   cluster_endpoint_public_access = var.env == "dev" ? true : false
   cluster_ip_family              = "ipv4"
-  create_cni_ipv6_iam_policy     = true
   create_cloudwatch_log_group    = true
   cluster_addons = {
-    coredns = {
-      most_recent = true
-    }
-    kube-proxy = {
-      most_recent = true
+    eks-pod-identity-agent = {
+      before_compute = true // create the pod identity agent before the compute resources
+      most_recent    = true
     }
     vpc-cni = {
+      before_compute = true // create the vpc-cni before the compute resources
       most_recent    = true
-      before_compute = true
-      # service_account_role_arn = module.vpc_cni_irsa.iam_role_arn (deprecated)
-      service_account_role_arn = module.aws_vpc_cni_ipv4_pod_identity.iam_role_arn
+      # service_account_role_arn = module.vpc_cni_irsa.iam_role_arn // for using irsa (deprecated) change to pod identity
       configuration_values = jsonencode({
         eniConfig = {
           create = true,
@@ -136,10 +132,20 @@ module "eks_main" {
         }
       })
     }
+    coredns = {
+      most_recent = true
+    }
+    kube-proxy = {
+      most_recent = true
+    }
     aws-ebs-csi-driver = {
       # service_account_role_arn = module.ebs_csi_irsa.iam_role_arn (deprecated)
-      service_account_role_arn = module.aws_ebs_csi_pod_identity.iam_role_arn
-      most_recent              = true
+      most_recent = true
+    }
+
+    amazon-cloudwatch-observability = {
+      # service_account_role_arn = module.ebs_csi_irsa.iam_role_arn (deprecated)
+      most_recent = true
     }
   }
   node_security_group_tags = {
@@ -149,16 +155,18 @@ module "eks_main" {
   # Managed Node Groups for critical workloads, not for autoscaling
   eks_managed_node_groups = {
     "ng-ondemand-base" = {
-      ami_type                       = "BOTTLEROCKET_x86_64"
+      ami_type = "BOTTLEROCKET_x86_64"
+      # ami_type                       = "AL2023_x86_64_STANDARD"
       use_latest_ami_release_version = true
-      instance_types                 = ["m5a.large"]
+      instance_types                 = var.env == "dev" ? ["t3.medium"] : ["m6i.large"]
       enable_bootstrap_user_data     = true
-      capacity_type                  = "ON_DEMAND"
+      capacity_type                  = var.env == "dev" ? "SPOT" : "ON_DEMAND"
       min_size                       = 2
       max_size                       = 2
       desired_size                   = 2
       force_update_version           = true
-      bootstrap_extra_args           = <<-EOT
+      # User data for Bottlerocket
+      bootstrap_extra_args = <<-EOT
         # The admin host container provides SSH access and runs with "superpowers".
         # It is disabled by default, but can be disabled explicitly.
         [settings.host-containers.admin]
@@ -174,9 +182,9 @@ module "eks_main" {
         [settings.kernel]
         lockdown = "integrity"
       EOT
-      update_config = {
-        max_unavailable_percentage = 33 # or set `max_unavailable`
-      }
+      # update_config = {
+      #   max_unavailable_percentage = 1 # or set `max_unavailable`
+      # }
       ebs_optimized           = true
       disable_api_termination = false
       enable_monitoring       = true
@@ -196,37 +204,8 @@ module "eks_main" {
       }
     }
   }
-  # Cluster access entry
-  # To add the current caller identity as an administrator
-  enable_cluster_creator_admin_permissions = true
 
-  access_entries = {
-    # One access entry with a policy associated
-    iac = {
-      principal_arn = "arn:aws:iam::123456789012:role/iac"
-      policy_associations = {
-        iac = {
-          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterPolicy"
-          access_scope = {
-            type = "cluster"
-          }
-        }
-      }
-    }
-    root = {
-      principal_arn = "arn:aws:iam::123456789012:user:root"
-      policy_associations = {
-        iac = {
-          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterPolicy"
-          access_scope = {
-            type = "cluster"
-          }
-        }
-      }
-    }
-  }
-
-  # aws-auth configmap (deprecated)
+  # aws-auth configmap (deprecated use access_entries instead)
   # manage_aws_auth_configmap = true
   # aws_auth_users = [
   #   {
@@ -240,6 +219,26 @@ module "eks_main" {
   #     groups   = ["system:masters"]
   #   },
   # ]
+
+  # Cluster access entry
+  # To add the current caller identity as an administrator
+  enable_cluster_creator_admin_permissions = true
+
+  access_entries = {
+    # One access entry with a policy associated
+    admin = {
+      principal_arn = "arn:aws:iam::124456474132:user/imam.arief.rhmn@gmail.com"
+      policy_associations = {
+        iac = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
+    }
+  }
+
   tags = merge(
     local.tags,
     local.eks_standard,
@@ -249,37 +248,37 @@ module "eks_main" {
   )
 }
 
-# Create IAM Role for service accounts (IRSA) for VPC CNI (deprecated, use AWS EKS Pod Identity instead)
-module "vpc_cni_irsa" {
-  source = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+# # Create IAM Role for service accounts (IRSA) for VPC CNI
+# module "vpc_cni_irsa" {
+#   source = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
 
-  role_name_prefix      = local.vpc_cni_naming_standard
-  attach_vpc_cni_policy = true
-  vpc_cni_enable_ipv4   = true
+#   role_name_prefix      = "aws-vpc-cni-ipv4-irsa"
+#   attach_vpc_cni_policy = true
+#   vpc_cni_enable_ipv4   = true
 
-  oidc_providers = {
-    main = {
-      provider_arn               = module.eks_main.oidc_provider_arn
-      namespace_service_accounts = ["kube-system:aws-node"]
-    }
-  }
-  tags = local.tags
-}
+#   oidc_providers = {
+#     main = {
+#       provider_arn               = module.eks_main.oidc_provider_arn
+#       namespace_service_accounts = ["kube-system:aws-node"]
+#     }
+#   }
+#   tags = local.tags
+# }
 
-module "ebs_csi_irsa" {
-  source = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+# module "ebs_csi_irsa" {
+#   source = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
 
-  role_name             = local.vpc_cni_naming_standard
-  attach_ebs_csi_policy = true
+#   role_name             = "aws-ebs-csi-irsa"
+#   attach_ebs_csi_policy = true
 
-  oidc_providers = {
-    main = {
-      provider_arn               = module.eks_main.oidc_provider_arn
-      namespace_service_accounts = ["kube-system:ebs-csi-controller-sa"]
-    }
-  }
-  tags = local.tags
-}
+#   oidc_providers = {
+#     main = {
+#       provider_arn               = module.eks_main.oidc_provider_arn
+#       namespace_service_accounts = ["kube-system:ebs-csi-controller-sa"]
+#     }
+#   }
+#   tags = local.tags
+# }
 
 # EKS Pod Identity for VPC CNI
 module "aws_vpc_cni_ipv4_pod_identity" {
@@ -352,21 +351,22 @@ module "aws_cloudwatch_observability_pod_identity" {
   }
 }
 
-# AWS required resources for Karpenter
-module "karpenter" {
-  source = "terraform-aws-modules/eks/aws//modules/karpenter"
+# # AWS required resources for Karpenter
+# module "karpenter" {
+#   source = "terraform-aws-modules/eks/aws//modules/karpenter"
 
-  cluster_name = module.eks_main.cluster_name
+#   cluster_name = module.eks_main.cluster_name
 
-  enable_v1_permissions = true
+#   enable_v1_permissions = true
 
-  enable_pod_identity             = true
-  create_pod_identity_association = true
+#   enable_pod_identity             = true
+#   create_pod_identity_association = true
 
-  # Used to attach additional IAM policies to the Karpenter node IAM role
-  node_iam_role_additional_policies = {
-    AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-  }
+#   # Used to attach additional IAM policies to the Karpenter node IAM role
+#   node_iam_role_additional_policies = {
+#     AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+#   }
 
-  tags = local.tags
-}
+#   tags = local.tags
+# }
+
