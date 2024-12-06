@@ -23,7 +23,7 @@ locals {
   # VPC Locals
   vpc_cidr     = "10.0.0.0/16"
   rfc6598_cidr = "100.64.0.0/16"
-  azs = slice(data.aws_availability_zones.available.names, 0, length(data.aws_availability_zones.available.names))
+  azs          = slice(data.aws_availability_zones.available.names, 0, length(data.aws_availability_zones.available.names))
   vpc_standard = {
     Unit    = var.unit
     Env     = var.env
@@ -31,4 +31,22 @@ locals {
     Feature = "main"
   }
   vpc_naming_standard = "${local.vpc_standard.Unit}-${local.vpc_standard.Env}-${local.vpc_standard.Code}-${local.vpc_standard.Feature}"
+  # EKS Locals
+  eks_standard = {
+    Unit    = var.unit
+    Env     = var.env
+    Code    = "eks"
+    Feature = "main"
+  }
+  eks_naming_standard = "${local.eks_standard.Unit}-${local.eks_standard.Env}-${local.eks_standard.Code}-${local.eks_standard.Feature}"
+  cluster_version     = "1.31"
+  eks_workload_type   = "ec2"
+  # Aurora Locals
+  aurora_standard = {
+    Unit    = var.unit
+    Env     = var.env
+    Code    = "aurora"
+    Feature = "main"
+  }
+  aurora_naming_standard = "${local.aurora_standard.Unit}-${local.aurora_standard.Env}-${local.aurora_standard.Code}-${local.aurora_standard.Feature}"
 }

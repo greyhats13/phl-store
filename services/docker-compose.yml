@@ -22,7 +22,8 @@ services:
 
   web:
     container_name: crud-api
-    image: zylwin/phl-store
+    # image: zylwin/phl-store
+    image: greyhats13/phl-products:latest
     restart: always
     ports:
       - "8080:8080"
