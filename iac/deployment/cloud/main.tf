@@ -43,6 +43,38 @@ module "bucket_tfstate" {
   tags = merge(local.tags, local.s3_standard, { Name = local.s3_naming_standard })
 }
 
+# Create Route53 zones
+module "zones_main" {
+  source  = "terraform-aws-modules/route53/aws//modules/zones"
+  version = "~> 2.10.2"
+
+  zones = {
+    "${local.route53_domain_name}" = {
+      comment       = "Zone for ${local.route53_domain_name}"
+      force_destroy = true
+      tags          = local.route53_standard
+    }
+  }
+  tags = merge(local.tags, local.route53_standard)
+}
+
+# # Create ACM certificate
+# module "acm_main" {
+#   source  = "terraform-aws-modules/acm/aws"
+#   version = "~> 4.3.2"
+
+#   domain_name = local.route53_domain_name
+#   zone_id     = module.zones_main.route53_zone_zone_id[local.route53_domain_name]
+
+#   subject_alternative_names = [
+#     "*.${var.env}.${local.route53_domain_name}",
+#   ]
+
+#   wait_for_validation = true
+
+#   tags = merge(local.tags, local.acm_standard, { Name = local.acm_naming_standard })
+# }
+
 # Create AWS VPC architecture
 module "vpc_main" {
   source  = "terraform-aws-modules/vpc/aws"
@@ -370,3 +402,186 @@ module "aws_cloudwatch_observability_pod_identity" {
 #   tags = local.tags
 # }
 
+## ArgoCD
+# ArgoCD is a declarative, GitOps continuous delivery tool for Kubernetes.
+# module "argocd" {
+#   source           = "../../modules/cicd/helm"
+#   region           = var.region
+#   standard         = local.argocd_standard
+#   repository       = "https://argoproj.github.io/argo-helm"
+#   chart            = "argo-cd"
+#   values           = ["${file("manifest/${local.argocd_standard.Feature}.yaml")}"]
+#   namespace        = "argocd"
+#   create_namespace = true
+#   extra_vars = {
+#     github_orgs          = var.github_orgs
+#     github_client_id     = var.github_oauth_client_id
+#     ARGOCD_VERSION       = var.argocd_version
+#     AVP_VERSION          = var.argocd_vault_plugin_version
+#     server_insecure      = false
+#     alb_certificate_arn  = module.acm_main.acm_certificate_arn
+#     alb_ssl_policy       = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+#     alb_backend_protocol = "HTTPS"
+#     alb_listen_ports     = "[{\"HTTPS\": 443}]"
+#     alb_scheme           = "internet-facing"
+#     alb_target_type      = "ip"
+#     alb_group_order      = "100"
+#     alb_healthcheck_path = "/"
+#     github_orgs          = "blastcoid"
+#     github_client_id     = "9781757e794562ceb7e1"
+#     AVP_VERSION          = "1.16.1"
+#   }
+#   helm_sets_sensitive = [
+#     {
+#       name  = "configs.secret.githubSecret"
+#       value = jsondecode(module.gsm_iac.secret_data)["argocd_github_secret"]
+#     },
+#     {
+#       name  = "configs.secret.extra.dex\\.github\\.clientSecret"
+#       value = jsondecode(module.gsm_iac.secret_data)["github_oauth_client_secret"]
+#     },
+#   ]
+#   depends_on = [
+#     module.eks_main,
+#   ]
+# }
+
+# # Aurora
+# module "aurora_main" {
+#   source          = "terraform-aws-modules/rds-aurora/aws"
+#   name            = local.aurora_naming_standard
+#   engine          = "aurora-mysql"
+#   engine_version  = "8.0"
+#   master_username = "root"
+#   instances = {
+#     1 = {
+#       instance_class      = var.env == "dev" ? "db.t4g.medium" : "db.r5.xlarge"
+#       publicly_accessible = true
+#     }
+#     2 = {
+#       identifier     = "mysql-static-1"
+#       instance_class = "db.r5.2xlarge"
+#     }
+#     3 = {
+#       identifier     = "mysql-excluded-1"
+#       instance_class = "db.r5.xlarge"
+#       promotion_tier = 15
+#     }
+#   }
+
+#   vpc_id               = module.vpc_main.vpc_id
+#   db_subnet_group_name = module.vpc_main.database_subnet_group_name
+#   security_group_rules = {
+#     vpc_ingress = {
+#       cidr_blocks = module.vpc_main.private_subnets_cidr_blocks // allow all private subnets (nodes and app subnets) to access the database
+#     }
+#     kms_vpc_endpoint = {
+#       type                     = "egress"
+#       from_port                = 443
+#       to_port                  = 443
+#       source_security_group_id = module.vpc_endpoints.security_group_id
+#     }
+#   }
+
+#   apply_immediately   = true
+#   skip_final_snapshot = true
+
+#   create_db_cluster_parameter_group      = true
+#   db_cluster_parameter_group_name        = "${local.aurora_naming_standard}-cluster-parameter-group"
+#   db_cluster_parameter_group_family      = "aurora-mysql8.0"
+#   db_cluster_parameter_group_description = "${local.aurora_naming_standard} example cluster parameter group"
+#   db_cluster_parameter_group_parameters = [
+#     {
+#       name         = "connect_timeout"
+#       value        = 120
+#       apply_method = "immediate"
+#     },
+#     {
+#       name         = "innodb_lock_wait_timeout"
+#       value        = 300
+#       apply_method = "immediate"
+#     },
+#     {
+#       name         = "log_output"
+#       value        = "FILE"
+#       apply_method = "immediate"
+#     },
+#     {
+#       name         = "max_allowed_packet"
+#       value        = "67108864"
+#       apply_method = "immediate"
+#     },
+#     {
+#       name         = "aurora_parallel_query"
+#       value        = "OFF"
+#       apply_method = "pending-reboot"
+#     },
+#     {
+#       name         = "binlog_format"
+#       value        = "ROW"
+#       apply_method = "pending-reboot"
+#     },
+#     {
+#       name         = "log_bin_trust_function_creators"
+#       value        = 1
+#       apply_method = "immediate"
+#     },
+#     {
+#       name         = "require_secure_transport"
+#       value        = "ON"
+#       apply_method = "immediate"
+#     },
+#     {
+#       name         = "tls_version"
+#       value        = "TLSv1.2"
+#       apply_method = "pending-reboot"
+#     }
+#   ]
+
+#   create_db_parameter_group      = true
+#   db_parameter_group_name        = "${local.aurora_naming_standard}-db-parameter-group"
+#   db_parameter_group_family      = "aurora-mysql8.0"
+#   db_parameter_group_description = "${local.aurora_naming_standard} example DB parameter group"
+#   db_parameter_group_parameters = [
+#     {
+#       name         = "connect_timeout"
+#       value        = 60
+#       apply_method = "immediate"
+#       }, {
+#       name         = "general_log"
+#       value        = 0
+#       apply_method = "immediate"
+#       }, {
+#       name         = "innodb_lock_wait_timeout"
+#       value        = 300
+#       apply_method = "immediate"
+#       }, {
+#       name         = "log_output"
+#       value        = "FILE"
+#       apply_method = "pending-reboot"
+#       }, {
+#       name         = "long_query_time"
+#       value        = 5
+#       apply_method = "immediate"
+#       }, {
+#       name         = "max_connections"
+#       value        = 2000
+#       apply_method = "immediate"
+#       }, {
+#       name         = "slow_query_log"
+#       value        = 1
+#       apply_method = "immediate"
+#       }, {
+#       name         = "log_bin_trust_function_creators"
+#       value        = 1
+#       apply_method = "immediate"
+#     }
+#   ]
+
+#   enabled_cloudwatch_logs_exports = ["audit", "error", "slowquery"]
+
+#   manage_master_user_password_rotation              = true
+#   master_user_password_rotation_schedule_expression = "rate(15 days)"
+
+#   tags = local.tags
+# }

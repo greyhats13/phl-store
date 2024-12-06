@@ -20,6 +20,22 @@ locals {
     Feature = "tfstate"
   }
   s3_naming_standard = "${local.s3_standard.Unit}-${local.s3_standard.Env}-${local.s3_standard.Code}-${local.s3_standard.Feature}"
+    # Route53 Locals
+  route53_standard = {
+    Unit    = var.unit
+    Env     = var.env
+    Code    = "route53"
+    Feature = "main"
+  }
+  route53_domain_name = "${var.unit}.blast.co.id"
+  # ACM Locals
+  acm_standard = {
+    Unit    = var.unit
+    Env     = var.env
+    Code    = "acm"
+    Feature = "main"
+  }
+  acm_naming_standard = "${local.acm_standard.Unit}-${local.acm_standard.Env}-${local.acm_standard.Code}-${local.acm_standard.Feature}"
   # VPC Locals
   vpc_cidr     = "10.0.0.0/16"
   rfc6598_cidr = "100.64.0.0/16"
