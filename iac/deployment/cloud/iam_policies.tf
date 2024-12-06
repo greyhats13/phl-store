@@ -30,7 +30,6 @@ data "aws_iam_policy_document" "avp_policy" {
   statement {
     actions = [
       "secretsmanager:GetSecretValue",
-      "secretsmanager:DescribeSecret",
     ]
 
     resources = [

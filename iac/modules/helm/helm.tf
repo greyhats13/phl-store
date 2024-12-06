@@ -23,7 +23,6 @@ resource "helm_release" "helm" {
     "${templatefile(
       "manifest/${var.standard.Feature}.yaml",
       {
-        service_account_name       = local.sa_naming_standard
         unit                       = var.standard.Unit
         code                       = var.standard.Code
         env                        = var.standard.Env

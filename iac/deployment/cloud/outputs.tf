@@ -17,3 +17,12 @@ output "tfstate_bucket_arn" {
 }
 
 # VPC Outputs
+
+# Route53 Outputs
+output "route53_zone_id" {
+  value = module.zones_main.route53_zone_zone_id
+}
+
+output "route53_zone_name" {
+  value = module.zones_main.route53_zone_name
+}

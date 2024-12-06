@@ -1,8 +1,6 @@
 # Ref: https://github.com/argoproj/argo-helm/tree/main/charts/argo-cd
 global:
   domain: "${feature}.${dns_name}"
-  nodeSelector:
-    iam.gke.io/gke-metadata-server-enabled: "true"
 
 configs:
   cm:
@@ -105,42 +103,18 @@ configs:
         lockRepo: false
 
 # ref: https://argo-cd.readthedocs.io/en/stable/operator-manual/declarative-setup/
-controller:
-  serviceAccount:
-    annotations:
-      eks.amazonaws.com/role-arn: "${service_account_arn}"
 server:
-  serviceAccount:
-    annotations:
-      eks.amazonaws.com/role-arn: "${service_account_arn}"
   service:
     type: ClusterIP
     servicePortHttp: 80
     servicePortHttpName: http
   ingress:
     enabled: false
-    # ingressClassName: alb
-    # annotations:
-    #   external-dns.alpha.kubernetes.io/hostname: ${feature}.${env}.${dns_name}
-    #   # external-dns.alpha.kubernetes.io/ttl: 300
-    #   alb.ingress.kubernetes.io/group.name: ${unit}-${env}-svc-ingress
-    #   alb.ingress.kubernetes.io/healthcheck-path: ${extra_vars.alb_healthcheck_path}
-    #   alb.ingress.kubernetes.io/certificate-arn: ${extra_vars.alb_certificate_arn}
-    #   alb.ingress.kubernetes.io/ssl-policy: ${extra_vars.alb_ssl_policy}
-    #   alb.ingress.kubernetes.io/backend-protocol: ${extra_vars.alb_backend_protocol}
-    #   alb.ingress.kubernetes.io/listen-ports: '${extra_vars.alb_listen_ports}'
-    #   alb.ingress.kubernetes.io/scheme: ${extra_vars.alb_scheme}
-    #   alb.ingress.kubernetes.io/target-type: ${extra_vars.alb_target_type}
-    #   alb.ingress.kubernetes.io/group.order: ${extra_vars.alb_group_order}
-    # tls: true
-    # # http: false
 
 # ref: https://github.com/argoproj-labs/argocd-vault-plugin/blob/main/manifests/cmp-sidecar/argocd-repo-server.yaml
 repoServer:
   serviceAccount:
     name: ${feature}-repo-server
-    annotations:
-      eks.amazonaws.com/role-arn: "${service_account_arn}"
     # Not strictly necessary, but required for passing AVP configuration from a secret and for using Kubernetes auth to Hashicorp Vault
     automountServiceAccountToken: true
   volumes:

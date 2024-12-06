@@ -37,13 +37,13 @@ locals {
   }
   acm_naming_standard = "${local.acm_standard.Unit}-${local.acm_standard.Env}-${local.acm_standard.Code}-${local.acm_standard.Feature}"
   # Secrets Manager Locals
-  secret_standard = {
+  secrets_manager_standard = {
     Unit    = var.unit
     Env     = var.env
-    Code    = "secret"
+    Code    = "secrets-manager"
     Feature = "iac"
   }
-  secret_naming_standard = "${local.secret_standard.Unit}-${local.secret_standard.Env}-${local.secret_standard.Code}-${local.secret_standard.Feature}"
+  secrets_manager_naming_standard = "${local.secrets_manager_standard.Unit}-${local.secrets_manager_standard.Env}-${local.secrets_manager_standard.Code}-${local.secrets_manager_standard.Feature}"
   # VPC Locals
   vpc_cidr     = "10.0.0.0/16"
   rfc6598_cidr = "100.64.0.0/16"
@@ -77,7 +77,7 @@ locals {
   aurora_standard = {
     Unit    = var.unit
     Env     = var.env
-    Code    = "aurora"
+    Code    = "rds-aurora"
     Feature = "main"
   }
   aurora_naming_standard = "${local.aurora_standard.Unit}-${local.aurora_standard.Env}-${local.aurora_standard.Code}-${local.aurora_standard.Feature}"

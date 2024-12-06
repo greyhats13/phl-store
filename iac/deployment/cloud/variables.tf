@@ -38,17 +38,30 @@ variable "github_oauth_client_id" {
   description = "Github OAuth client ID for ArgoCD"
 }
 
-### Atlantis
-
-variable "atlantis_version" {
+### Secrets
+variable "github_oauth_client_secret" {
   type        = string
-  description = "Atlantis version"
+  description = "Github OAuth client secret for ArgoCD"
+  sensitive   = true
 }
 
-variable "atlantis_user" {
-  type        = string
-  description = "Atlantis username"
+variable "github_secret" {
+  type       = string
+  sensitive  = true
+  description = "Github secret for ArgoCD"
 }
+
+# ### Atlantis
+
+# variable "atlantis_version" {
+#   type        = string
+#   description = "Atlantis version"
+# }
+
+# variable "atlantis_user" {
+#   type        = string
+#   description = "Atlantis username"
+# }
 
 ### ArgoCD
 variable "argocd_version" {
