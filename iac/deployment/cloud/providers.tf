@@ -6,9 +6,9 @@ locals {
 
 terraform {
   backend "s3" {
-    bucket  = "phl-dev-s3-tfstate"
-    key     = "phl/deployment/cloud/phl-dev-deployment-cloud.tfstate"
-    region  = "us-west-1"
+    bucket = "phl-dev-s3-tfstate"
+    key    = "phl/deployment/cloud/phl-dev-deployment-cloud.tfstate"
+    region = "us-west-1"
     # profile = "phl-dev"
   }
   required_providers {
@@ -19,6 +19,10 @@ terraform {
     kubernetes = {
       source  = "hashicorp/kubernetes"
       version = "2.34.0"
+    }
+    github = {
+      source  = "integrations/github"
+      version = "~> 6.4.0"
     }
   }
 }
@@ -37,9 +41,9 @@ provider "aws" {
 }
 
 provider "aws" {
-  region  = "us-east-1"
+  region = "us-east-1"
   # profile = "${var.unit}-${var.env}"
-  alias   = "virginia"
+  alias = "virginia"
   dynamic "assume_role" {
     for_each = local.is_ec2_environment ? [] : [1]
     content {
@@ -72,9 +76,9 @@ provider "helm" {
       args = ["eks", "get-token", "--cluster-name", module.eks_main.cluster_name]
     }
   }
-  registry {
-    url      = "oci://public.ecr.aws"
-    username = data.aws_ecrpublic_authorization_token.token.user_name
-    password = data.aws_ecrpublic_authorization_token.token.password
-  }
+  # registry {
+  #   url      = "oci://public.ecr.aws"
+  #   username = data.aws_ecrpublic_authorization_token.token.user_name
+  #   password = data.aws_ecrpublic_authorization_token.token.password
+  # }
 }

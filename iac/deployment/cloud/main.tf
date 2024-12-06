@@ -5,8 +5,8 @@ module "kms_main" {
   aliases               = ["main/${local.kms_naming_standard}"]
   description           = "${local.kms_naming_standard} cluster encryption key"
   enable_default_policy = true
-  key_owners            = ["arn:aws:iam::124456474132:role/iac"]
-  key_users             = ["arn:aws:iam::124456474132:user/iac"]
+  key_owners            = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/iac"]
+  key_users             = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/iac"]
   key_service_roles_for_autoscaling = [
     # required for the ASG to manage encrypted volumes for nodes
     "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling",
@@ -81,8 +81,8 @@ module "secrets_iac" {
   version = "~> 1.3.1"
 
   # Secret
-  name                    = local.secret_naming_standard
-  description             = "Secrets for ${local.secret_naming_standard}"
+  name                    = local.secrets_manager_naming_standard
+  description             = "Secrets for ${local.secrets_manager_naming_standard}"
   recovery_window_in_days = 30
 
   # Policy
@@ -94,19 +94,23 @@ module "secrets_iac" {
       principals = [
         {
           type        = "AWS"
-          identifiers = ["arn:aws:iam::1234567890:root"]
+          identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
         },
         {
           type        = "AWS"
-          identifiers = ["larn:aws:iam::124456474132:user/idanfreak@gmail.com"]
+          identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
         },
         {
           type        = "AWS"
-          identifiers = ["larn:aws:iam::124456474132:user/imam.arief.rhmn@gmail.com"]
+          identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/idanfreak@gmail.com"]
         },
         {
           type        = "AWS"
-          identifiers = ["arn:aws:iam::124456474132:role/iac"]
+          identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/imam.arief.rhmn@gmail.com"]
+        },
+        {
+          type        = "AWS"
+          identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/iac"]
         },
       ]
       actions   = ["secretsmanager:*"]
@@ -114,7 +118,54 @@ module "secrets_iac" {
     }
   }
 
-  tags = merge(local.tags, local.secret_standard)
+  # Version
+  ignore_secret_changes = true
+  secret_string = jsonencode({
+    github_oauth_client_secret = var.github_oauth_client_secret
+    argocd_ssh_base64          = base64encode(tls_private_key.argocd_ssh.private_key_pem)
+    argocd_github_secret       = random_password.argocd_github_secret.result
+    atlantis_github_secret     = random_password.atlantis_github_secret.result
+    atlantis_password          = random_password.atlantis_password.result
+  })
+
+  tags = merge(local.tags, local.secrets_manager_standard)
+}
+
+# Create Github webhook
+
+module "repo_phl" {
+  source    = "../../modules/github"
+  repo_name = var.github_repo
+  owner     = var.github_owner
+  webhooks = {
+    argocd = {
+      configuration = {
+        url          = "https://argocd.phl.blast.co.id/api/webhook"
+        content_type = "json"
+        insecure_ssl = false
+        secret       = random_password.argocd_github_secret.result
+      }
+      active = true
+      events = ["push"]
+    }
+    atlantis = {
+      configuration = {
+        url          = "https://atlantis.phl.blast.co.id/events"
+        content_type = "json"
+        insecure_ssl = false
+        secret       = random_password.atlantis_github_secret.result
+      }
+      active = true
+      events = ["push", "pull_request", "pull_request_review", "issue_comment"]
+    }
+  }
+  create_deploy_key          = true
+  add_repo_ssh_key_to_argocd = false
+
+  public_key = tls_private_key.argocd_ssh.public_key_openssh
+  # ssh_key                 = base64encode(tls_private_key.argocd_ssh.private_key_pem)
+  is_deploy_key_read_only = false
+  argocd_namespace        = "argocd"
 }
 
 # Create AWS VPC architecture
@@ -294,21 +345,43 @@ module "eks_main" {
 
   # Cluster access entry
   # To add the current caller identity as an administrator
-  enable_cluster_creator_admin_permissions = true
+  enable_cluster_creator_admin_permissions = false
 
   access_entries = {
     # One access entry with a policy associated
-    admin = {
-      principal_arn = "arn:aws:iam::124456474132:user/imam.arief.rhmn@gmail.com"
+    iac = {
+      principal_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/iac"
       policy_associations = {
         iac = {
-          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminPolicy"
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
           access_scope = {
             type = "cluster"
           }
         }
       }
     }
+    admin = {
+      principal_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/imam.arief.rhmn@gmail.com"
+      policy_associations = {
+        iac = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
+    }
+    # root = {
+    #   principal_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+    #   policy_associations = {
+    #     iac = {
+    #       policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+    #       access_scope = {
+    #         type = "cluster"
+    #       }
+    #     }
+    #   }
+    # }
   }
 
   tags = merge(
@@ -354,7 +427,8 @@ module "eks_main" {
 
 # EKS Pod Identity for VPC CNI
 module "aws_vpc_cni_ipv4_pod_identity" {
-  source = "terraform-aws-modules/eks-pod-identity/aws"
+  source  = "terraform-aws-modules/eks-pod-identity/aws"
+  version = "~> 1.7.0"
 
   name = "aws-vpc-cni-ipv4"
 
@@ -372,13 +446,13 @@ module "aws_vpc_cni_ipv4_pod_identity" {
       cluster_name = module.eks_main.cluster_name
     }
   }
-
   tags = local.tags
 }
 
 # EKS Pod Identity for AWS EBS CSI
 module "aws_ebs_csi_pod_identity" {
-  source = "terraform-aws-modules/eks-pod-identity/aws"
+  source  = "terraform-aws-modules/eks-pod-identity/aws"
+  version = "~> 1.7.0"
 
   name = "aws-ebs-csi"
 
@@ -400,7 +474,8 @@ module "aws_ebs_csi_pod_identity" {
 }
 
 module "aws_cloudwatch_observability_pod_identity" {
-  source = "terraform-aws-modules/eks-pod-identity/aws"
+  source  = "terraform-aws-modules/eks-pod-identity/aws"
+  version = "~> 1.7.0"
 
   name = "aws-cloudwatch-observability"
 
@@ -442,46 +517,75 @@ module "aws_cloudwatch_observability_pod_identity" {
 #   tags = local.tags
 # }
 
-# # ArgoCD
-# # ArgoCD is a declarative, GitOps continuous delivery tool for Kubernetes.
-# module "argocd" {
-#   source           = "../../modules/helm"
-#   region           = var.region
-#   standard         = local.argocd_standard
-#   repository       = "https://argoproj.github.io/argo-helm"
-#   chart            = "argo-cd"
-#   values           = ["${file("manifest/${local.argocd_standard.Feature}.yaml")}"]
-#   namespace        = "argocd"
-#   create_namespace = true
-#   extra_vars = {
-#     github_orgs      = var.github_orgs
-#     github_client_id = var.github_oauth_client_id
-#     ARGOCD_VERSION   = var.argocd_version
-#     AVP_VERSION      = var.argocd_vault_plugin_version
-#     server_insecure  = false
-#     # alb_certificate_arn  = module.acm_main.acm_certificate_arn
-#     # alb_ssl_policy       = "ELBSecurityPolicy-TLS13-1-2-2021-06"
-#     # alb_backend_protocol = "HTTPS"
-#     # alb_listen_ports     = "[{\"HTTPS\": 443}]"
-#     # alb_scheme           = "internet-facing"
-#     # alb_target_type      = "ip"
-#     # alb_group_order      = "100"
-#     # alb_healthcheck_path = "/"
-#   }
-#   helm_sets_sensitive = [
-#     {
-#       name  = "configs.secret.githubSecret"
-#       value = jsondecode(module.gsm_iac.secret_data)["argocd_github_secret"]
-#     },
-#     {
-#       name  = "configs.secret.extra.dex\\.github\\.clientSecret"
-#       value = jsondecode(module.gsm_iac.secret_data)["github_oauth_client_secret"]
-#     },
-#   ]
-#   depends_on = [
-#     module.eks_main,
-#   ]
-# }
+# ArgoCD
+# ArgoCD is a declarative, GitOps continuous delivery tool for Kubernetes.
+module "argocd" {
+  source           = "../../modules/helm"
+  region           = var.region
+  standard         = local.argocd_standard
+  repository       = "https://argoproj.github.io/argo-helm"
+  chart            = "argo-cd"
+  values           = ["${file("manifest/${local.argocd_standard.Feature}.yaml")}"]
+  namespace        = "argocd"
+  create_namespace = true
+  dns_name         = local.route53_domain_name
+  extra_vars = {
+    github_orgs      = var.github_orgs
+    github_client_id = var.github_oauth_client_id
+    ARGOCD_VERSION   = var.argocd_version
+    AVP_VERSION      = var.argocd_vault_plugin_version
+    server_insecure  = false
+    # alb_certificate_arn  = module.acm_main.acm_certificate_arn
+    # alb_ssl_policy       = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+    # alb_backend_protocol = "HTTPS"
+    # alb_listen_ports     = "[{\"HTTPS\": 443}]"
+    # alb_scheme           = "internet-facing"
+    # alb_target_type      = "ip"
+    # alb_group_order      = "100"
+    # alb_healthcheck_path = "/"
+  }
+  helm_sets_sensitive = [
+    {
+      name  = "configs.secret.githubSecret"
+      value = random_password.argocd_github_secret.result
+    },
+    {
+      name  = "configs.secret.extra.dex\\.github\\.clientSecret"
+      value = jsondecode(module.secrets_iac.secret_string)["github_oauth_client_secret"]
+    },
+  ]
+  depends_on = [
+    module.eks_main,
+  ]
+}
+
+# ArgoCD Vault Plugin (AVP) Pod Identity
+module "avp_custom_pod_identity" {
+  source  = "terraform-aws-modules/eks-pod-identity/aws"
+  version = "~> 1.7.0"
+
+  name            = "avp_role"
+  use_name_prefix = false
+
+  # ArgoCD Vault Plugin (AVP) is installed in the argocd-repo-server 
+  # So we need to attach the policy to the argocd-repo-server service account
+  association_defaults = {
+    namespace       = "argocd"
+    service_account = "argocd-repo-server"
+    tags            = { App = "avp" }
+  }
+
+  associations = {
+    main = {
+      cluster_name = module.eks_main.cluster_name
+    }
+  }
+
+  attach_custom_policy    = true
+  source_policy_documents = [data.aws_iam_policy_document.avp_policy.json]
+
+  tags = local.tags
+}
 
 # # Aurora
 # module "aurora_main" {
