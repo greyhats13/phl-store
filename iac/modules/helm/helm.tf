@@ -29,7 +29,6 @@ resource "helm_release" "helm" {
         env                        = var.standard.Env
         feature                    = var.standard.Feature
         dns_name                   = var.dns_name
-        service_account_annotation = var.create_gsa ? google_service_account.gsa[0].email : null
         extra_vars                 = var.extra_vars
       }
       )

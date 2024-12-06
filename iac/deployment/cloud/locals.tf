@@ -20,7 +20,7 @@ locals {
     Feature = "tfstate"
   }
   s3_naming_standard = "${local.s3_standard.Unit}-${local.s3_standard.Env}-${local.s3_standard.Code}-${local.s3_standard.Feature}"
-    # Route53 Locals
+  # Route53 Locals
   route53_standard = {
     Unit    = var.unit
     Env     = var.env
@@ -36,6 +36,14 @@ locals {
     Feature = "main"
   }
   acm_naming_standard = "${local.acm_standard.Unit}-${local.acm_standard.Env}-${local.acm_standard.Code}-${local.acm_standard.Feature}"
+  # Secrets Manager Locals
+  secret_standard = {
+    Unit    = var.unit
+    Env     = var.env
+    Code    = "secret"
+    Feature = "iac"
+  }
+  secret_naming_standard = "${local.secret_standard.Unit}-${local.secret_standard.Env}-${local.secret_standard.Code}-${local.secret_standard.Feature}"
   # VPC Locals
   vpc_cidr     = "10.0.0.0/16"
   rfc6598_cidr = "100.64.0.0/16"
@@ -57,6 +65,14 @@ locals {
   eks_naming_standard = "${local.eks_standard.Unit}-${local.eks_standard.Env}-${local.eks_standard.Code}-${local.eks_standard.Feature}"
   cluster_version     = "1.31"
   eks_workload_type   = "ec2"
+  # ArgoCD Locals
+  argocd_standard = {
+    Unit    = var.unit
+    Env     = var.env
+    Code    = "addon"
+    Feature = "argocd"
+  }
+  argocd_naming_standard = "${local.argocd_standard.Unit}-${local.argocd_standard.Env}-${local.argocd_standard.Code}-${local.argocd_standard.Feature}"
   # Aurora Locals
   aurora_standard = {
     Unit    = var.unit
