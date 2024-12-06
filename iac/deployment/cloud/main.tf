@@ -58,22 +58,64 @@ module "zones_main" {
   tags = merge(local.tags, local.route53_standard)
 }
 
-# # Create ACM certificate
-# module "acm_main" {
-#   source  = "terraform-aws-modules/acm/aws"
-#   version = "~> 4.3.2"
+# Create ACM certificate
+module "acm_main" {
+  source  = "terraform-aws-modules/acm/aws"
+  version = "~> 4.3.2"
 
-#   domain_name = local.route53_domain_name
-#   zone_id     = module.zones_main.route53_zone_zone_id[local.route53_domain_name]
+  domain_name = local.route53_domain_name
+  zone_id     = module.zones_main.route53_zone_zone_id[local.route53_domain_name]
 
-#   subject_alternative_names = [
-#     "*.${var.env}.${local.route53_domain_name}",
-#   ]
+  subject_alternative_names = [
+    "*.${var.env}.${local.route53_domain_name}",
+  ]
 
-#   wait_for_validation = true
+  wait_for_validation = true
 
-#   tags = merge(local.tags, local.acm_standard, { Name = local.acm_naming_standard })
-# }
+  tags = merge(local.tags, local.acm_standard, { Name = local.acm_naming_standard })
+}
+
+# Create Secrets Manager
+module "secrets_iac" {
+  source  = "terraform-aws-modules/secrets-manager/aws"
+  version = "~> 1.3.1"
+
+  # Secret
+  name                    = local.secret_naming_standard
+  description             = "Secrets for ${local.secret_naming_standard}"
+  recovery_window_in_days = 30
+
+  # Policy
+  create_policy       = true
+  block_public_policy = true
+  policy_statements = {
+    admin = {
+      sid = "IacSecretAdmin"
+      principals = [
+        {
+          type        = "AWS"
+          identifiers = ["arn:aws:iam::1234567890:root"]
+        },
+        {
+          type        = "AWS"
+          identifiers = ["larn:aws:iam::124456474132:user/idanfreak@gmail.com"]
+        },
+        {
+          type        = "AWS"
+          identifiers = ["larn:aws:iam::124456474132:user/imam.arief.rhmn@gmail.com"]
+        },
+        {
+          type        = "AWS"
+          identifiers = ["arn:aws:iam::124456474132:role/iac"]
+        },
+      ]
+      actions   = ["secretsmanager:*"]
+      resources = ["*"]
+    }
+  }
+
+  tags = merge(local.tags, local.secret_standard)
+}
 
 # Create AWS VPC architecture
 module "vpc_main" {
@@ -187,8 +229,7 @@ module "eks_main" {
   # Managed Node Groups for critical workloads, not for autoscaling
   eks_managed_node_groups = {
     "ng-ondemand-base" = {
-      ami_type = "BOTTLEROCKET_x86_64"
-      # ami_type                       = "AL2023_x86_64_STANDARD"
+      ami_type                       = "BOTTLEROCKET_x86_64"
       use_latest_ami_release_version = true
       instance_types                 = var.env == "dev" ? ["t3.medium"] : ["m6i.large"]
       enable_bootstrap_user_data     = true
@@ -197,8 +238,7 @@ module "eks_main" {
       max_size                       = 2
       desired_size                   = 2
       force_update_version           = true
-      # User data for Bottlerocket
-      bootstrap_extra_args = <<-EOT
+      bootstrap_extra_args           = <<-EOT
         # The admin host container provides SSH access and runs with "superpowers".
         # It is disabled by default, but can be disabled explicitly.
         [settings.host-containers.admin]
@@ -402,10 +442,10 @@ module "aws_cloudwatch_observability_pod_identity" {
 #   tags = local.tags
 # }
 
-## ArgoCD
-# ArgoCD is a declarative, GitOps continuous delivery tool for Kubernetes.
+# # ArgoCD
+# # ArgoCD is a declarative, GitOps continuous delivery tool for Kubernetes.
 # module "argocd" {
-#   source           = "../../modules/cicd/helm"
+#   source           = "../../modules/helm"
 #   region           = var.region
 #   standard         = local.argocd_standard
 #   repository       = "https://argoproj.github.io/argo-helm"
@@ -414,22 +454,19 @@ module "aws_cloudwatch_observability_pod_identity" {
 #   namespace        = "argocd"
 #   create_namespace = true
 #   extra_vars = {
-#     github_orgs          = var.github_orgs
-#     github_client_id     = var.github_oauth_client_id
-#     ARGOCD_VERSION       = var.argocd_version
-#     AVP_VERSION          = var.argocd_vault_plugin_version
-#     server_insecure      = false
-#     alb_certificate_arn  = module.acm_main.acm_certificate_arn
-#     alb_ssl_policy       = "ELBSecurityPolicy-TLS13-1-2-2021-06"
-#     alb_backend_protocol = "HTTPS"
-#     alb_listen_ports     = "[{\"HTTPS\": 443}]"
-#     alb_scheme           = "internet-facing"
-#     alb_target_type      = "ip"
-#     alb_group_order      = "100"
-#     alb_healthcheck_path = "/"
-#     github_orgs          = "blastcoid"
-#     github_client_id     = "9781757e794562ceb7e1"
-#     AVP_VERSION          = "1.16.1"
+#     github_orgs      = var.github_orgs
+#     github_client_id = var.github_oauth_client_id
+#     ARGOCD_VERSION   = var.argocd_version
+#     AVP_VERSION      = var.argocd_vault_plugin_version
+#     server_insecure  = false
+#     # alb_certificate_arn  = module.acm_main.acm_certificate_arn
+#     # alb_ssl_policy       = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+#     # alb_backend_protocol = "HTTPS"
+#     # alb_listen_ports     = "[{\"HTTPS\": 443}]"
+#     # alb_scheme           = "internet-facing"
+#     # alb_target_type      = "ip"
+#     # alb_group_order      = "100"
+#     # alb_healthcheck_path = "/"
 #   }
 #   helm_sets_sensitive = [
 #     {

@@ -8,3 +8,8 @@ data "aws_caller_identity" "current" {}
 
 # Get availability zones
 data "aws_availability_zones" "available" {}
+
+# Get ECR public token from us-east-1
+data "aws_ecrpublic_authorization_token" "token" {
+  provider = aws.virginia
+}

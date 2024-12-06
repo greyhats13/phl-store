@@ -35,3 +35,46 @@ provider "aws" {
     }
   }
 }
+
+provider "aws" {
+  region  = "us-east-1"
+  # profile = "${var.unit}-${var.env}"
+  alias   = "virginia"
+  dynamic "assume_role" {
+    for_each = local.is_ec2_environment ? [] : [1]
+    content {
+      role_arn = "arn:aws:iam::124456474132:role/iac"
+    }
+  }
+}
+
+# Create Kubernetes provider
+provider "kubernetes" {
+  host                   = module.eks_main.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks_main.cluster_certificate_authority_data)
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    # This requires the awscli to be installed locally where Terraform is executed
+    args = ["eks", "get-token", "--cluster-name", module.eks_main.cluster_name]
+  }
+}
+
+# Create Helm provider
+provider "helm" {
+  kubernetes {
+    host                   = module.eks_main.cluster_endpoint
+    cluster_ca_certificate = base64decode(module.eks_main.cluster_certificate_authority_data)
+    exec {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "aws"
+      # This requires the awscli to be installed locally where Terraform is executed
+      args = ["eks", "get-token", "--cluster-name", module.eks_main.cluster_name]
+    }
+  }
+  registry {
+    url      = "oci://public.ecr.aws"
+    username = data.aws_ecrpublic_authorization_token.token.user_name
+    password = data.aws_ecrpublic_authorization_token.token.password
+  }
+}
