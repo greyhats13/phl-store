@@ -5,7 +5,7 @@ locals {
 terraform {
   backend "s3" {
     bucket = "phl-dev-s3-tfstate"
-    key    = "phl/deployment/addons/phl-dev-deployment-addons-external-dns.tfstate"
+    key    = "phl/deployment/addons/phl-dev-deployment-addons-aws-load-balancer-controller.tfstate"
     region = "us-west-1"
     # profile = "phl-dev"
   }
