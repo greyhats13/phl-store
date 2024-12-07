@@ -19,10 +19,19 @@ output "tfstate_bucket_arn" {
 # VPC Outputs
 
 # Route53 Outputs
-output "route53_zone_id" {
-  value = module.zones_main.route53_zone_zone_id
+output "route53_zone_arn" {
+  value = module.zones_main.route53_zone_zone_arn
 }
 
-output "route53_zone_name" {
-  value = module.zones_main.route53_zone_name
+# EKS Outputs
+output "eks_cluster_endpoint" {
+  value = module.eks_main.cluster_endpoint
+}
+
+output "eks_cluster_name" {
+  value = module.eks_main.cluster_name
+}
+
+output "eks_cluster_certificate_authority_data" {
+  value = module.eks_main.cluster_certificate_authority_data
 }
