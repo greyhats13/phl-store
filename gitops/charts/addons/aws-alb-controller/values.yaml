@@ -1,0 +1,9 @@
+serviceAccount:
+  create: true
+  name: "${service_account_name}"
+  annotations:
+    eks.amazonaws.com/sts-regional-endpoints: "true"
+clusterName: phl-dev-eks-main
+disableIngressClassAnnotation: true
+ingressClassConfig:
+  default: true

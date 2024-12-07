@@ -131,8 +131,7 @@ module "secrets_iac" {
   tags = merge(local.tags, local.secrets_manager_standard)
 }
 
-# Create Github webhook
-
+# Setup repository for argocd and atlantis
 module "repo_phl" {
   source    = "../../modules/github"
   repo_name = var.github_repo
@@ -160,12 +159,11 @@ module "repo_phl" {
     }
   }
   create_deploy_key          = true
-  add_repo_ssh_key_to_argocd = false
-
-  public_key = tls_private_key.argocd_ssh.public_key_openssh
-  # ssh_key                 = base64encode(tls_private_key.argocd_ssh.private_key_pem)
-  is_deploy_key_read_only = false
-  argocd_namespace        = "argocd"
+  add_repo_ssh_key_to_argocd = true
+  public_key                 = tls_private_key.argocd_ssh.public_key_openssh
+  ssh_key                    = tls_private_key.argocd_ssh.private_key_pem
+  is_deploy_key_read_only    = false
+  argocd_namespace           = "argocd"
 }
 
 # Create AWS VPC architecture
