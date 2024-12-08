@@ -22,15 +22,10 @@ fullnameOverride: ""
 # ArgoCD Vault Plugin will replace the placeholders with the actual values from the AWS Secret Manager
 appSecret:
   annotations:
-    avp.kubernetes.io/path: "phl-svc-products"
+    avp.kubernetes.io/path: "phl/svc/phl-products"
     avp.kubernetes.io/secret-version: "AWSCURRENT"
   secrets:
-    username: <phl-svc-products | jsonPath {.USERNAME}>
-    password: <phl-svc-products | jsonPath {.PASSWORD}>
-    database: <phl-svc-products | jsonPath {.DATABASE}>
-    host: <phl-svc-products | jsonPath {.HOST}>
-    port: <phl-svc-products | jsonPath {.PORT}>
-    appPort: <phl-svc-products | jsonPath {.APP_PORT}>
+    configjson: <phl/svc/phl-products>
 
 # This section builds out the service account more information can be found here: https://kubernetes.io/docs/concepts/security/service-accounts/
 serviceAccount:
@@ -131,17 +126,20 @@ autoscaling:
   targetMemoryUtilizationPercentage: 75
 
 # Additional volumes on the output Deployment definition.
-volumes: []
-# - name: foo
-#   secret:
-#     secretName: mysecret
-#     optional: false
+volumes:
+  - name: config-volume
+    secret:
+      secretName: phl/svc/phl-products
+      items:
+        - key: config.json
+          path: config.json
 
 # Additional volumeMounts on the output Deployment definition.
-volumeMounts: []
-# - name: foo
-#   mountPath: "/etc/foo"
-#   readOnly: true
+volumeMounts:
+  - name: config-volume
+    mountPath: "/config/config.json"
+    subPath: config.json
+
 
 nodeSelector: {}
 
