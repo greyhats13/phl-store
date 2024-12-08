@@ -92,14 +92,15 @@ module "svc_custom_pod_identity" {
 }
 
 module "argocd_app" {
-  source     = "../../../modules/helm"
-  region     = var.region
-  standard   = local.svc_standard
-  repository = "https://argoproj.github.io/argo-helm"
-  chart      = "argocd-apps"
-  values     = ["${file("manifest/${local.svc_standard.Feature}.yaml")}"]
-  namespace  = "argocd"
-  dns_name   = "${local.svc_standard.Feature}.${var.unit}.blast.co.id"
+  source        = "../../../modules/helm"
+  region        = var.region
+  standard      = local.svc_standard
+  override_name = local.svc_naming_full
+  repository    = "https://argoproj.github.io/argo-helm"
+  chart         = "argocd-apps"
+  values        = ["${file("manifest/${local.svc_standard.Feature}.yaml")}"]
+  namespace     = "argocd"
+  dns_name      = "${local.svc_standard.Feature}.${var.unit}.blast.co.id"
   extra_vars = {
     argocd_namespace                       = "argocd"
     source_repoURL                         = "git@github.com:${var.github_owner}/${var.github_repo}.git"
