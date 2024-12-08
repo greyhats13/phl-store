@@ -25,6 +25,11 @@ repoConfig: |
 serviceAccount:
   name: atlantis-sa
 
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 4141
+
 ingress:
   enabled: true
   ingressClassName: "alb"
@@ -41,11 +46,7 @@ ingress:
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/group.order: "100"
     alb.ingress.kubernetes.io/actions.ssl-redirect: '443'
-  hosts:
-    - host: atlantis.phl.blast.co.id
-      paths:
-        - path: /
-          pathType: ImplementationSpecific
+  host: atlantis.phl.blast.co.id
   tls:
     - hosts:
         - atlantis.phl.blast.co.id
