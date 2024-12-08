@@ -45,7 +45,7 @@ ingress:
     - host: atlantis.phl.blast.co.id
       paths:
         - path: /
-          pathType: ImplementationSpecific
+          pathType: Prefix
   tls:
     - hosts:
         - atlantis.phl.blast.co.id
