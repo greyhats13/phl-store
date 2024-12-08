@@ -9,12 +9,19 @@ applications:
     sources:
       - repoURL: ${extra_vars.source_origin_repoURL}
         chart: ${extra_vars.source_origin_chart}
-        targetRevision: ${extra_vars.source_origin_targetRevision}  # 8.3.8
+        targetRevision: ${extra_vars.source_origin_targetRevision}
         helm:
           valueFiles:
             - $values/${extra_vars.source_override_path}
       - repoURL: ${extra_vars.source_override_repoURL}
         targetRevision: ${extra_vars.source_override_targetRevision}
+        plugin:
+          name: argocd-vault-plugin-helm
+          env:
+            - name: AVP_TYPE
+              value: ${extra_vars.avp_type}
+            - name: AWS_REGION
+              value: ${extra_vars.region}
         ref: values
     destination:
       server: ${extra_vars.destination_server}
