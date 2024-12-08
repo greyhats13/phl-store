@@ -537,7 +537,7 @@ module "argocd" {
     alb_group_name                   = "${var.unit}-${var.env}-svc-ingress"
     alb_group_order                  = "100"
     alb_healthcheck_path             = "/"
-    alb_ssl_redirec                 = "{'Type': 'redirect', 'RedirectConfig': { 'Protocol': 'HTTPS', 'Port': '443', 'StatusCode': 'HTTP_301'}}"
+    alb_ssl_redirect                 = 443
     aws_alb_service_type             = "ClusterIP"
     aws_alb_backend_protocol_version = "GRPC"
   }
