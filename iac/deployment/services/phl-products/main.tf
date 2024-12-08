@@ -86,7 +86,7 @@ module "svc_custom_pod_identity" {
   }
 
   attach_custom_policy    = true
-  source_policy_documents = [data.aws_iam_policy_document.avp_policy.json]
+  source_policy_documents = [data.aws_iam_policy_document.svc_policy.json]
 
   tags = local.tags
 }
