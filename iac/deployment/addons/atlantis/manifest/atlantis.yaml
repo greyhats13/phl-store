@@ -13,8 +13,6 @@ applications:
         helm:
           valueFiles:
             - $values/${extra_vars.source_override_path}
-      - repoURL: ${extra_vars.source_override_repoURL}
-        targetRevision: ${extra_vars.source_override_targetRevision}
         plugin:
           name: argocd-vault-plugin-helm
           env:
@@ -22,7 +20,16 @@ applications:
               value: ${extra_vars.avp_type}
             - name: AWS_REGION
               value: ${extra_vars.region}
+      - repoURL: ${extra_vars.source_override_repoURL}
+        targetRevision: ${extra_vars.source_override_targetRevision}
         ref: values
+        plugin:
+          name: argocd-vault-plugin-helm
+          env:
+            - name: AVP_TYPE
+              value: ${extra_vars.avp_type}
+            - name: AWS_REGION
+              value: ${extra_vars.region}
     destination:
       server: ${extra_vars.destination_server}
       namespace: ${extra_vars.destination_namespace}
