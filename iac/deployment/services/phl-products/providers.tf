@@ -92,6 +92,6 @@ provider "mysql" {
 
   aws_config {
     region = local.region
-    profile = "${var.unit}-${var.env}"
+    # profile = "${var.unit}-${var.env}"
   }
 }
