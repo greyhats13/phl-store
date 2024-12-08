@@ -65,31 +65,31 @@ module "secrets_iac" {
   tags = merge(local.tags, local.svc_standard)
 }
 
-# # ArgoCD Vault Plugin (AVP) Pod Identity
-# module "svc_custom_pod_identity" {
-#   source  = "terraform-aws-modules/eks-pod-identity/aws"
-#   version = "~> 1.7.0"
+# ArgoCD Vault Plugin (AVP) Pod Identity
+module "svc_custom_pod_identity" {
+  source  = "terraform-aws-modules/eks-pod-identity/aws"
+  version = "~> 1.7.0"
 
-#   name            = local.svc_naming_standard
-#   use_name_prefix = false
+  name            = local.svc_naming_standard
+  use_name_prefix = false
 
-#   association_defaults = {
-#     namespace       = "app"
-#     service_account = local.svc_naming_standard
-#     tags            = { App = "products" }
-#   }
+  association_defaults = {
+    namespace       = "app"
+    service_account = local.svc_naming_standard
+    tags            = { App = "products" }
+  }
 
-#   associations = {
-#     main = {
-#       cluster_name = data.terraform_remote_state.cloud.outputs.eks_cluster_name
-#     }
-#   }
+  associations = {
+    main = {
+      cluster_name = data.terraform_remote_state.cloud.outputs.eks_cluster_name
+    }
+  }
 
-#   attach_custom_policy    = true
-#   source_policy_documents = [data.aws_iam_policy_document.avp_policy.json]
+  attach_custom_policy    = true
+  source_policy_documents = [data.aws_iam_policy_document.svc_policy.json]
 
-#   tags = local.tags
-# }
+  tags = local.tags
+}
 
 module "argocd_app" {
   source     = "../../../modules/helm"
@@ -107,9 +107,9 @@ module "argocd_app" {
     source_path                            = "gitops/charts/app/${local.svc_name}"
     project                                = "default"
     destination_server                     = "https://kubernetes.default.svc"
-    destination_namespace                  = "app"
+    destination_namespace                  = var.env
     avp_type                               = "awssecretsmanager"
-    AWS_REGION                             = var.region
+    region                                 = var.region
     syncPolicy_automated_prune             = true
     syncPolicy_automated_selfHeal          = true
     syncPolicy_syncOptions_CreateNamespace = true

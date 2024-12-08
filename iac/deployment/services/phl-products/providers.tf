@@ -58,12 +58,13 @@ provider "aws" {
 provider "kubernetes" {
   host                   = data.terraform_remote_state.cloud.outputs.eks_cluster_endpoint
   cluster_ca_certificate = base64decode(data.terraform_remote_state.cloud.outputs.eks_cluster_certificate_authority_data)
-  exec {
-    api_version = "client.authentication.k8s.io/v1beta1"
-    command     = "aws"
-    # This requires the awscli to be installed locally where Terraform is executed
-    args = ["eks", "get-token", "--cluster-name", data.terraform_remote_state.cloud.outputs.eks_cluster_name]
-  }
+  token                  = data.aws_eks_cluster_auth.cluster.token
+  # exec {
+  #   api_version = "client.authentication.k8s.io/v1beta1"
+  #   command     = "aws"
+  #   # This requires the awscli to be installed locally where Terraform is executed
+  #   args = ["eks", "get-token", "--cluster-name", data.terraform_remote_state.cloud.outputs.eks_cluster_name]
+  # }
 }
 
 # Create Helm provider
@@ -71,12 +72,13 @@ provider "helm" {
   kubernetes {
     host                   = data.terraform_remote_state.cloud.outputs.eks_cluster_endpoint
     cluster_ca_certificate = base64decode(data.terraform_remote_state.cloud.outputs.eks_cluster_certificate_authority_data)
-    exec {
-      api_version = "client.authentication.k8s.io/v1beta1"
-      command     = "aws"
-      # This requires the awscli to be installed locally where Terraform is executed
-      args = ["eks", "get-token", "--cluster-name", data.terraform_remote_state.cloud.outputs.eks_cluster_name]
-    }
+    token                  = data.aws_eks_cluster_auth.cluster.token
+    # exec {
+    #   api_version = "client.authentication.k8s.io/v1beta1"
+    #   command     = "aws"
+    #   # This requires the awscli to be installed locally where Terraform is executed
+    #   args = ["eks", "get-token", "--cluster-name", data.terraform_remote_state.cloud.outputs.eks_cluster_name]
+    # }
   }
   # registry {
   #   url      = "oci://public.ecr.aws"
@@ -86,12 +88,7 @@ provider "helm" {
 }
 
 provider "mysql" {
-  endpoint = "aws://${data.terraform_remote_state.cloud.outputs.aurora_cluster_endpoint}"
-  username = "root"
-  tls      = "skip-verify"
-
-  aws_config {
-    region = local.region
-    profile = "${var.unit}-${var.env}"
-  }
+  endpoint = "${data.terraform_remote_state.cloud.outputs.aurora_cluster_endpoint}:${data.terraform_remote_state.cloud.outputs.aurora_cluster_port}"
+  username = data.terraform_remote_state.cloud.outputs.aurora_cluster_username
+  password = jsondecode(data.aws_secretsmanager_secret_version.aurora_password.secret_string)["password"]
 }

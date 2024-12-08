@@ -364,6 +364,17 @@ module "eks_main" {
         }
       }
     }
+    atlantis = {
+      principal_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/atlantis-role"
+      policy_associations = {
+        atlantis = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
+    }
     admin = {
       principal_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/imam.arief.rhmn@gmail.com"
       policy_associations = {
@@ -615,7 +626,7 @@ module "atlantis" {
   create_namespace = true
   dns_name         = local.route53_domain_name
   extra_vars = {
-    github_user      = var.github_owner
+    github_user = var.github_owner
 
     # ingress
     ingress_enabled    = true
