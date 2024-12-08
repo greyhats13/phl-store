@@ -33,7 +33,7 @@ ingress:
     external-dns.alpha.kubernetes.io/ttl: "300"
     alb.ingress.kubernetes.io/group.name: phl-dev-svc-ingress
     alb.ingress.kubernetes.io/healthcheck-path: /
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-west-1:124456474132:certificate/577ce175-24b2-4d67-8abf-9485231f7584
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-west-1:124456474132:certificate/155ec9de-d537-4b5f-9fc3-bbf43c8f91d5
     alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS13-1-2-2021-06
     alb.ingress.kubernetes.io/backend-protocol: HTTP
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80},{"HTTPS": 443}]'
