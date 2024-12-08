@@ -27,7 +27,7 @@ serviceAccount:
 
 ingress:
   enabled: true
-  className: "alb"
+  ingressClassName: "alb"
   annotations:
     external-dns.alpha.kubernetes.io/hostname: atlantis.phl.blast.co.id
     external-dns.alpha.kubernetes.io/ttl: "300"
