@@ -39,6 +39,8 @@ module "argocd_app" {
     project                                = "default"
     destination_server                     = "https://kubernetes.default.svc"
     destination_namespace                  = local.addon_standard.Feature
+    avp_type                               = "awssecretsmanager"
+    AWS_REGION                             = var.region
     syncPolicy_automated_prune             = true
     syncPolicy_automated_selfHeal          = true
     syncPolicy_syncOptions_CreateNamespace = true
