@@ -1,8 +1,9 @@
 orgAllowlist: github.com/greyhats13/*
 
 github:
-  token: <path:phl/dev/secretsmanager/iac#github_token#AWSCURRENT | base64encode>
-  secret: <path:phl/dev/secretsmanager/iac#atlantis_github_secret#AWSCURRENT | base64encode>
+  user: greyhats13
+  token: <path:arn:aarn:aws:secretsmanager:us-west-1:124456474132:secret:phl/dev/secretsmanager/iac-qvz0Jsc#github_token#AWSCURRENT>
+  secret: <path:arn:aws:secretsmanager:us-west-1:124456474132:secret:phl/dev/secretsmanager/iac-qvz0Js#atlantis_github_secret#AWSCURRENT>
 
 repoConfig: |
  ---
