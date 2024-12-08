@@ -7,7 +7,6 @@ terraform {
     bucket = "phl-dev-s3-tfstate"
     key    = "phl/deployment/addons/phl-dev-deployment-addons-external-dns.tfstate"
     region = "us-west-1"
-    # profile = "phl-dev"
   }
   required_providers {
     aws = {
@@ -28,7 +27,6 @@ terraform {
 # Create AWS provider
 provider "aws" {
   region = local.region
-  # profile = "${var.unit}-${var.env}"
   dynamic "assume_role" {
     # If the current environment is running on EC2 then use instance profile to access AWS resources
     for_each = local.is_ec2_environment ? [] : [1]
@@ -38,29 +36,11 @@ provider "aws" {
   }
 }
 
-# provider "aws" {
-#   region = "us-east-1"
-#   # profile = "${var.unit}-${var.env}"
-#   alias = "virginia"
-#   dynamic "assume_role" {
-#     for_each = local.is_ec2_environment ? [] : [1]
-#     content {
-#       role_arn = "arn:aws:iam::124456474132:role/iac"
-#     }
-#   }
-# }
-
 # Create Kubernetes provider
 provider "kubernetes" {
   host                   = data.terraform_remote_state.cloud.outputs.eks_cluster_endpoint
   cluster_ca_certificate = base64decode(data.terraform_remote_state.cloud.outputs.eks_cluster_certificate_authority_data)
   token                  = data.aws_eks_cluster_auth.cluster.token
-  # exec {
-  #   api_version = "client.authentication.k8s.io/v1beta1"
-  #   command     = "aws"
-  #   # This requires the awscli to be installed locally where Terraform is executed
-  #   args = ["eks", "get-token", "--cluster-name", data.terraform_remote_state.cloud.outputs.eks_cluster_name]
-  # }
 }
 
 # Create Helm provider
@@ -69,16 +49,5 @@ provider "helm" {
     host                   = data.terraform_remote_state.cloud.outputs.eks_cluster_endpoint
     cluster_ca_certificate = base64decode(data.terraform_remote_state.cloud.outputs.eks_cluster_certificate_authority_data)
     token                  = data.aws_eks_cluster_auth.cluster.token
-    # exec {
-    #   api_version = "client.authentication.k8s.io/v1beta1"
-    #   command     = "aws"
-    #   # This requires the awscli to be installed locally where Terraform is executed
-    #   args = ["eks", "get-token", "--cluster-name", data.terraform_remote_state.cloud.outputs.eks_cluster_name]
-    # }
   }
-  # registry {
-  #   url      = "oci://public.ecr.aws"
-  #   username = data.aws_ecrpublic_authorization_token.token.user_name
-  #   password = data.aws_ecrpublic_authorization_token.token.password
-  # }
 }
