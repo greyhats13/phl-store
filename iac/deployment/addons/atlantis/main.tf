@@ -32,7 +32,7 @@ module "argocd_app" {
     argocd_namespace                       = "argocd"
     source_repoURL                         = "git@github.com:${var.github_owner}/${var.github_repo}.git"
     source_targetRevision                  = "HEAD"
-    source_path                            = "gitops/charts/addons/${local.addon_standard.Feature}/values-custom.yaml"
+    source_path                            = "gitops/charts/addons/${local.addon_standard.Feature}"
     project                                = "default"
     destination_server                     = "https://kubernetes.default.svc"
     destination_namespace                  = local.addon_standard.Feature
