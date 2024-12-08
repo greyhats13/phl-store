@@ -18,7 +18,7 @@ data "terraform_remote_state" "cloud" {
   }
 }
 
-# data "aws_secretsmanager_secret_version" "aurora_password" {
-#   secret_id     = "rds!cluster-d1ada68e-8341-41d5-b425-4f5111f1f9e4"
-#   version_stage = "AWSCURRENT"
-# }
+data "aws_secretsmanager_secret_version" "aurora_password" {
+  secret_id     = "rds!cluster-4f486f41-ab65-4060-b95d-a018a5abfc24"
+  version_stage = "AWSCURRENT"
+}

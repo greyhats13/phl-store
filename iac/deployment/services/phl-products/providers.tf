@@ -86,12 +86,7 @@ provider "helm" {
 }
 
 provider "mysql" {
-  endpoint = "aws://${data.terraform_remote_state.cloud.outputs.aurora_cluster_endpoint}"
-  username = "root"
-  tls      = "skip-verify"
-
-  aws_config {
-    region = local.region
-    # profile = "${var.unit}-${var.env}"
-  }
+  endpoint = "${data.terraform_remote_state.cloud.outputs.aurora_cluster_endpoint}:${data.terraform_remote_state.cloud.outputs.aurora_cluster_port}"
+  username = data.terraform_remote_state.cloud.outputs.aurora_cluster_username
+  password = data.aws_secretsmanager_secret_version.aurora_password.secret_string
 }
