@@ -97,7 +97,7 @@ module "argocd_app" {
   standard   = local.svc_standard
   repository = "https://argoproj.github.io/argo-helm"
   chart      = "argocd-apps"
-  values     = ["${file("manifest/${var.unit}-${local.svc_standard.Feature}.yaml")}"]
+  values     = ["${file("manifest/${local.svc_standard.Feature}.yaml")}"]
   namespace  = "argocd"
   dns_name   = "${local.svc_standard.Feature}.${var.unit}.blast.co.id"
   extra_vars = {
