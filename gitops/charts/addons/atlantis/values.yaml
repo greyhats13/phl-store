@@ -22,9 +22,11 @@ repoConfig: |
        steps: [init, plan]
      apply:
        steps: [apply]
+serviceAccount:
+  name: atlantis-sa
 
 ingress:
-  enabled: enabled
+  enabled: true
   className: "alb"
   annotations:
     external-dns.alpha.kubernetes.io/hostname: atlantis.phl.blast.co.id

@@ -109,8 +109,8 @@ server:
     controller: ${extra_vars.ingress_controller}
     ingressClassName: ${extra_vars.ingress_class_name}
     annotations:
-      external-dns.alpha.kubernetes.io/hostname: ${feature}.${env}.${dns_name}
-      # external-dns.alpha.kubernetes.io/ttl: 300
+      external-dns.alpha.kubernetes.io/hostname: ${feature}.${dns_name}
+      external-dns.alpha.kubernetes.io/ttl: 300
       alb.ingress.kubernetes.io/group.name: ${extra_vars.alb_group_name}
       alb.ingress.kubernetes.io/certificate-arn: ${extra_vars.alb_certificate_arn}
       alb.ingress.kubernetes.io/ssl-policy: ${extra_vars.alb_ssl_policy}
@@ -120,7 +120,7 @@ server:
       alb.ingress.kubernetes.io/target-type: ${extra_vars.alb_target_type}
       alb.ingress.kubernetes.io/group.order: ${extra_vars.alb_group_order}
       alb.ingress.kubernetes.io/healthcheck-path: ${extra_vars.alb_healthcheck_path}
-      alb.ingress.kubernetes.io/ssl-redirect: ${extra_vars.alb_ssl_redirect}
+      alb.ingress.kubernetes.io/ssl-redirect: '${extra_vars.alb_ssl_redirect}'
     aws:
       serviceType: ${extra_vars.aws_alb_service_type}
       backendProtocolVersion: ${extra_vars.aws_alb_backend_protocol_version}
