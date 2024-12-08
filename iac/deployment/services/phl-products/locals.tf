@@ -22,12 +22,4 @@ locals {
     repo_gitops_ssh       = "git@github.com:${var.github_owner}/${var.github_repo}.git"
     gitops_path_dev       = "gitops/charts/app/${local.svc_name}"
   }
-  ## Secrets that will be stored in the Secret Manager
-  app_secret = {
-    "USERNAME" = "${local.svc_name}"
-    "PASSWORD" = random_password.password.result
-    "DATABASE" = local.svc_standard.Feature
-    "HOST"     = data.terraform_remote_state.cloud.outputs.aurora_cluster_endpoint
-    "PORT"     = data.terraform_remote_state.cloud.outputs.aurora_cluster_port
-  }
 }
