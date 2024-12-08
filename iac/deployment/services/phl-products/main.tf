@@ -107,7 +107,7 @@ module "argocd_app" {
     source_path                            = "gitops/charts/app/${local.svc_name}"
     project                                = "default"
     destination_server                     = "https://kubernetes.default.svc"
-    destination_namespace                  = "app"
+    destination_namespace                  = var.env
     avp_type                               = "awssecretsmanager"
     region                                 = var.region
     syncPolicy_automated_prune             = true
