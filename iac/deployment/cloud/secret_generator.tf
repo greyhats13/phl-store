@@ -25,7 +25,7 @@ resource "tls_private_key" "atlantis_ssh" {
 # ArgoCD
 resource "random_password" "argocd_github_secret" {
   length           = 64
-  override_special = "!#$%&*"
+  override_special = "!#$%&*@"
   min_lower        = 10
   min_upper        = 10
   min_numeric      = 10
