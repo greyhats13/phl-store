@@ -17,8 +17,6 @@ applications:
             value: ${extra_vars.avp_type}
           - name: AWS_REGION
             value: ${extra_vars.region}
-          - name: HELM_ARGS
-            value: -f values-custom.yaml
       directory:
         recurse: false
     destination:
