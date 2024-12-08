@@ -34,7 +34,6 @@ terraform {
 # Create AWS provider
 provider "aws" {
   region = local.region
-  # profile = "${var.unit}-${var.env}"
   dynamic "assume_role" {
     # If the current environment is running on EC2 then use instance profile to access AWS resources
     for_each = local.is_ec2_environment ? [] : [1]
@@ -46,7 +45,6 @@ provider "aws" {
 
 provider "aws" {
   region = "us-east-1"
-  # profile = "${var.unit}-${var.env}"
   alias = "virginia"
   dynamic "assume_role" {
     for_each = local.is_ec2_environment ? [] : [1]
@@ -61,12 +59,6 @@ provider "kubernetes" {
   host                   = module.eks_main.cluster_endpoint
   cluster_ca_certificate = base64decode(module.eks_main.cluster_certificate_authority_data)
   token                  = data.aws_eks_cluster_auth.cluster.token
-  # exec {
-  #   api_version = "client.authentication.k8s.io/v1beta1"
-  #   command     = "aws"
-  #   # This requires the awscli to be installed locally where Terraform is executed
-  #   args = ["eks", "get-token", "--cluster-name", data.terraform_remote_state.cloud.outputs.eks_cluster_name]
-  # }
 }
 
 # Create Helm provider
@@ -75,12 +67,6 @@ provider "helm" {
     host                   = module.eks_main.cluster_endpoint
     cluster_ca_certificate = base64decode(module.eks_main.cluster_certificate_authority_data)
     token                  = data.aws_eks_cluster_auth.cluster.token
-    # exec {
-    #   api_version = "client.authentication.k8s.io/v1beta1"
-    #   command     = "aws"
-    #   # This requires the awscli to be installed locally where Terraform is executed
-    #   args = ["eks", "get-token", "--cluster-name", data.terraform_remote_state.cloud.outputs.eks_cluster_name]
-    # }
   }
   # registry {
   #   url      = "oci://public.ecr.aws"
