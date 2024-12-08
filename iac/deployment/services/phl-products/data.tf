@@ -1,0 +1,24 @@
+# Check whether the current environment is running on EC2 or not
+data "external" "is_running_on_ec2" {
+  program = ["bash", "-c", "curl -s -m 1 http://169.254.169.254/latest/meta-data/instance-id &>/dev/null && echo '{\"on_ec2\": \"true\"}' || echo '{\"on_ec2\": \"false\"}'"]
+}
+
+# Get the current AWS account ID
+data "aws_caller_identity" "current" {}
+
+# Terraform state data kms cryptokey
+data "terraform_remote_state" "cloud" {
+  backend = "s3"
+
+  config = {
+    bucket  = "${var.unit}-${var.env}-s3-tfstate"
+    key     = "${var.unit}/deployment/cloud/${var.unit}-${var.env}-deployment-cloud.tfstate"
+    region  = var.region
+    # profile = "${var.unit}-${var.env}"
+  }
+}
+
+data "aws_secretsmanager_secret_version" "aurora_password" {
+  secret_id     = "rds!cluster-d1ada68e-8341-41d5-b425-4f5111f1f9e4"
+  version_stage = "AWSCURRENT"
+}

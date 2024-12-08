@@ -1,0 +1,10 @@
+serviceAccount:
+  name: phl-dev-addon-karpenter
+
+settings:
+  aws:
+    clusterName: phl-dev-eks-main
+    clusterEndpoint: https://6617C600BF62846890D01779FFB20492.sk1.us-west-1.eks.amazonaws.com
+    defaultInstanceProfile: "${extra_vars.default_instance_profile}"
+    interruptionQueueName: "${extra_vars.interruption_queue_name}"
+    reservedENIs: 1

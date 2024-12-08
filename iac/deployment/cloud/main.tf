@@ -67,7 +67,7 @@ module "acm_main" {
   zone_id     = module.zones_main.route53_zone_zone_id[local.route53_domain_name]
 
   subject_alternative_names = [
-    "*.${var.env}.${local.route53_domain_name}",
+    "*.${local.route53_domain_name}",
   ]
 
   wait_for_validation = true
@@ -83,7 +83,7 @@ module "secrets_iac" {
   # Secret
   name                    = local.secrets_manager_naming_standard
   description             = "Secrets for ${local.secrets_manager_naming_standard}"
-  recovery_window_in_days = 30
+  recovery_window_in_days = 0
 
   # Policy
   create_policy       = true
@@ -121,49 +121,13 @@ module "secrets_iac" {
   # Version
   ignore_secret_changes = true
   secret_string = jsonencode({
-    github_oauth_client_secret = var.github_oauth_client_secret
-    argocd_ssh_base64          = base64encode(tls_private_key.argocd_ssh.private_key_pem)
-    argocd_github_secret       = random_password.argocd_github_secret.result
-    atlantis_github_secret     = random_password.atlantis_github_secret.result
-    atlantis_password          = random_password.atlantis_password.result
+    argocd_ssh_base64      = base64encode(tls_private_key.argocd_ssh.private_key_pem)
+    argocd_github_secret   = random_password.argocd_github_secret.result
+    atlantis_github_secret = random_password.atlantis_github_secret.result
+    atlantis_password      = random_password.atlantis_password.result
   })
 
   tags = merge(local.tags, local.secrets_manager_standard)
-}
-
-# Setup repository for argocd and atlantis
-module "repo_phl" {
-  source    = "../../modules/github"
-  repo_name = var.github_repo
-  owner     = var.github_owner
-  webhooks = {
-    argocd = {
-      configuration = {
-        url          = "https://argocd.phl.blast.co.id/api/webhook"
-        content_type = "json"
-        insecure_ssl = false
-        secret       = random_password.argocd_github_secret.result
-      }
-      active = true
-      events = ["push"]
-    }
-    atlantis = {
-      configuration = {
-        url          = "https://atlantis.phl.blast.co.id/events"
-        content_type = "json"
-        insecure_ssl = false
-        secret       = random_password.atlantis_github_secret.result
-      }
-      active = true
-      events = ["push", "pull_request", "pull_request_review", "issue_comment"]
-    }
-  }
-  create_deploy_key          = true
-  add_repo_ssh_key_to_argocd = true
-  public_key                 = tls_private_key.argocd_ssh.public_key_openssh
-  ssh_key                    = tls_private_key.argocd_ssh.private_key_pem
-  is_deploy_key_read_only    = false
-  argocd_namespace           = "argocd"
 }
 
 # Create AWS VPC architecture
@@ -196,23 +160,65 @@ module "vpc_main" {
 
   private_subnet_tags = {
     "kubernetes.io/role/internal-elb" = 1
-    # # Tags subnets for Karpenter auto-discovery
+    # Tags subnets for Karpenter auto-discovery
     "karpenter.sh/discovery" = local.eks_naming_standard
   }
   tags = merge(local.tags, local.vpc_standard)
 }
 
+# Aurora
+module "aurora_main" {
+  source          = "terraform-aws-modules/rds-aurora/aws"
+  version         = "~> 9.10.0"
+  name            = local.aurora_naming_standard
+  engine          = "aurora-mysql"
+  engine_version  = "8.0"
+  master_username = "root"
+  instance_class  = var.env == "dev" ? "db.t4g.large" : "db.r6g.large"
+  instances = {
+    one = {}
+  }
+  vpc_id               = module.vpc_main.vpc_id
+  db_subnet_group_name = module.vpc_main.database_subnet_group_name
+  security_group_rules = {
+    vpc_ingress = {
+      cidr_blocks = module.vpc_main.private_subnets_cidr_blocks // allow all private subnets (nodes and app subnets) to access the database
+    }
+  }
+  storage_encrypted                     = true
+  kms_key_id                            = module.kms_main.key_arn
+  manage_master_user_password           = true
+  iam_database_authentication_enabled   = true
+  autoscaling_enabled                   = true
+  autoscaling_min_capacity              = 1
+  autoscaling_max_capacity              = 5
+  apply_immediately                     = true
+  skip_final_snapshot                   = true
+  create_db_cluster_parameter_group     = false
+  create_db_parameter_group             = false
+  performance_insights_enabled          = true
+  performance_insights_kms_key_id       = module.kms_main.key_arn
+  performance_insights_retention_period = 7
+  publicly_accessible                   = false
+  enabled_cloudwatch_logs_exports       = ["audit", "error", "slowquery"]
+
+  tags = local.tags
+}
+
+
 module "eks_main" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 20.31.0"
-  vpc_id  = module.vpc_main.vpc_id
+
+  vpc_id = module.vpc_main.vpc_id
   # Only take non RFC 6598 private subnets
-  control_plane_subnet_ids = module.vpc_main.intra_subnets
-  subnet_ids               = slice(module.vpc_main.private_subnets, 0, length(local.azs))
-  enable_irsa              = true
-  create_kms_key           = false
-  cluster_version          = "1.31"
-  cluster_name             = local.eks_naming_standard
+  control_plane_subnet_ids  = module.vpc_main.intra_subnets
+  subnet_ids                = slice(module.vpc_main.private_subnets, 0, length(local.azs))
+  cluster_service_ipv4_cidr = local.service_cidr
+  enable_irsa               = true
+  create_kms_key            = false
+  cluster_version           = "1.31"
+  cluster_name              = local.eks_naming_standard
   cluster_encryption_config = {
     provider_key_arn = module.kms_main.key_arn
     resources        = ["secrets"]
@@ -496,29 +502,11 @@ module "aws_cloudwatch_observability_pod_identity" {
   }
 }
 
-# # AWS required resources for Karpenter
-# module "karpenter" {
-#   source = "terraform-aws-modules/eks/aws//modules/karpenter"
-
-#   cluster_name = module.eks_main.cluster_name
-
-#   enable_v1_permissions = true
-
-#   enable_pod_identity             = true
-#   create_pod_identity_association = true
-
-#   # Used to attach additional IAM policies to the Karpenter node IAM role
-#   node_iam_role_additional_policies = {
-#     AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-#   }
-
-#   tags = local.tags
-# }
-
 # ArgoCD
 # ArgoCD is a declarative, GitOps continuous delivery tool for Kubernetes.
 module "argocd" {
-  source           = "../../modules/helm"
+  source = "../../modules/helm"
+
   region           = var.region
   standard         = local.argocd_standard
   repository       = "https://argoproj.github.io/argo-helm"
@@ -532,15 +520,26 @@ module "argocd" {
     github_client_id = var.github_oauth_client_id
     ARGOCD_VERSION   = var.argocd_version
     AVP_VERSION      = var.argocd_vault_plugin_version
-    server_insecure  = false
-    # alb_certificate_arn  = module.acm_main.acm_certificate_arn
-    # alb_ssl_policy       = "ELBSecurityPolicy-TLS13-1-2-2021-06"
-    # alb_backend_protocol = "HTTPS"
-    # alb_listen_ports     = "[{\"HTTPS\": 443}]"
-    # alb_scheme           = "internet-facing"
-    # alb_target_type      = "ip"
-    # alb_group_order      = "100"
-    # alb_healthcheck_path = "/"
+    server_insecure  = true
+
+    # ref https://github.com/argoproj/argo-helm/tree/main/charts/argo-cd
+    # ingress
+    ingress_enabled    = true
+    ingress_controller = "aws"
+    ingress_class_name = "alb"
+    # ingress alb
+    alb_certificate_arn              = module.acm_main.acm_certificate_arn
+    alb_ssl_policy                   = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+    alb_backend_protocol             = "HTTP"
+    alb_listen_ports                 = "[{\"HTTP\": 80}, {\"HTTPS\": 443}]"
+    alb_scheme                       = "internet-facing"
+    alb_target_type                  = "ip"
+    alb_group_name                   = "${var.unit}-${var.env}-svc-ingress"
+    alb_group_order                  = "100"
+    alb_healthcheck_path             = "/"
+    alb_ssl_redirec                 = "{'Type': 'redirect', 'RedirectConfig': { 'Protocol': 'HTTPS', 'Port': '443', 'StatusCode': 'HTTP_301'}}"
+    aws_alb_service_type             = "ClusterIP"
+    aws_alb_backend_protocol_version = "GRPC"
   }
   helm_sets_sensitive = [
     {
@@ -549,7 +548,7 @@ module "argocd" {
     },
     {
       name  = "configs.secret.extra.dex\\.github\\.clientSecret"
-      value = jsondecode(module.secrets_iac.secret_string)["github_oauth_client_secret"]
+      value = jsondecode(data.aws_secretsmanager_secret_version.secret_iac_current.secret_string)["github_oauth_client_secret"]
     },
   ]
   depends_on = [
@@ -585,142 +584,60 @@ module "avp_custom_pod_identity" {
   tags = local.tags
 }
 
-# # Aurora
-# module "aurora_main" {
-#   source          = "terraform-aws-modules/rds-aurora/aws"
-#   name            = local.aurora_naming_standard
-#   engine          = "aurora-mysql"
-#   engine_version  = "8.0"
-#   master_username = "root"
-#   instances = {
-#     1 = {
-#       instance_class      = var.env == "dev" ? "db.t4g.medium" : "db.r5.xlarge"
-#       publicly_accessible = true
-#     }
-#     2 = {
-#       identifier     = "mysql-static-1"
-#       instance_class = "db.r5.2xlarge"
-#     }
-#     3 = {
-#       identifier     = "mysql-excluded-1"
-#       instance_class = "db.r5.xlarge"
-#       promotion_tier = 15
-#     }
+# Setup repository for argocd and atlantis
+module "repo_phl" {
+  source    = "../../modules/github"
+  repo_name = var.github_repo
+  owner     = var.github_owner
+  webhooks = {
+    argocd = {
+      configuration = {
+        url          = "https://argocd.phl.blast.co.id/api/webhook"
+        content_type = "json"
+        insecure_ssl = false
+        secret       = random_password.argocd_github_secret.result
+      }
+      active = true
+      events = ["push"]
+    }
+    atlantis = {
+      configuration = {
+        url          = "https://atlantis.phl.blast.co.id/events"
+        content_type = "json"
+        insecure_ssl = false
+        secret       = random_password.atlantis_github_secret.result
+      }
+      active = true
+      events = ["push", "pull_request", "pull_request_review", "issue_comment"]
+    }
+  }
+  create_deploy_key          = true
+  add_repo_ssh_key_to_argocd = true
+  public_key                 = tls_private_key.argocd_ssh.public_key_openssh
+  ssh_key                    = tls_private_key.argocd_ssh.private_key_pem
+  is_deploy_key_read_only    = false
+  argocd_namespace           = "argocd"
+  depends_on = [
+    module.argocd
+  ]
+}
+
+# # AWS required resources for Karpenter
+# module "eks_karpenter" {
+#   source  = "terraform-aws-modules/eks/aws//modules/karpenter"
+#   version = "~> 20.31.0"
+
+#   cluster_name = module.eks_main.cluster_name
+
+#   enable_v1_permissions = true
+
+#   enable_pod_identity             = true
+#   create_pod_identity_association = true
+
+#   # Used to attach additional IAM policies to the Karpenter node IAM role
+#   node_iam_role_additional_policies = {
+#     AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 #   }
-
-#   vpc_id               = module.vpc_main.vpc_id
-#   db_subnet_group_name = module.vpc_main.database_subnet_group_name
-#   security_group_rules = {
-#     vpc_ingress = {
-#       cidr_blocks = module.vpc_main.private_subnets_cidr_blocks // allow all private subnets (nodes and app subnets) to access the database
-#     }
-#     kms_vpc_endpoint = {
-#       type                     = "egress"
-#       from_port                = 443
-#       to_port                  = 443
-#       source_security_group_id = module.vpc_endpoints.security_group_id
-#     }
-#   }
-
-#   apply_immediately   = true
-#   skip_final_snapshot = true
-
-#   create_db_cluster_parameter_group      = true
-#   db_cluster_parameter_group_name        = "${local.aurora_naming_standard}-cluster-parameter-group"
-#   db_cluster_parameter_group_family      = "aurora-mysql8.0"
-#   db_cluster_parameter_group_description = "${local.aurora_naming_standard} example cluster parameter group"
-#   db_cluster_parameter_group_parameters = [
-#     {
-#       name         = "connect_timeout"
-#       value        = 120
-#       apply_method = "immediate"
-#     },
-#     {
-#       name         = "innodb_lock_wait_timeout"
-#       value        = 300
-#       apply_method = "immediate"
-#     },
-#     {
-#       name         = "log_output"
-#       value        = "FILE"
-#       apply_method = "immediate"
-#     },
-#     {
-#       name         = "max_allowed_packet"
-#       value        = "67108864"
-#       apply_method = "immediate"
-#     },
-#     {
-#       name         = "aurora_parallel_query"
-#       value        = "OFF"
-#       apply_method = "pending-reboot"
-#     },
-#     {
-#       name         = "binlog_format"
-#       value        = "ROW"
-#       apply_method = "pending-reboot"
-#     },
-#     {
-#       name         = "log_bin_trust_function_creators"
-#       value        = 1
-#       apply_method = "immediate"
-#     },
-#     {
-#       name         = "require_secure_transport"
-#       value        = "ON"
-#       apply_method = "immediate"
-#     },
-#     {
-#       name         = "tls_version"
-#       value        = "TLSv1.2"
-#       apply_method = "pending-reboot"
-#     }
-#   ]
-
-#   create_db_parameter_group      = true
-#   db_parameter_group_name        = "${local.aurora_naming_standard}-db-parameter-group"
-#   db_parameter_group_family      = "aurora-mysql8.0"
-#   db_parameter_group_description = "${local.aurora_naming_standard} example DB parameter group"
-#   db_parameter_group_parameters = [
-#     {
-#       name         = "connect_timeout"
-#       value        = 60
-#       apply_method = "immediate"
-#       }, {
-#       name         = "general_log"
-#       value        = 0
-#       apply_method = "immediate"
-#       }, {
-#       name         = "innodb_lock_wait_timeout"
-#       value        = 300
-#       apply_method = "immediate"
-#       }, {
-#       name         = "log_output"
-#       value        = "FILE"
-#       apply_method = "pending-reboot"
-#       }, {
-#       name         = "long_query_time"
-#       value        = 5
-#       apply_method = "immediate"
-#       }, {
-#       name         = "max_connections"
-#       value        = 2000
-#       apply_method = "immediate"
-#       }, {
-#       name         = "slow_query_log"
-#       value        = 1
-#       apply_method = "immediate"
-#       }, {
-#       name         = "log_bin_trust_function_creators"
-#       value        = 1
-#       apply_method = "immediate"
-#     }
-#   ]
-
-#   enabled_cloudwatch_logs_exports = ["audit", "error", "slowquery"]
-
-#   manage_master_user_password_rotation              = true
-#   master_user_password_rotation_schedule_expression = "rate(15 days)"
 
 #   tags = local.tags
 # }

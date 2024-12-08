@@ -1,6 +1,8 @@
 locals {
   region = var.region
   tags = {
+    Unit       = var.unit
+    Env        = var.env
     GithubRepo = var.github_repo
     GithubOrg  = var.github_owner
   }
@@ -40,13 +42,14 @@ locals {
   secrets_manager_standard = {
     Unit    = var.unit
     Env     = var.env
-    Code    = "secrets-manager"
+    Code    = "secretsmanager"
     Feature = "iac"
   }
-  secrets_manager_naming_standard = "${local.secrets_manager_standard.Unit}-${local.secrets_manager_standard.Env}-${local.secrets_manager_standard.Code}-${local.secrets_manager_standard.Feature}"
+  secrets_manager_naming_standard = "${local.secrets_manager_standard.Unit}/${local.secrets_manager_standard.Env}/${local.secrets_manager_standard.Code}/${local.secrets_manager_standard.Feature}"
   # VPC Locals
   vpc_cidr     = "10.0.0.0/16"
   rfc6598_cidr = "100.64.0.0/16"
+  service_cidr = "10.1.0.0/16"
   azs          = slice(data.aws_availability_zones.available.names, 0, length(data.aws_availability_zones.available.names))
   vpc_standard = {
     Unit    = var.unit
