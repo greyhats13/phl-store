@@ -602,6 +602,80 @@ module "avp_custom_pod_identity" {
   tags = local.tags
 }
 
+# Atlantis
+module "atlantis" {
+  source = "../../modules/helm"
+
+  region           = var.region
+  standard         = local.atlantis_standard
+  repository       = "https://runatlantis.github.io/helm-charts"
+  chart            = "atlantis"
+  values           = ["${file("manifest/${local.atlantis_standard.Feature}.yaml")}"]
+  namespace        = "atlantis"
+  create_namespace = true
+  dns_name         = local.route53_domain_name
+  extra_vars = {
+    github_user      = var.github_owner
+
+    # ingress
+    ingress_enabled    = true
+    ingress_class_name = "alb"
+    # ingress alb
+    alb_certificate_arn              = module.acm_main.acm_certificate_arn
+    alb_ssl_policy                   = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+    alb_backend_protocol             = "HTTP"
+    alb_listen_ports                 = "[{\"HTTP\": 80}, {\"HTTPS\": 443}]"
+    alb_scheme                       = "internet-facing"
+    alb_target_type                  = "ip"
+    alb_group_name                   = "${var.unit}-${var.env}-svc-ingress"
+    alb_group_order                  = "100"
+    alb_healthcheck_path             = "/"
+    alb_ssl_redirect                 = 443
+    aws_alb_service_type             = "ClusterIP"
+    aws_alb_backend_protocol_version = "GRPC"
+  }
+  helm_sets_sensitive = [
+    {
+      name  = "github.token"
+      value = jsondecode(data.aws_secretsmanager_secret_version.secret_iac_current.secret_string)["github_token"]
+    },
+    {
+      name  = "github.secret"
+      value = random_password.atlantis_github_secret.result
+    },
+  ]
+  depends_on = [
+    module.eks_main,
+  ]
+}
+
+module "atlantis_custom_pod_identity" {
+  source  = "terraform-aws-modules/eks-pod-identity/aws"
+  version = "~> 1.7.0"
+
+  name            = "${local.atlantis_standard.Feature}-role"
+  use_name_prefix = false
+
+  # ArgoCD Vault Plugin (AVP) is installed in the argocd-repo-server 
+  # So we need to attach the policy to the argocd-repo-server service account
+  association_defaults = {
+    namespace       = local.atlantis_standard.Feature
+    service_account = "${local.atlantis_standard.Feature}-sa"
+    tags            = { App = local.atlantis_standard.Feature }
+  }
+
+  associations = {
+    main = {
+      cluster_name = module.eks_main.cluster_name
+    }
+  }
+
+  attach_custom_policy    = true
+  source_policy_documents = [data.aws_iam_policy_document.atlantis_policy.json]
+
+  tags = local.tags
+}
+
 # Setup repository for argocd and atlantis
 module "repo_phl" {
   source    = "../../modules/github"
@@ -636,7 +710,8 @@ module "repo_phl" {
   is_deploy_key_read_only    = false
   argocd_namespace           = "argocd"
   depends_on = [
-    module.argocd
+    module.argocd,
+    module.atlantis,
   ]
 }
 
