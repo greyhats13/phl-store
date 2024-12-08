@@ -1,0 +1,33 @@
+applications:
+  ${unit}-${env}-${code}-${feature}:
+    namespace: ${extra_vars.argocd_namespace}
+    additionalLabels: {}
+    additionalAnnotations: {}
+    finalizers:
+      - resources-finalizer.argocd.argoproj.io
+    project: ${extra_vars.project}
+    sources:
+      - repoURL: ${extra_vars.source_origin_repoURL}
+        chart: ${extra_vars.source_origin_chart}
+        targetRevision: ${extra_vars.source_origin_targetRevision}  # 8.3.8
+        helm:
+          valueFiles:
+            - $values/${extra_vars.source_override_path}
+      - repoURL: ${extra_vars.source_override_repoURL}
+        targetRevision: ${extra_vars.source_override_targetRevision}
+        ref: values
+    destination:
+      server: ${extra_vars.destination_server}
+      namespace: ${extra_vars.destination_namespace}
+    syncPolicy:
+      automated:
+        prune: ${extra_vars.syncPolicy_automated_prune}
+        selfHeal: ${extra_vars.syncPolicy_automated_selfHeal}
+      syncOptions:
+        - CreateNamespace=${extra_vars.syncPolicy_syncOptions_CreateNamespace}
+    revisionHistoryLimit: null
+    ignoreDifferences:
+      - group: apps
+        kind: Deployment
+        jsonPointers:
+          - /spec/replicas

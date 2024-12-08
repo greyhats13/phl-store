@@ -23,15 +23,34 @@ output "route53_zone_arn" {
   value = module.zones_main.route53_zone_zone_arn
 }
 
-# EKS Outputs
-output "eks_cluster_endpoint" {
-  value = module.eks_main.cluster_endpoint
+# RDS Aurora Outputs
+output "aurora_cluster_endpoint" {
+  value = module.aurora_main.cluster_endpoint
 }
 
+output "aurora_cluster_reader_endpoint" {
+  value = module.aurora_main.cluster_reader_endpoint
+}
+
+output "aurora_cluster_port" {
+  value = module.aurora_main.cluster_port
+}
+
+output "aurora_cluster_username" {
+  value = module.aurora_main.cluster_master_username
+}
+
+# # EKS Outputs
 output "eks_cluster_name" {
   value = module.eks_main.cluster_name
+}
+
+output "eks_cluster_endpoint" {
+  value = module.eks_main.cluster_endpoint
 }
 
 output "eks_cluster_certificate_authority_data" {
   value = module.eks_main.cluster_certificate_authority_data
 }
+
+# EKS Karpenter

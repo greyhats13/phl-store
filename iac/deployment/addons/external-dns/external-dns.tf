@@ -5,7 +5,7 @@ module "external_dns_pod_identity" {
   attach_external_dns_policy    = true
   external_dns_hosted_zone_arns = [data.terraform_remote_state.cloud.outputs.route53_zone_arn["phl.blast.co.id"]]
   association_defaults = {
-    namespace       = "${local.addon_standard.Feature}"
+    namespace       = var.env
     service_account = "${local.addon_standard.Feature}-sa"
   }
   associations = {

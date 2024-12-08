@@ -23,7 +23,6 @@ data "aws_iam_policy_document" "custom_bucket_policy" {
   }
 }
 
-
 # ArgoCD Vault Plugin IAM Policy
 data "aws_iam_policy_document" "avp_policy" {
   # allow get secret value

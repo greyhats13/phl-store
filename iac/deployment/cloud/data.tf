@@ -9,6 +9,12 @@ data "aws_caller_identity" "current" {}
 # Get availability zones
 data "aws_availability_zones" "available" {}
 
+# Get AWS Secrets Manager current version
+data "aws_secretsmanager_secret_version" "secret_iac_current" {
+  secret_id     = module.secrets_iac.secret_id
+  version_stage = "AWSCURRENT"
+}
+
 # Get ECR public token from us-east-1
 data "aws_ecrpublic_authorization_token" "token" {
   provider = aws.virginia

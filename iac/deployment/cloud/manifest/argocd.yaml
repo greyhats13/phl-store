@@ -17,7 +17,7 @@ configs:
             orgs:
               - name: ${extra_vars.github_orgs}
   params:
-    server.insecure: true
+    server.insecure: ${extra_vars.server_insecure}
   rbac:
     policy.default: role:readonly
     policy.csv: |
@@ -104,13 +104,26 @@ configs:
 
 # ref: https://argo-cd.readthedocs.io/en/stable/operator-manual/declarative-setup/
 server:
-  service:
-    type: ClusterIP
-    servicePortHttp: 80
-    servicePortHttpName: http
   ingress:
-    enabled: false
-
+    enabled: ${extra_vars.ingress_enabled}
+    controller: ${extra_vars.ingress_controller}
+    ingressClassName: ${extra_vars.ingress_class_name}
+    annotations:
+      external-dns.alpha.kubernetes.io/hostname: ${feature}.${env}.${dns_name}
+      # external-dns.alpha.kubernetes.io/ttl: 300
+      alb.ingress.kubernetes.io/group.name: ${extra_vars.alb_group_name}
+      alb.ingress.kubernetes.io/certificate-arn: ${extra_vars.alb_certificate_arn}
+      alb.ingress.kubernetes.io/ssl-policy: ${extra_vars.alb_ssl_policy}
+      alb.ingress.kubernetes.io/backend-protocol: ${extra_vars.alb_backend_protocol}
+      alb.ingress.kubernetes.io/listen-ports: '${extra_vars.alb_listen_ports}'
+      alb.ingress.kubernetes.io/scheme: ${extra_vars.alb_scheme}
+      alb.ingress.kubernetes.io/target-type: ${extra_vars.alb_target_type}
+      alb.ingress.kubernetes.io/group.order: ${extra_vars.alb_group_order}
+      alb.ingress.kubernetes.io/healthcheck-path: ${extra_vars.alb_healthcheck_path}
+      alb.ingress.kubernetes.io/ssl-redirect: ${extra_vars.alb_ssl_redirect}
+    aws:
+      serviceType: ${extra_vars.aws_alb_service_type}
+      backendProtocolVersion: ${extra_vars.aws_alb_backend_protocol_version}
 # ref: https://github.com/argoproj-labs/argocd-vault-plugin/blob/main/manifests/cmp-sidecar/argocd-repo-server.yaml
 repoServer:
   serviceAccount:
