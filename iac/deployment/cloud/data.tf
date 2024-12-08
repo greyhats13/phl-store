@@ -19,3 +19,8 @@ data "aws_secretsmanager_secret_version" "secret_iac_current" {
 data "aws_ecrpublic_authorization_token" "token" {
   provider = aws.virginia
 }
+
+# Get eks cluster token
+data "aws_eks_cluster_auth" "cluster" {
+  name = module.eks_main.cluster_name
+}

@@ -22,15 +22,10 @@ fullnameOverride: ""
 # ArgoCD Vault Plugin will replace the placeholders with the actual values from the AWS Secret Manager
 appSecret:
   annotations:
-    avp.kubernetes.io/path: "phl-svc-products"
+    avp.kubernetes.io/path: "phl/svc/phl-products"
     avp.kubernetes.io/secret-version: "AWSCURRENT"
   secrets:
-    username: <phl-svc-products | jsonPath {.USERNAME}>
-    password: <phl-svc-products | jsonPath {.PASSWORD}>
-    database: <phl-svc-products | jsonPath {.DATABASE}>
-    host: <phl-svc-products | jsonPath {.HOST}>
-    port: <phl-svc-products | jsonPath {.PORT}>
-    appPort: <phl-svc-products | jsonPath {.APP_PORT}>
+    configjson: <phl/svc/phl-products>
 
 # This section builds out the service account more information can be found here: https://kubernetes.io/docs/concepts/security/service-accounts/
 serviceAccount:
@@ -80,6 +75,7 @@ ingress:
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
     external-dns.alpha.kubernetes.io/hostname: "products.phl.blast.co.id"
+    external-dns.alpha.kubernetes.io/ttl: "300"
     alb.ingress.kubernetes.io/group.name: phl-dev-svc-ingress
     alb.ingress.kubernetes.io/healthcheck-path: /
     alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-west-1:124456474132:certificate/155ec9de-d537-4b5f-9fc3-bbf43c8f91d5
@@ -124,23 +120,26 @@ resources:
 # This section is for setting up autoscaling more information can be found here: https://kubernetes.io/docs/concepts/workloads/autoscaling/
 autoscaling:
   enabled: true
-  minReplicas: 1
+  minReplicas: 2
   maxReplicas: 4
   targetCPUUtilizationPercentage: 75
   targetMemoryUtilizationPercentage: 75
 
 # Additional volumes on the output Deployment definition.
-volumes: []
-# - name: foo
-#   secret:
-#     secretName: mysecret
-#     optional: false
+volumes:
+  - name: config-volume
+    secret:
+      secretName: phl/svc/phl-products
+      items:
+        - key: config.json
+          path: config.json
 
 # Additional volumeMounts on the output Deployment definition.
-volumeMounts: []
-# - name: foo
-#   mountPath: "/etc/foo"
-#   readOnly: true
+volumeMounts:
+  - name: config-volume
+    mountPath: "/config/config.json"
+    subPath: config.json
+
 
 nodeSelector: {}
 

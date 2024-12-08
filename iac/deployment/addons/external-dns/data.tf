@@ -14,3 +14,8 @@ data "terraform_remote_state" "cloud" {
     # profile = "${var.unit}-${var.env}"
   }
 }
+
+# Get eks cluster token
+data "aws_eks_cluster_auth" "cluster" {
+  name = data.terraform_remote_state.cloud.outputs.eks_cluster_name
+}
