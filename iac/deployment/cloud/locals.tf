@@ -76,6 +76,14 @@ locals {
     Feature = "argocd"
   }
   argocd_naming_standard = "${local.argocd_standard.Unit}-${local.argocd_standard.Env}-${local.argocd_standard.Code}-${local.argocd_standard.Feature}"
+  # Atlantis Locals
+  atlantis_standard = {
+    Unit    = var.unit
+    Env     = var.env
+    Code    = "addon"
+    Feature = "atlantis"
+  }
+  atlantis_naming_standard = "${local.atlantis_standard.Unit}-${local.atlantis_standard.Env}-${local.atlantis_standard.Code}-${local.atlantis_standard.Feature}"
   # Aurora Locals
   aurora_standard = {
     Unit    = var.unit
