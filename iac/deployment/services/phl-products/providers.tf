@@ -87,6 +87,6 @@ provider "helm" {
 
 provider "mysql" {
   endpoint = "${data.terraform_remote_state.cloud.outputs.aurora_cluster_endpoint}:${data.terraform_remote_state.cloud.outputs.aurora_cluster_port}"
-  username = data.terraform_remote_state.cloud.outputs.aurora_cluster_username
-  password = data.aws_secretsmanager_secret_version.aurora_password.secret_string
+  username = "${data.terraform_remote_state.cloud.outputs.aurora_cluster_username
+  password = jsondecode(data.aws_secretsmanager_secret_version.aurora_password.secret_string)["password"]
 }
