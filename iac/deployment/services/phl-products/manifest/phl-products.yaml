@@ -19,14 +19,6 @@ applications:
             value: ${extra_vars.region}
       directory:
         recurse: false
-    # ArgoCD v2.6 or later
-    # sources:
-    #  - chart: elasticsearch
-    #    repoURL: https://helm.elastic.co
-    #    targetRevision: 8.5.1
-    #  - repoURL: https://github.com/argoproj/argocd-example-apps.git
-    #    path: guestbook
-    #    targetRevision: HEAD
     destination:
       server: ${extra_vars.destination_server}
       namespace: ${extra_vars.destination_namespace}

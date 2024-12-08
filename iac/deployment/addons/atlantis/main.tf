@@ -30,12 +30,9 @@ module "argocd_app" {
   dns_name   = "${local.addon_standard.Feature}.${var.unit}.blast.co.id"
   extra_vars = {
     argocd_namespace                       = "argocd"
-    source_origin_repoURL                  = "https://runatlantis.github.io/helm-charts"
-    source_origin_chart                    = local.addon_standard.Feature
-    source_origin_targetRevision           = "5.11.0"
-    source_override_repoURL                = "git@github.com:${var.github_owner}/${var.github_repo}.git"
-    source_override_targetRevision         = "main"
-    source_override_path                   = "gitops/charts/addons/${local.addon_standard.Feature}/values.yaml"
+    source_repoURL                         = "git@github.com:${var.github_owner}/${var.github_repo}.git"
+    source_targetRevision                  = "HEAD"
+    source_path                            = "gitops/charts/addons/${local.addon_standard.Feature}/values-custom.yaml"
     project                                = "default"
     destination_server                     = "https://kubernetes.default.svc"
     destination_namespace                  = local.addon_standard.Feature

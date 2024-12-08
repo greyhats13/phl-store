@@ -6,30 +6,19 @@ applications:
     finalizers:
       - resources-finalizer.argocd.argoproj.io
     project: ${extra_vars.project}
-    sources:
-      - repoURL: ${extra_vars.source_origin_repoURL}
-        chart: ${extra_vars.source_origin_chart}
-        targetRevision: ${extra_vars.source_origin_targetRevision}
-        helm:
-          valueFiles:
-            - $values/${extra_vars.source_override_path}
-        plugin:
-          name: argocd-vault-plugin-helm
-          env:
-            - name: AVP_TYPE
-              value: ${extra_vars.avp_type}
-            - name: AWS_REGION
-              value: ${extra_vars.region}
-      - repoURL: ${extra_vars.source_override_repoURL}
-        targetRevision: ${extra_vars.source_override_targetRevision}
-        ref: values
-        plugin:
-          name: argocd-vault-plugin-helm
-          env:
-            - name: AVP_TYPE
-              value: ${extra_vars.avp_type}
-            - name: AWS_REGION
-              value: ${extra_vars.region}
+    source:
+      repoURL: ${extra_vars.source_repoURL}
+      targetRevision: ${extra_vars.source_targetRevision}
+      path: ${extra_vars.source_path}
+      plugin:
+        name: argocd-vault-plugin-helm
+        env:
+          - name: AVP_TYPE
+            value: ${extra_vars.avp_type}
+          - name: AWS_REGION
+            value: ${extra_vars.region}
+      directory:
+        recurse: false
     destination:
       server: ${extra_vars.destination_server}
       namespace: ${extra_vars.destination_namespace}
