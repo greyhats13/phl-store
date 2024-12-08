@@ -25,11 +25,8 @@ appSecret:
     avp.kubernetes.io/path: "phl/svc/phl-products"
     avp.kubernetes.io/secret-version: "AWSCURRENT"
   secrets:
-    configjson: |
-      {
-        "connection_string": "<path:phl/svc/phl-products#connection_string>",
-        "port": "<path:phl/svc/phl-products#port>"
-      }
+    connection_string: <connection_string>
+    port: <port>
 # This section builds out the service account more information can be found here: https://kubernetes.io/docs/concepts/security/service-accounts/
 serviceAccount:
   # Specifies whether a service account should be created
