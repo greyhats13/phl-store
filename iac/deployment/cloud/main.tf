@@ -75,6 +75,23 @@ module "acm_main" {
   tags = merge(local.tags, local.acm_standard, { Name = local.acm_naming_standard })
 }
 
+# Modul ACM di us-east-1 menggunakan provider alias 'virginia'
+module "acm_main_virginia" {
+  source  = "terraform-aws-modules/acm/aws"
+  version = "~> 4.3.2"
+
+  providers = {
+    aws = aws.virginia
+  }
+
+  domain_name               = local.route53_domain_name
+  zone_id                   = module.zones_main.route53_zone_zone_id[local.route53_domain_name]
+  subject_alternative_names = ["*.${local.route53_domain_name}"]
+  wait_for_validation       = true
+
+  tags = merge(local.tags, local.acm_standard, { Name = local.acm_naming_standard })
+}
+
 # Create Secrets Manager
 module "secrets_iac" {
   source  = "terraform-aws-modules/secrets-manager/aws"
@@ -752,9 +769,10 @@ module "cognito_pool" {
   name                         = local.cognito_naming_standard
   supported_identity_providers = ["COGNITO"]
   domain                       = "oauth.${local.route53_domain_name}"
-  certificate_arn              = module.acm_main.acm_certificate_arn
+  certificate_arn              = module.acm_main_virginia.acm_certificate_arn
   zone_id                      = module.zones_main.route53_zone_zone_id[local.route53_domain_name]
   alb_dns                      = data.aws_lb.alb.dns_name
+  alb_zone_id                  = data.aws_lb.alb.zone_id
   explicit_auth_flows = [
     "ALLOW_USER_PASSWORD_AUTH",
     "ALLOW_USER_SRP_AUTH",
@@ -767,11 +785,35 @@ module "cognito_pool" {
     require_symbols   = true
     require_uppercase = true
   }
-  allowed_oauth_flows   = ["code", "implicit"]
-  allowed_oauth_scopes  = ["email", "openid", "profile"]
-  access_token_validity = 60
-  id_token_validity     = 60
-  tags                  = local.cognito_standard
+  allowed_oauth_flows_user_pool_client = true
+  generate_secret                      = true
+  resource_servers = {
+    "apigw" = {
+      identifier = "https://api.${local.route53_domain_name}"
+      name       = "${local.cognito_naming_standard}-apigw"
+      scopes = [
+        {
+          scope_name        = "api.read"
+          scope_description = "Read access"
+        },
+        {
+          scope_name        = "api.write"
+          scope_description = "Write access"
+        }
+      ]
+    }
+  }
+  allowed_oauth_flows      = ["client_credentials"]
+  allowed_oauth_scopes     = [
+    "https://api.${local.route53_domain_name}/api.read",
+    "https://api.${local.route53_domain_name}/api.write"
+  ]
+  auto_verified_attributes = ["email"]
+  username_attributes      = ["email"]
+  access_token_validity    = 60
+  id_token_validity        = 60
+  refresh_token_validity   = 30
+  tags                     = local.cognito_standard
 }
 
 module "api_sg" {

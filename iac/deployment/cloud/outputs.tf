@@ -55,6 +55,28 @@ output "eks_cluster_certificate_authority_data" {
 
 # EKS Karpenter
 
+# Cognito Outputs
+output "cognito_user_pool_id" {
+  value = module.cognito_pool.cognito_user_pool_id
+}
+
+output "cognito_user_pool_arn" {
+  value = module.cognito_pool.cognito_user_pool_arn
+}
+
+output "cognito_user_pool_client_id" {
+  value = module.cognito_pool.cognito_user_pool_client_id
+}
+
+output "cognito_user_pool_client_secret" {
+  value     = module.cognito_pool.cognito_user_pool_client_secret
+  sensitive = true
+}
+
+output "cognito_user_pool_endpoint" {
+  value = module.cognito_pool.cognito_user_pool_endpoint
+}
+
 # API Gateway Outputs
 # output "api_id" {
 #   value = module.api.api_id
