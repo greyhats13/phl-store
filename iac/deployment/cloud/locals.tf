@@ -92,4 +92,20 @@ locals {
     Feature = "main"
   }
   aurora_naming_standard = "${local.aurora_standard.Unit}-${local.aurora_standard.Env}-${local.aurora_standard.Code}-${local.aurora_standard.Feature}"
+  # Cognito User Pool Locals
+  cognito_standard = {
+    Unit    = var.unit
+    Env     = var.env
+    Code    = "cognito"
+    Feature = "main"
+  }
+  cognito_naming_standard = "${local.cognito_standard.Unit}-${local.cognito_standard.Env}-${local.cognito_standard.Code}-${local.cognito_standard.Feature}"
+  # API Gateway Locals
+  api_gateway_standard = {
+    Unit    = var.unit
+    Env     = var.env
+    Code    = "api"
+    Feature = "main"
+  }
+  api_gateway_naming_standard = "${local.api_gateway_standard.Unit}-${local.api_gateway_standard.Env}-${local.api_gateway_standard.Code}-${local.api_gateway_standard.Feature}"
 }
