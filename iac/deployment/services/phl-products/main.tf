@@ -124,8 +124,8 @@ module "api_integration_routes" {
   create_domain_name             = false
   create_certificate             = false
   create_stage                   = false
-  deploy_stage                   = false
-  create_routes_and_integrations = false
+  deploy_stage                   = true
+  create_routes_and_integrations = true
   routes = {
     "GET /api/products" = {
       authorization_type     = "JWT"
@@ -152,10 +152,9 @@ module "api_integration_routes" {
         payload_format_version = "2.0"
       }
     }
-
-    tags = {
-      Environment = "dev"
-      Terraform   = "true"
-    }
+  }
+  tags = {
+    Environment = "dev"
+    Terraform   = "true"
   }
 }
