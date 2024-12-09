@@ -129,7 +129,7 @@ autoscaling:
 volumes:
   - name: config-volume
     secret:
-      secretName: phl/svc/phl-products
+      secretName: phl-dev-svc-products
       items:
         - key: config.json
           path: config.json
