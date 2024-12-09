@@ -27,7 +27,7 @@ module "secrets_iac" {
   recovery_window_in_days = 0
   # Policy
   create_policy       = true
-  block_public_policy = true
+  block_public_policy = trueapi_id
   policy_statements = {
     admin = {
       sid = "IacSecretAdmin"
@@ -119,7 +119,7 @@ module "argocd_app" {
 module "api_integration_routes" {
   source = "../../../modules/api"
 
-  existing_gateway_id = data.terraform_remote_state.cloud.outputs.api_gateway_id
+  existing_gateway_id = data.terraform_remote_state.cloud.outputs.api_id
   # Custom domain
   create_domain_name             = false
   create_certificate             = false
