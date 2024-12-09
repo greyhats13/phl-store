@@ -91,27 +91,27 @@ module "svc_custom_pod_identity" {
   tags = local.tags
 }
 
-# module "argocd_app" {
-#   source        = "../../../modules/helm"
-#   region        = var.region
-#   standard      = local.svc_standard
-#   repository    = "https://argoproj.github.io/argo-helm"
-#   chart         = "argocd-apps"
-#   values        = ["${file("manifest/${local.svc_standard.Feature}.yaml")}"]
-#   namespace     = "argocd"
-#   dns_name      = "${local.svc_standard.Feature}.${var.unit}.blast.co.id"
-#   extra_vars = {
-#     argocd_namespace                       = "argocd"
-#     source_repoURL                         = "git@github.com:${var.github_owner}/${var.github_repo}.git"
-#     source_targetRevision                  = "HEAD"
-#     source_path                            = "gitops/charts/app/${local.svc_name}"
-#     project                                = "default"
-#     destination_server                     = "https://kubernetes.default.svc"
-#     destination_namespace                  = var.env
-#     avp_type                               = "awssecretsmanager"
-#     region                                 = var.region
-#     syncPolicy_automated_prune             = true
-#     syncPolicy_automated_selfHeal          = true
-#     syncPolicy_syncOptions_CreateNamespace = true
-#   }
-# }
+module "argocd_app" {
+  source        = "../../../modules/helm"
+  region        = var.region
+  standard      = local.svc_standard
+  repository    = "https://argoproj.github.io/argo-helm"
+  chart         = "argocd-apps"
+  values        = ["${file("manifest/${local.svc_standard.Feature}.yaml")}"]
+  namespace     = "argocd"
+  dns_name      = "${local.svc_standard.Feature}.${var.unit}.blast.co.id"
+  extra_vars = {
+    argocd_namespace                       = "argocd"
+    source_repoURL                         = "git@github.com:${var.github_owner}/${var.github_repo}.git"
+    source_targetRevision                  = "HEAD"
+    source_path                            = "gitops/charts/app/${local.svc_name}"
+    project                                = "default"
+    destination_server                     = "https://kubernetes.default.svc"
+    destination_namespace                  = var.env
+    avp_type                               = "awssecretsmanager"
+    region                                 = var.region
+    syncPolicy_automated_prune             = true
+    syncPolicy_automated_selfHeal          = true
+    syncPolicy_syncOptions_CreateNamespace = true
+  }
+}
