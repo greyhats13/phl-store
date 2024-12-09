@@ -803,8 +803,8 @@ module "cognito_pool" {
       ]
     }
   }
-  allowed_oauth_flows      = ["client_credentials"]
-  allowed_oauth_scopes     = [
+  allowed_oauth_flows = ["client_credentials"]
+  allowed_oauth_scopes = [
     "https://api.${local.route53_domain_name}/api.read",
     "https://api.${local.route53_domain_name}/api.write"
   ]
@@ -891,7 +891,7 @@ module "api" {
       name             = "cognito-authorizer"
       identity_sources = ["$request.header.Authorization"]
       jwt_configuration = {
-        issuer   = module.cognito_pool.cognito_user_pool_endpoint
+        issuer   = "https://${module.cognito_pool.cognito_user_pool_endpoint}"
         audience = [module.cognito_pool.cognito_user_pool_client_id]
       }
     }
@@ -911,4 +911,3 @@ module "api" {
     Terraform   = "true"
   }
 }
-
