@@ -8,7 +8,7 @@ resource "kubernetes_namespace" "namespace" {
 
 locals {
   sa_naming_standard   = "${var.standard.Unit}-${var.standard.Env}-${var.standard.Code}-${var.standard.Feature}"
-  helm_naming_standard = var.standard.Code == "svc" || var.standard.Code == "addon" ? "${var.standard.Unit}-${var.standard.Env}-${var.standard.Code}-${var.standard.Feature}" : "${var.standard.Unit}-${var.standard.Code}-${var.standard.Feature}"
+  helm_naming_standard = "${var.standard.Unit}-${var.standard.Env}-${var.standard.Code}-${var.standard.Feature}"
   namespace            = var.create_namespace ? kubernetes_namespace.namespace[0].metadata[0].name : var.namespace
 }
 
