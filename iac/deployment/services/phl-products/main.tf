@@ -136,11 +136,11 @@ module "api_integration_routes" {
 
       integration = {
         connection_type        = "VPC_LINK"
+        connection_id          = data.terraform_remote_state.cloud.outputs.api_vpc_links
         type                   = "HTTP_PROXY"
         method                 = "GET"
         uri                    = data.aws_lb_listener.selected443.arn
         payload_format_version = "2.0"
-        vpc_link_key           = "vpc-main"
       }
     }
 
@@ -153,11 +153,11 @@ module "api_integration_routes" {
 
       integration = {
         connection_type        = "VPC_LINK"
+        connection_id          = data.terraform_remote_state.cloud.outputs.api_vpc_links
         type                   = "HTTP_PROXY"
         method                 = "POST"
         uri                    = data.aws_lb_listener.selected443.arn
         payload_format_version = "2.0"
-        vpc_link_key           = "vpc-main"
       }
     }
     "PUT /api/products" = {
@@ -169,14 +169,14 @@ module "api_integration_routes" {
 
       integration = {
         connection_type        = "VPC_LINK"
+        connection_id          = data.terraform_remote_state.cloud.outputs.api_vpc_links
         type                   = "HTTP_PROXY"
         method                 = "PUT"
         uri                    = data.aws_lb_listener.selected443.arn
         payload_format_version = "2.0"
-        vpc_link_key           = "vpc-main"
       }
     }
-    
+
     "DELETE /api/products" = {
       authorization_type     = "JWT"
       authorizer_key         = "cognito"
@@ -190,7 +190,7 @@ module "api_integration_routes" {
         method                 = "DELETE"
         uri                    = data.aws_lb_listener.selected443.arn
         payload_format_version = "2.0"
-        vpc_link_key           = "vpc-main"
+        connection_id          = data.terraform_remote_state.cloud.outputs.api_vpc_links
       }
     }
   }
