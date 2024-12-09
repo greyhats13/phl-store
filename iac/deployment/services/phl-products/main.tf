@@ -129,68 +129,64 @@ module "api_integration_routes" {
   routes = {
     "GET /api/products" = {
       authorization_type     = "JWT"
-      authorizer_key         = "cognito"
+      authorizer_key         = "cognito-authorizer"
       authorization_scopes   = data.terraform_remote_state.cloud.outputs.cognito_authrization_scopes
       throttling_rate_limit  = 80
       throttling_burst_limit = 40
 
       integration = {
-        connection_type        = "VPC_LINK"
-        type                   = "HTTP_PROXY"
-        method                 = "GET"
-        uri                    = data.aws_lb_listener.selected443.arn
-        payload_format_version = "2.0"
-        vpc_link_key           = "vpc-main"
+        connection_type = "VPC_LINK"
+        connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
+        type            = "HTTP_PROXY"
+        method          = "GET"
+        uri             = data.aws_lb_listener.selected443.arn
       }
     }
 
     "POST /api/products" = {
       authorization_type     = "JWT"
-      authorizer_key         = "cognito"
+      authorizer_key         = "cognito-authorizer"
       authorization_scopes   = data.terraform_remote_state.cloud.outputs.cognito_authrization_scopes
       throttling_rate_limit  = 80
       throttling_burst_limit = 40
 
       integration = {
-        connection_type        = "VPC_LINK"
-        type                   = "HTTP_PROXY"
-        method                 = "POST"
-        uri                    = data.aws_lb_listener.selected443.arn
-        payload_format_version = "2.0"
-        vpc_link_key           = "vpc-main"
+        connection_type = "VPC_LINK"
+        connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
+        type            = "HTTP_PROXY"
+        method          = "POST"
+        uri             = data.aws_lb_listener.selected443.arn
       }
     }
     "PUT /api/products" = {
       authorization_type     = "JWT"
-      authorizer_key         = "cognito"
+      authorizer_key         = "cognito-authorizer"
       authorization_scopes   = data.terraform_remote_state.cloud.outputs.cognito_authrization_scopes
       throttling_rate_limit  = 80
       throttling_burst_limit = 40
 
       integration = {
-        connection_type        = "VPC_LINK"
-        type                   = "HTTP_PROXY"
-        method                 = "PUT"
-        uri                    = data.aws_lb_listener.selected443.arn
-        payload_format_version = "2.0"
-        vpc_link_key           = "vpc-main"
+        connection_type = "VPC_LINK"
+        connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
+        type            = "HTTP_PROXY"
+        method          = "PUT"
+        uri             = data.aws_lb_listener.selected443.arn
       }
     }
-    
+
     "DELETE /api/products" = {
       authorization_type     = "JWT"
-      authorizer_key         = "cognito"
+      authorizer_key         = "cognito-authorizer"
       authorization_scopes   = data.terraform_remote_state.cloud.outputs.cognito_authrization_scopes
       throttling_rate_limit  = 80
       throttling_burst_limit = 40
 
       integration = {
-        connection_type        = "VPC_LINK"
-        type                   = "HTTP_PROXY"
-        method                 = "DELETE"
-        uri                    = data.aws_lb_listener.selected443.arn
-        payload_format_version = "2.0"
-        vpc_link_key           = "vpc-main"
+        connection_type = "VPC_LINK"
+        connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
+        type            = "HTTP_PROXY"
+        method          = "DELETE"
+        uri             = data.aws_lb_listener.selected443.arn
       }
     }
   }
