@@ -25,3 +25,7 @@ output "cognito_user_pool_domain" {
 output "cognito_user_pool_endpoint" {
   value = aws_cognito_user_pool.this.endpoint
 }
+
+output "cognito_authrization_scopes" {
+  value = aws_cognito_resource_server.resource_servers["apigw"].scope_identifiers
+}

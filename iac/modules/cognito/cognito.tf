@@ -40,14 +40,30 @@ resource "aws_route53_record" "child" {
     name    = aws_cognito_user_pool_domain.main.cloudfront_distribution
     zone_id = aws_cognito_user_pool_domain.main.cloudfront_distribution_zone_id
   }
-  depends_on = [ aws_route53_record.parent ]
+  depends_on = [aws_route53_record.parent]
+}
+
+resource "aws_cognito_resource_server" "resource_servers" {
+  for_each = var.resource_servers
+
+  user_pool_id = aws_cognito_user_pool.this.id
+  identifier   = each.value.identifier
+  name         = each.value.name
+
+  dynamic "scope" {
+    for_each = each.value.scopes
+    content {
+      scope_name        = scope.value.scope_name
+      scope_description = scope.value.scope_description
+    }
+  }
 }
 
 resource "aws_cognito_user_pool_client" "this" {
   name                                 = "${var.name}-client"
   user_pool_id                         = aws_cognito_user_pool.this.id
   allowed_oauth_flows                  = var.allowed_oauth_flows
-  allowed_oauth_scopes                 = var.allowed_oauth_scopes
+  allowed_oauth_scopes                 = aws_cognito_resource_server.resource_servers["apigw"].scope_identifiers
   supported_identity_providers         = var.supported_identity_providers
   allowed_oauth_flows_user_pool_client = var.allowed_oauth_flows_user_pool_client
   explicit_auth_flows                  = var.explicit_auth_flows
@@ -74,20 +90,4 @@ resource "aws_cognito_identity_provider" "identity_providers" {
   provider_type     = each.value.provider_type
   provider_details  = each.value.provider_details
   attribute_mapping = each.value.attribute_mapping
-}
-
-resource "aws_cognito_resource_server" "resource_servers" {
-  for_each = var.resource_servers
-
-  user_pool_id = aws_cognito_user_pool.this.id
-  identifier   = each.value.identifier
-  name         = each.value.name
-
-  dynamic "scope" {
-    for_each = each.value.scopes
-    content {
-      scope_name        = scope.value.scope_name
-      scope_description = scope.value.scope_description
-    }
-  }
 }

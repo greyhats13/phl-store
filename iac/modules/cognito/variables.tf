@@ -64,11 +64,11 @@ variable "allowed_oauth_flows" {
   default     = []
 }
 
-variable "allowed_oauth_scopes" {
-  type        = list(string)
-  description = "Allowed OAuth scopes"
-  default     = []
-}
+# variable "allowed_oauth_scopes" {
+#   type        = list(string)
+#   description = "Allowed OAuth scopes"
+#   default     = []
+# }
 
 variable "explicit_auth_flows" {
   type        = list(string)
