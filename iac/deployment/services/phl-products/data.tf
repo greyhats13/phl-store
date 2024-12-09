@@ -15,7 +15,7 @@ data "terraform_remote_state" "cloud" {
   backend = "s3"
 
   config = {
-    bucket  = "${var.unit}-${var.env}-s3-tfstapi_gateway_idate"
+    bucket  = "${var.unit}-${var.env}-s3-tfstate"
     key     = "${var.unit}/deployment/cloud/${var.unit}-${var.env}-deployment-cloud.tfstate"
     region  = var.region
     # profile = "${var.unit}-${var.env}"
@@ -34,7 +34,7 @@ data "aws_eks_cluster_auth" "cluster" {
 }
 
 data "aws_lb" "selected" {
-  name = "k8s-phldevsvcingress-9fd5a50e2d"
+  name = "k8s-phldevsvcingress-95c2777f2b"
 }
 
 data "aws_lb_listener" "selected443" {
