@@ -92,7 +92,7 @@ ingress:
   hosts:
     - host: products.phl.blast.co.id
       paths:
-        - path: /api/products/*
+        - path: /
           pathType: ImplementationSpecific
   tls:
     - hosts:
