@@ -101,11 +101,11 @@ locals {
   }
   cognito_naming_standard = "${local.cognito_standard.Unit}-${local.cognito_standard.Env}-${local.cognito_standard.Code}-${local.cognito_standard.Feature}"
   # API Gateway Locals
-  api_gateway_standard = {
+  api_standard = {
     Unit    = var.unit
     Env     = var.env
     Code    = "api"
     Feature = "main"
   }
-  api_gateway_naming_standard = "${local.api_gateway_standard.Unit}-${local.api_gateway_standard.Env}-${local.api_gateway_standard.Code}-${local.api_gateway_standard.Feature}"
+  api_naming_standard = "${local.api_standard.Unit}-${local.api_standard.Env}-${local.api_standard.Code}-${local.api_standard.Feature}"
 }

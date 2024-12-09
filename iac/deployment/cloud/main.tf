@@ -746,79 +746,127 @@ module "repo_phl" {
 #   tags = local.tags
 # }
 
-resource "aws_cognito_user_pool" "cognito" {
-  name = local.cognito_naming_standard
+module "cognito_pool" {
+  source                       = "../../modules/cognito"
+  region                       = var.region
+  name                         = local.cognito_naming_standard
+  supported_identity_providers = ["COGNITO"]
+  domain                       = "oauth.${local.route53_domain_name}"
+  certificate_arn              = module.acm_main.acm_certificate_arn
+  zone_id                      = module.zones_main.route53_zone_zone_id[local.route53_domain_name]
+  alb_dns                      = data.aws_lb.alb.dns_name
+  explicit_auth_flows = [
+    "ALLOW_USER_PASSWORD_AUTH",
+    "ALLOW_USER_SRP_AUTH",
+    "ALLOW_REFRESH_TOKEN_AUTH"
+  ]
+  password_policy = {
+    minimum_length    = 8
+    require_lowercase = true
+    require_numbers   = true
+    require_symbols   = true
+    require_uppercase = true
+  }
+  allowed_oauth_flows   = ["code", "implicit"]
+  allowed_oauth_scopes  = ["email", "openid", "profile"]
+  access_token_validity = 60
+  id_token_validity     = 60
+  tags                  = local.cognito_standard
+}
+
+module "api_sg" {
+  source  = "terraform-aws-modules/security-group/aws"
+  version = "~> 5.2.0"
+
+  name        = "${local.api_naming_standard}-sg"
+  description = "API Gateway security group fort ${local.api_naming_standard}"
+  vpc_id      = module.vpc_main.vpc_id
+
+  ingress_cidr_blocks = ["0.0.0.0/0"]
+  ingress_rules       = ["http-80-tcp", "https-443-tcp"]
+
+  egress_rules = ["all-all"]
+
   tags = local.tags
 }
 
-module "api_gateway" {
-  source  = "terraform-aws-modules/apigateway-v2/aws"
-  version = "~> 5.2.1"
 
-  name          = local.api_gateway_naming_standard
-  description   = "API Gateway for ${local.api_gateway_naming_standard}"
-  protocol_type = "HTTP"
+# module "api" {
+#   source  = "terraform-aws-modules/apigateway-v2/aws"
+#   version = "~> 5.2.1"
 
-  cors_configuration = {
-    allow_headers = ["content-type", "x-amz-date", "authorization", "x-api-key", "x-amz-security-token", "x-amz-user-agent"]
-    allow_methods = ["*"]
-    allow_origins = ["*"]
-  }
+#   name          = local.api_gateway_naming_standard
+#   description   = "API Gateway for ${local.api_gateway_naming_standard}"
+#   protocol_type = "HTTP"
 
-  # Custom domain
-  create_domain_name             = true
-  hosted_zone_name               = module.zones_main.route53_zone_name[local.route53_domain_name]
-  domain_name                    = "api.${local.route53_domain_name}"
-  create_certificate             = false
-  domain_name_certificate_arn    = module.acm_main.acm_certificate_arn
-  create_stage                   = true
-  deploy_stage                   = false
-  create_routes_and_integrations = false
-  stage_access_log_settings = {
-    create_log_group            = true
-    log_group_retention_in_days = 7
-    format = jsonencode({
-      context = {
-        domainName              = "$context.domainName"
-        integrationErrorMessage = "$context.integrationErrorMessage"
-        protocol                = "$context.protocol"
-        requestId               = "$context.requestId"
-        requestTime             = "$context.requestTime"
-        responseLength          = "$context.responseLength"
-        routeKey                = "$context.routeKey"
-        stage                   = "$context.stage"
-        status                  = "$context.status"
-        error = {
-          message      = "$context.error.message"
-          responseType = "$context.error.responseType"
-        }
-        identity = {
-          sourceIP = "$context.identity.sourceIp"
-        }
-        integration = {
-          error             = "$context.integration.error"
-          integrationStatus = "$context.integration.integrationStatus"
-        }
-      }
-    })
-  }
+#   cors_configuration = {
+#     allow_headers = ["content-type", "x-amz-date", "authorization", "x-api-key", "x-amz-security-token", "x-amz-user-agent"]
+#     allow_methods = ["*"]
+#     allow_origins = ["*"]
+#   }
 
-  # Authorizer(s)authorizers = {
-  authorizers = {
-    cognito = {
-      authorizer_type  = "JWT"
-      identity_sources = ["$request.header.Authorization"]
-      name             = "cognito"
-      jwt_configuration = {
-        audience = ["d6a38afd-45d6-4874-d1aa-3c5c558aqcc2"]
-        issuer   = "https://${aws_cognito_user_pool.cognito.endpoint}"
-      }
-    }
-  }
+#   # Custom domain
+#   create_domain_name             = true
+#   hosted_zone_name               = module.zones_main.route53_zone_name[local.route53_domain_name]
+#   domain_name                    = "api.${local.route53_domain_name}"
+#   create_certificate             = false
+#   domain_name_certificate_arn    = module.acm_main.acm_certificate_arn
+#   create_stage                   = true
+#   deploy_stage                   = false
+#   create_routes_and_integrations = false
+#   # stage_access_log_settings = {
+#   #   create_log_group            = true
+#   #   log_group_retention_in_days = 7
+#   #   format = jsonencode({
+#   #     context = {
+#   #       domainName              = "$context.domainName"
+#   #       integrationErrorMessage = "$context.integrationErrorMessage"
+#   #       protocol                = "$context.protocol"
+#   #       requestId               = "$context.requestId"
+#   #       requestTime             = "$context.requestTime"
+#   #       responseLength          = "$context.responseLength"
+#   #       routeKey                = "$context.routeKey"
+#   #       stage                   = "$context.stage"
+#   #       status                  = "$context.status"
+#   #       error = {
+#   #         message      = "$context.error.message"
+#   #         responseType = "$context.error.responseType"
+#   #       }
+#   #       identity = {
+#   #         sourceIP = "$context.identity.sourceIp"
+#   #       }
+#   #       integration = {
+#   #         error             = "$context.integration.error"
+#   #         integrationStatus = "$context.integration.integrationStatus"
+#   #       }
+#   #     }
+#   #   })
+#   # }
 
-  tags = {
-    Environment = "dev"
-    Terraform   = "true"
-  }
-}
+#   authorizers = {
+#     cognito = {
+#       authorizer_type  = "JWT"
+#       identity_sources = ["$request.header.Authorization"]
+#       name             = "cognito"
+#       jwt_configuration = {
+#         audience = [module.cognito_pool.cognito_user_pool_client_id]
+#         issuer   = "https://${aws_cognito_user_pool.cognito.endpoint}"
+#       }
+#     }
+#   }
+
+#   # VPC Link
+#   vpc_links = {
+#     vpc-main = {
+#       name               = "${local.api_gateway_naming_standard}-vpc-link"
+#       security_group_ids = [module.api_gateway_security_group.security_group_id]
+#       subnet_ids         = module.vpc_main.public_subnets
+#     }
+#   }
+
+#   tags = {
+#     Environment = "dev"
+#     Terraform   = "true"
+#   }
+# }
 

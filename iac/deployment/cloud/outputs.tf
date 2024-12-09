@@ -56,10 +56,10 @@ output "eks_cluster_certificate_authority_data" {
 # EKS Karpenter
 
 # API Gateway Outputs
-output "api_gateway_id" {
-  value = module.api_gateway.api_id
-}
+# output "api_id" {
+#   value = module.api.api_id
+# }
 
-output "api_endpoint" {
-  value = module.api_gateway.api_endpoint
-}
+# output "api_endpoint" {
+#   value = module.api.api_endpoint
+# }
