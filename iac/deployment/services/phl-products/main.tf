@@ -123,10 +123,7 @@ module "api_integration_routes" {
   existing_gateway_id = data.terraform_remote_state.cloud.outputs.api_gateway_id
   # Custom domain
   create_domain_name             = false
-  hosted_zone_name               = module.zones_main.route53_zone_name[local.route53_domain_name]
-  domain_name                    = "api.${local.route53_domain_name}"
   create_certificate             = false
-  domain_name_certificate_arn    = module.acm_main.acm_certificate_arn
   create_stage                   = false
   deploy_stage                   = false
   create_routes_and_integrations = false
