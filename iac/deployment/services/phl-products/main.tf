@@ -25,7 +25,6 @@ module "secrets_iac" {
   name                    = local.svc_secret_standard
   description             = "Secrets for ${local.svc_secret_standard}"
   recovery_window_in_days = 0
-
   # Policy
   create_policy       = true
   block_public_policy = true
@@ -117,37 +116,45 @@ module "argocd_app" {
 }
 
 
-module "api_integration_routes" {
-  source  = "../../../modules/api"
+# module "api_integration_routes" {
+#   source = "../../../modules/api"
 
-  existing_gateway_id = data.terraform_remote_state.cloud.outputs.api_gateway_id
-  # Custom domain
-  create_domain_name             = false
-  hosted_zone_name               = module.zones_main.route53_zone_name[local.route53_domain_name]
-  domain_name                    = "api.${local.route53_domain_name}"
-  create_certificate             = false
-  domain_name_certificate_arn    = module.acm_main.acm_certificate_arn
-  create_stage                   = false
-  deploy_stage                   = false
-  create_routes_and_integrations = false
-  routes = {
-    "GET /api/products" = {
-      authorization_type   = "JWT"
-      authorizer_key       = "cognito"
-      authorization_scopes = ["user.id", "user.email"]
-      throttling_rate_limit    = 80
-      throttling_burst_limit   = 40
+#   existing_gateway_id = data.terraform_remote_state.cloud.outputs.api_gateway_id
+#   # Custom domain
+#   create_domain_name             = false
+#   create_certificate             = false
+#   create_stage                   = false
+#   deploy_stage                   = true
+#   create_routes_and_integrations = true
+#   routes = {
+#     "GET /api/products" = {
+#       authorization_type     = "JWT"
+#       authorizer_key         = "cognito"
+#       authorization_scopes   = ["user.id", "user.email"]
+#       throttling_rate_limit  = 80
+#       throttling_burst_limit = 40
 
-      integration = {
-        type                   = "HTTP_PROXY"
-        uri                    = data.aws_lb_listener.selected443.arn
-        payload_format_version = "2.0"
-      }
-    }
+#       integration = {
+#         type                   = "HTTP_PROXY"
+#         uri                    = data.aws_lb_listener.selected443.arn
+#         payload_format_version = "2.0"
+#       }
+#     }
 
-    tags = {
-      Environment = "dev"
-      Terraform   = "true"
-    }
-  }
-}
+#     "POST /api/products" = {
+#       authorization_type   = "JWT"
+#       authorizer_key       = "cognito"
+#       authorization_scopes = ["user.id", "user.email"]
+
+#       integration = {
+#         type                   = "HTTP_PROXY"
+#         uri                    = data.aws_lb_listener.selected443.arn
+#         payload_format_version = "2.0"
+#       }
+#     }
+#   }
+#   tags = {
+#     Environment = "dev"
+#     Terraform   = "true"
+#   }
+# }
