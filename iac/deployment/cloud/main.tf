@@ -833,82 +833,82 @@ module "api_sg" {
 }
 
 
-# module "api" {
-#   source  = "terraform-aws-modules/apigateway-v2/aws"
-#   version = "~> 5.2.1"
+module "api" {
+  source  = "terraform-aws-modules/apigateway-v2/aws"
+  version = "~> 5.2.1"
 
-#   name          = local.api_gateway_naming_standard
-#   description   = "API Gateway for ${local.api_gateway_naming_standard}"
-#   protocol_type = "HTTP"
+  name          = local.api_naming_standard
+  description   = "API Gateway for ${local.api_naming_standard}"
+  protocol_type = "HTTP"
 
-#   cors_configuration = {
-#     allow_headers = ["content-type", "x-amz-date", "authorization", "x-api-key", "x-amz-security-token", "x-amz-user-agent"]
-#     allow_methods = ["*"]
-#     allow_origins = ["*"]
-#   }
+  cors_configuration = {
+    allow_headers = ["content-type", "x-amz-date", "authorization", "x-api-key", "x-amz-security-token", "x-amz-user-agent"]
+    allow_methods = ["*"]
+    allow_origins = ["*"]
+  }
 
-#   # Custom domain
-#   create_domain_name             = true
-#   hosted_zone_name               = module.zones_main.route53_zone_name[local.route53_domain_name]
-#   domain_name                    = "api.${local.route53_domain_name}"
-#   create_certificate             = false
-#   domain_name_certificate_arn    = module.acm_main.acm_certificate_arn
-#   create_stage                   = true
-#   deploy_stage                   = false
-#   create_routes_and_integrations = false
-#   # stage_access_log_settings = {
-#   #   create_log_group            = true
-#   #   log_group_retention_in_days = 7
-#   #   format = jsonencode({
-#   #     context = {
-#   #       domainName              = "$context.domainName"
-#   #       integrationErrorMessage = "$context.integrationErrorMessage"
-#   #       protocol                = "$context.protocol"
-#   #       requestId               = "$context.requestId"
-#   #       requestTime             = "$context.requestTime"
-#   #       responseLength          = "$context.responseLength"
-#   #       routeKey                = "$context.routeKey"
-#   #       stage                   = "$context.stage"
-#   #       status                  = "$context.status"
-#   #       error = {
-#   #         message      = "$context.error.message"
-#   #         responseType = "$context.error.responseType"
-#   #       }
-#   #       identity = {
-#   #         sourceIP = "$context.identity.sourceIp"
-#   #       }
-#   #       integration = {
-#   #         error             = "$context.integration.error"
-#   #         integrationStatus = "$context.integration.integrationStatus"
-#   #       }
-#   #     }
-#   #   })
-#   # }
+  # Custom domain
+  create_domain_name             = true
+  hosted_zone_name               = module.zones_main.route53_zone_name[local.route53_domain_name]
+  domain_name                    = "api.${local.route53_domain_name}"
+  create_certificate             = false
+  domain_name_certificate_arn    = module.acm_main.acm_certificate_arn
+  create_stage                   = true
+  deploy_stage                   = false
+  create_routes_and_integrations = false
+  stage_access_log_settings = {
+    create_log_group            = true
+    log_group_retention_in_days = 7
+    format = jsonencode({
+      context = {
+        domainName              = "$context.domainName"
+        integrationErrorMessage = "$context.integrationErrorMessage"
+        protocol                = "$context.protocol"
+        requestId               = "$context.requestId"
+        requestTime             = "$context.requestTime"
+        responseLength          = "$context.responseLength"
+        routeKey                = "$context.routeKey"
+        stage                   = "$context.stage"
+        status                  = "$context.status"
+        error = {
+          message      = "$context.error.message"
+          responseType = "$context.error.responseType"
+        }
+        identity = {
+          sourceIP = "$context.identity.sourceIp"
+        }
+        integration = {
+          error             = "$context.integration.error"
+          integrationStatus = "$context.integration.integrationStatus"
+        }
+      }
+    })
+  }
 
-#   authorizers = {
-#     cognito = {
-#       authorizer_type  = "JWT"
-#       identity_sources = ["$request.header.Authorization"]
-#       name             = "cognito"
-#       jwt_configuration = {
-#         audience = [module.cognito_pool.cognito_user_pool_client_id]
-#         issuer   = "https://${aws_cognito_user_pool.cognito.endpoint}"
-#       }
-#     }
-#   }
+  authorizers = {
+    cognito = {
+      authorizer_type  = "JWT"
+      name             = "cognito-authorizer"
+      identity_sources = ["$request.header.Authorization"]
+      jwt_configuration = {
+        issuer   = module.cognito_pool.cognito_user_pool_endpoint
+        audience = [module.cognito_pool.cognito_user_pool_client_id]
+      }
+    }
+  }
 
-#   # VPC Link
-#   vpc_links = {
-#     vpc-main = {
-#       name               = "${local.api_gateway_naming_standard}-vpc-link"
-#       security_group_ids = [module.api_gateway_security_group.security_group_id]
-#       subnet_ids         = module.vpc_main.public_subnets
-#     }
-#   }
+  # VPC Link
+  vpc_links = {
+    vpc-main = {
+      name               = "${local.api_naming_standard}-vpc-link"
+      security_group_ids = [module.api_sg.security_group_id]
+      subnet_ids         = module.vpc_main.public_subnets
+    }
+  }
 
-#   tags = {
-#     Environment = "dev"
-#     Terraform   = "true"
-#   }
-# }
+  tags = {
+    Environment = "dev"
+    Terraform   = "true"
+  }
+}
 
