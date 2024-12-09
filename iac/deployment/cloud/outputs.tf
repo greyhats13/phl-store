@@ -93,3 +93,7 @@ output "api_endpoint" {
 output "api_vpc_links" {
   value = module.api.vpc_links
 }
+
+output "api_authorizer" {
+  value = module.api.authorizers
+}
