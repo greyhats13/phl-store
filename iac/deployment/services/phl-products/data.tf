@@ -32,3 +32,12 @@ data "aws_secretsmanager_secret_version" "aurora_password" {
 data "aws_eks_cluster_auth" "cluster" {
   name = data.terraform_remote_state.cloud.outputs.eks_cluster_name
 }
+
+data "aws_lb" "selected" {
+  name = "k8s-phldevsvcingress-9fd5a50e2d"
+}
+
+data "aws_lb_listener" "selected443" {
+  load_balancer_arn = data.aws_lb.selected.arn
+  port              = 443
+}

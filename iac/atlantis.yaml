@@ -27,5 +27,3 @@ projects:
     apply_requirements: ["mergeable"]
     autoplan:
       when_modified: ["*.tf*"]
-
-

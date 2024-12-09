@@ -745,3 +745,80 @@ module "repo_phl" {
 
 #   tags = local.tags
 # }
+
+resource "aws_cognito_user_pool" "cognito" {
+  name = local.cognito_naming_standard
+  tags = local.tags
+}
+
+module "api_gateway" {
+  source  = "terraform-aws-modules/apigateway-v2/aws"
+  version = "~> 5.2.1"
+
+  name          = local.api_gateway_naming_standard
+  description   = "API Gateway for ${local.api_gateway_naming_standard}"
+  protocol_type = "HTTP"
+
+  cors_configuration = {
+    allow_headers = ["content-type", "x-amz-date", "authorization", "x-api-key", "x-amz-security-token", "x-amz-user-agent"]
+    allow_methods = ["*"]
+    allow_origins = ["*"]
+  }
+
+  # Custom domain
+  create_domain_name             = true
+  hosted_zone_name               = module.zones_main.route53_zone_name[local.route53_domain_name]
+  domain_name                    = "api.${local.route53_domain_name}"
+  create_certificate             = false
+  domain_name_certificate_arn    = module.acm_main.acm_certificate_arn
+  create_stage                   = true
+  deploy_stage                   = false
+  create_routes_and_integrations = false
+  stage_access_log_settings = {
+    create_log_group            = true
+    log_group_retention_in_days = 7
+    format = jsonencode({
+      context = {
+        domainName              = "$context.domainName"
+        integrationErrorMessage = "$context.integrationErrorMessage"
+        protocol                = "$context.protocol"
+        requestId               = "$context.requestId"
+        requestTime             = "$context.requestTime"
+        responseLength          = "$context.responseLength"
+        routeKey                = "$context.routeKey"
+        stage                   = "$context.stage"
+        status                  = "$context.status"
+        error = {
+          message      = "$context.error.message"
+          responseType = "$context.error.responseType"
+        }
+        identity = {
+          sourceIP = "$context.identity.sourceIp"
+        }
+        integration = {
+          error             = "$context.integration.error"
+          integrationStatus = "$context.integration.integrationStatus"
+        }
+      }
+    })
+  }
+
+  # Authorizer(s)authorizers = {
+  authorizers = {
+    cognito = {
+      authorizer_type  = "JWT"
+      identity_sources = ["$request.header.Authorization"]
+      name             = "cognito"
+      jwt_configuration = {
+        audience = ["d6a38afd-45d6-4874-d1aa-3c5c558aqcc2"]
+        issuer   = "https://${aws_cognito_user_pool.cognito.endpoint}"
+      }
+    }
+  }
+
+  tags = {
+    Environment = "dev"
+    Terraform   = "true"
+  }
+}
+
