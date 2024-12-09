@@ -11,13 +11,13 @@ variable "name" {
 variable "username_attributes" {
   type        = list(string)
   description = "Attributes supported as username by Cognito"
-  default     = ["email"]
+  default     = []
 }
 
 variable "auto_verified_attributes" {
   type        = list(string)
   description = "Auto verified attributes"
-  default     = ["email"]
+  default     = []
 }
 
 variable "password_policy" {
@@ -48,6 +48,11 @@ variable "alb_dns" {
   description = "alb dns name"
 }
 
+variable "alb_zone_id" {
+  type        = string
+  description = "alb zone id"
+}
+
 variable "certificate_arn" {
   type        = string
   description = "ARN of the certificate to use for the Cognito domain"
@@ -56,26 +61,38 @@ variable "certificate_arn" {
 variable "allowed_oauth_flows" {
   type        = list(string)
   description = "Allowed OAuth flows"
-  default     = ["code", "client_credentials", "implicit"]
+  default     = []
 }
 
 variable "allowed_oauth_scopes" {
   type        = list(string)
   description = "Allowed OAuth scopes"
-  default     = ["phone", "email", "openid", "profile"]
+  default     = []
 }
 
 variable "explicit_auth_flows" {
   type        = list(string)
   description = "Explicit auth flows"
-  default     = []
+  default = []
 
 }
 
 variable "supported_identity_providers" {
   type        = list(string)
   description = "Supported identity providers"
-  default     = ["COGNITO"]
+  default     = []
+}
+
+variable "allowed_oauth_flows_user_pool_client" {
+  type        = bool
+  description = "Whether the client is allowed to use the OAuth flow"
+  default     = false
+}
+
+variable "generate_secret" {
+  type        = bool
+  description = "Whether to generate a client secret"
+  default     = false
 }
 
 variable "callback_urls" {
@@ -107,19 +124,19 @@ variable "token_validity_units" {
 variable "access_token_validity" {
   type        = number
   description = "Access token validity in minutes"
-  default     = 60
+  default     = null
 }
 
 variable "id_token_validity" {
   type        = number
   description = "ID token validity in minutes"
-  default     = 60
+  default     = null
 }
 
 variable "refresh_token_validity" {
   type        = number
   description = "Refresh token validity in days"
-  default     = 30
+  default     = null
 }
 
 variable "tags" {
@@ -137,4 +154,16 @@ variable "identity_providers" {
   }))
   description = "Optional identity providers to attach to the User Pool"
   default     = {}
+}
+
+variable "resource_servers" {
+  type = map(object({
+    identifier = string
+    name       = string
+    scopes = list(object({
+      scope_name        = string
+      scope_description = string
+    }))
+  }))
+  default = {}
 }

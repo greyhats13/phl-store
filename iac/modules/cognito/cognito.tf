@@ -25,7 +25,7 @@ resource "aws_route53_record" "parent" {
 
   alias {
     name                   = var.alb_dns
-    zone_id                = var.zone_id
+    zone_id                = var.alb_zone_id
     evaluate_target_health = false
   }
 }
@@ -49,11 +49,11 @@ resource "aws_cognito_user_pool_client" "this" {
   allowed_oauth_flows                  = var.allowed_oauth_flows
   allowed_oauth_scopes                 = var.allowed_oauth_scopes
   supported_identity_providers         = var.supported_identity_providers
-  allowed_oauth_flows_user_pool_client = true
+  allowed_oauth_flows_user_pool_client = var.allowed_oauth_flows_user_pool_client
   explicit_auth_flows                  = var.explicit_auth_flows
   callback_urls                        = var.callback_urls
   logout_urls                          = var.logout_urls
-  generate_secret                      = false
+  generate_secret                      = var.generate_secret
 
   access_token_validity  = var.access_token_validity
   id_token_validity      = var.id_token_validity
@@ -74,4 +74,20 @@ resource "aws_cognito_identity_provider" "identity_providers" {
   provider_type     = each.value.provider_type
   provider_details  = each.value.provider_details
   attribute_mapping = each.value.attribute_mapping
+}
+
+resource "aws_cognito_resource_server" "resource_servers" {
+  for_each = var.resource_servers
+
+  user_pool_id = aws_cognito_user_pool.this.id
+  identifier   = each.value.identifier
+  name         = each.value.name
+
+  dynamic "scope" {
+    for_each = each.value.scopes
+    content {
+      scope_name        = scope.value.scope_name
+      scope_description = scope.value.scope_description
+    }
+  }
 }
