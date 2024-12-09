@@ -25,7 +25,6 @@ module "secrets_iac" {
   name                    = local.svc_secret_standard
   description             = "Secrets for ${local.svc_secret_standard}"
   recovery_window_in_days = 0
-
   # Policy
   create_policy       = true
   block_public_policy = true
@@ -118,7 +117,7 @@ module "argocd_app" {
 
 
 module "api_integration_routes" {
-  source  = "../../../modules/api"
+  source = "../../../modules/api"
 
   existing_gateway_id = data.terraform_remote_state.cloud.outputs.api_gateway_id
   # Custom domain
@@ -129,11 +128,23 @@ module "api_integration_routes" {
   create_routes_and_integrations = false
   routes = {
     "GET /api/products" = {
+      authorization_type     = "JWT"
+      authorizer_key         = "cognito"
+      authorization_scopes   = ["user.id", "user.email"]
+      throttling_rate_limit  = 80
+      throttling_burst_limit = 40
+
+      integration = {
+        type                   = "HTTP_PROXY"
+        uri                    = data.aws_lb_listener.selected443.arn
+        payload_format_version = "2.0"
+      }
+    }
+
+    "POST /api/products" = {
       authorization_type   = "JWT"
       authorizer_key       = "cognito"
       authorization_scopes = ["user.id", "user.email"]
-      throttling_rate_limit    = 80
-      throttling_burst_limit   = 40
 
       integration = {
         type                   = "HTTP_PROXY"
