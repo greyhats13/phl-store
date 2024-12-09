@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "phl_products.fullname" . }}
+  name: {{ include "phl-dev-svc-products.fullname" . }}
   labels:
-    {{- include "phl_products.labels" . | nindent 4 }}
+    {{- include "phl-dev-svc-products.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "phl_products.selectorLabels" . | nindent 6 }}
+      {{- include "phl-dev-svc-products.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -18,7 +18,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "phl_products.labels" . | nindent 8 }}
+        {{- include "phl-dev-svc-products.labels" . | nindent 8 }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -27,7 +27,7 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "phl_products.serviceAccountName" . }}
+      serviceAccountName: {{ include "phl-dev-svc-products.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
