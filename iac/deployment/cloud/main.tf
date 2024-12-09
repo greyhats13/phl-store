@@ -563,8 +563,8 @@ module "argocd" {
     alb_listen_ports                 = "[{\"HTTP\": 80}, {\"HTTPS\": 443}]"
     alb_scheme                       = "internet-facing"
     alb_target_type                  = "ip"
-    alb_group_name                   = "${var.unit}-${var.env}-svc-ingress"
-    alb_group_order                  = "100"
+    alb_group_name                   = "${var.unit}-${var.env}-${local.argocd_standard.Code}-ingress"
+    alb_group_order                  = "1"
     alb_healthcheck_path             = "/"
     alb_ssl_redirect                 = 443
     aws_alb_service_type             = "ClusterIP"
@@ -638,8 +638,8 @@ module "atlantis" {
     alb_listen_ports                 = "[{\"HTTP\": 80}, {\"HTTPS\": 443}]"
     alb_scheme                       = "internet-facing"
     alb_target_type                  = "ip"
-    alb_group_name                   = "${var.unit}-${var.env}-svc-ingress"
-    alb_group_order                  = "100"
+    alb_group_name                   = "${var.unit}-${var.env}-${local.atlantis_standard.Code}-ingress"
+    alb_group_order                  = "2"
     alb_healthcheck_path             = "/"
     alb_ssl_redirect                 = 443
     aws_alb_service_type             = "ClusterIP"
