@@ -10,7 +10,7 @@ locals {
 ################################################################################
 
 resource "aws_apigatewayv2_api" "this" {
-  count = var.create && var.existing_gateway_id != null ? 1 : 0
+  count = var.create && var.existing_gateway_id == null ? 1 : 0
 
   api_key_selection_expression = local.is_websocket ? var.api_key_selection_expression : null
   body                         = local.is_http ? var.body : null
