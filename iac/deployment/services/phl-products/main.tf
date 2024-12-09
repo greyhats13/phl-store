@@ -27,7 +27,7 @@ module "secrets_iac" {
   recovery_window_in_days = 0
   # Policy
   create_policy       = true
-  block_public_policy = trueapi_id
+  block_public_policy = true
   policy_statements = {
     admin = {
       sid = "IacSecretAdmin"
