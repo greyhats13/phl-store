@@ -13,7 +13,7 @@ resource "mysql_grant" "db" {
   user       = mysql_user.db.user
   host       = mysql_user.db.host
   database   = mysql_database.db.name
-  privileges = ["SELECT", "INSERT", "UPDATE", "DELETE"]
+  privileges = ["CREATE", "SELECT", "INSERT", "UPDATE", "DELETE"]
 }
 
 # Create Secrets Manager
