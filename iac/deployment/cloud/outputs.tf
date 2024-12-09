@@ -77,6 +77,10 @@ output "cognito_user_pool_endpoint" {
   value = module.cognito_pool.cognito_user_pool_endpoint
 }
 
+output "cognito_authrization_scopes" {
+  value = module.cognito_pool.cognito_authrization_scopes
+}
+
 # API Gateway Outputs
 output "api_id" {
   value = module.api.api_id

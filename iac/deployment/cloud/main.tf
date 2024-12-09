@@ -793,21 +793,13 @@ module "cognito_pool" {
       name       = "${local.cognito_naming_standard}-apigw"
       scopes = [
         {
-          scope_name        = "api.read"
-          scope_description = "Read access"
-        },
-        {
-          scope_name        = "api.write"
-          scope_description = "Write access"
+          scope_name        = "all"
+          scope_description = "Get access to all API Gateway endpoints."
         }
       ]
     }
   }
   allowed_oauth_flows = ["client_credentials"]
-  allowed_oauth_scopes = [
-    "https://api.${local.route53_domain_name}/api.read",
-    "https://api.${local.route53_domain_name}/api.write"
-  ]
   auto_verified_attributes = ["email"]
   username_attributes      = ["email"]
   access_token_validity    = 60
