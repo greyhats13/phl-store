@@ -15,7 +15,7 @@ data "terraform_remote_state" "cloud" {
   backend = "s3"
 
   config = {
-    bucket  = "${var.unit}-${var.env}-s3-tfstate"
+    bucket  = "${var.unit}-${var.env}-s3-tfstapi_gateway_idate"
     key     = "${var.unit}/deployment/cloud/${var.unit}-${var.env}-deployment-cloud.tfstate"
     region  = var.region
     # profile = "${var.unit}-${var.env}"
