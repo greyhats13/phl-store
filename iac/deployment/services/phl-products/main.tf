@@ -130,7 +130,7 @@ module "api_integration_routes" {
     "GET /api/products" = {
       authorization_type     = "JWT"
       authorizer_key         = "cognito"
-      authorization_scopes   = data.terraform_remote_state.cognito.outputs.cognito_authrization_scopes
+      authorization_scopes   = data.terraform_remote_state.cloud.outputs.cognito_authrization_scopes
       throttling_rate_limit  = 80
       throttling_burst_limit = 40
 
@@ -147,7 +147,7 @@ module "api_integration_routes" {
     "POST /api/products" = {
       authorization_type     = "JWT"
       authorizer_key         = "cognito"
-      authorization_scopes   = data.terraform_remote_state.cognito.outputs.cognito_authrization_scopes
+      authorization_scopes   = data.terraform_remote_state.cloud.outputs.cognito_authrization_scopes
       throttling_rate_limit  = 80
       throttling_burst_limit = 40
 
@@ -163,7 +163,7 @@ module "api_integration_routes" {
     "PUT /api/products" = {
       authorization_type     = "JWT"
       authorizer_key         = "cognito"
-      authorization_scopes   = data.terraform_remote_state.cognito.outputs.cognito_authrization_scopes
+      authorization_scopes   = data.terraform_remote_state.cloud.outputs.cognito_authrization_scopes
       throttling_rate_limit  = 80
       throttling_burst_limit = 40
 
@@ -180,7 +180,7 @@ module "api_integration_routes" {
     "DELETE /api/products" = {
       authorization_type     = "JWT"
       authorizer_key         = "cognito"
-      authorization_scopes   = data.terraform_remote_state.cognito.outputs.cognito_authrization_scopes
+      authorization_scopes   = data.terraform_remote_state.cloud.outputs.cognito_authrization_scopes
       throttling_rate_limit  = 80
       throttling_burst_limit = 40
 
