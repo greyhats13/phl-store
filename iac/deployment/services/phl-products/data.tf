@@ -34,7 +34,7 @@ data "aws_eks_cluster_auth" "cluster" {
 }
 
 data "aws_lb" "selected" {
-  name = "k8s-phldevsvcingress-9fd5a50e2d"
+  name = "k8s-phldevsvcingress-95c2777f2b"
 }
 
 data "aws_lb_listener" "selected443" {
