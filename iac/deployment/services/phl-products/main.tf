@@ -171,12 +171,14 @@ module "api_integration_routes" {
           "overwrite.headers.host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
           "overwrite:path"         = "/${local.svc_standard.Feature}"
         }
-        response_parameters = {
-          status_code = 200
-          mappings = {
-            "overwrite:statuscode" = "204"
+        response_parameters = [
+          {
+            status_code = 200
+            mappings = {
+              "overwrite:statuscode" = "204"
+            }
           }
-        }
+        ]
       }
     }
 
@@ -249,12 +251,14 @@ module "api_integration_routes" {
           "overwrite.headers.host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
           "overwrite:path"         = "/${local.svc_standard.Feature}"
         }
-        response_parameters = {
-          status_code = 200
-          mappings = {
-            "overwrite:statuscode" = "204"
+        response_parameters = [
+          {
+            status_code = 200
+            mappings = {
+              "overwrite:statuscode" = "204"
+            }
           }
-        }
+        ]
       }
     }
     "$default" = {
