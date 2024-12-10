@@ -144,7 +144,8 @@ module "api_integration_routes" {
           server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
         }
         request_parameters = {
-          "overwrite:path"        = "/api/${local.svc_standard.Feature}"
+          "integration.request.header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          "overwrite:path"         = "/${local.svc_standard.Feature}"
         }
       }
     }
@@ -167,7 +168,8 @@ module "api_integration_routes" {
           server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
         }
         request_parameters = {
-          "overwrite:path"        = "/api/${local.svc_standard.Feature}"
+          "integration.request.header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          "overwrite:path"         = "/${local.svc_standard.Feature}"
         }
         response_parameters = [
           {
@@ -198,7 +200,8 @@ module "api_integration_routes" {
           server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
         }
         request_parameters = {
-          "overwrite:path"        = "/api/${local.svc_standard.Feature}"
+          "integration.request.header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          "overwrite:path"         = "/${local.svc_standard.Feature}"
         }
       }
     }
@@ -221,7 +224,8 @@ module "api_integration_routes" {
           server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
         }
         request_parameters = {
-          "overwrite:path"        = "/api/${local.svc_standard.Feature}"
+          "integration.request.header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          "overwrite:path"         = "/${local.svc_standard.Feature}"
         }
       }
     }
@@ -244,7 +248,8 @@ module "api_integration_routes" {
           server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
         }
         request_parameters = {
-          "overwrite:path"        = "/api/${local.svc_standard.Feature}"
+          "integration.request.header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          "overwrite:path"         = "/${local.svc_standard.Feature}"
         }
         response_parameters = [
           {
