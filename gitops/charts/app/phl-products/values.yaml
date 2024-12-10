@@ -94,13 +94,9 @@ ingress:
       paths:
         - path: /api/products
           pathType: Prefix
-    - host: api.phl.blast.co.id
-      paths:
-        - path: /api/products
-          pathType: Prefix
   tls:
     - hosts:
-        - api.phl.blast.co.id
+        - products.phl.blast.co.id
 
 resources:
   # We usually recommend not to specify default resources and to leave this as a conscious
