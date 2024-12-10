@@ -28,6 +28,12 @@ data "aws_secretsmanager_secret_version" "aurora_password" {
   version_stage = "AWSCURRENT"
 }
 
+# Get AWS Secrets Manager current version
+data "aws_secretsmanager_secret_version" "argocd_ssh" {
+  secret_id     = "phl/dev/secretsmanager/iac"
+  version_stage = "AWSCURRENT"
+}
+
 # Get eks cluster token
 data "aws_eks_cluster_auth" "cluster" {
   name = data.terraform_remote_state.cloud.outputs.eks_cluster_name
