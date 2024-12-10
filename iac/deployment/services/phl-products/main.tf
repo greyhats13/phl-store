@@ -105,7 +105,7 @@ module "ecr" {
       ]
     }
   ]
-  repository_kms_key = data.terraform_remote_state.cloud.outputs.kms_key_arn
+  repository_kms_key = data.terraform_remote_state.cloud.outputs.main_key_arn
   tags = {
     Terraform   = "true"
     Environment = "dev"
