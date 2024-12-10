@@ -95,6 +95,10 @@ ingress:
       paths:
         - path: /api/products
           pathType: Prefix
+    - host: api.phl.blast.co.id
+      paths:
+        - path: /api/products
+          pathType: Prefix
   tls:
     - hosts:
         - products.phl.blast.co.id
