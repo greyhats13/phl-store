@@ -799,7 +799,7 @@ module "cognito_pool" {
       ]
     }
   }
-  allowed_oauth_flows = ["client_credentials"]
+  allowed_oauth_flows      = ["client_credentials"]
   auto_verified_attributes = ["email"]
   username_attributes      = ["email"]
   access_token_validity    = 60
@@ -821,7 +821,7 @@ module "api_sg" {
 
   egress_rules = ["all-all"]
 
-  tags = local.tags
+  tags = local.api_standard
 }
 
 

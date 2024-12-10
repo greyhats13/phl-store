@@ -141,6 +141,9 @@ module "api_integration_routes" {
         type            = "HTTP_PROXY"
         method          = "GET"
         uri             = data.aws_lb_listener.listener.arn
+        tls_config = {
+          server_name_to_verify = "api.phl.blast.co.id"
+        }
       }
     }
 
@@ -158,6 +161,9 @@ module "api_integration_routes" {
         type            = "HTTP_PROXY"
         method          = "POST"
         uri             = data.aws_lb_listener.listener.arn
+        tls_config = {
+          server_name_to_verify = "api.phl.blast.co.id"
+        }
       }
     }
     "PUT /api/products" = {
@@ -174,6 +180,9 @@ module "api_integration_routes" {
         type            = "HTTP_PROXY"
         method          = "PUT"
         uri             = data.aws_lb_listener.listener.arn
+        tls_config = {
+          server_name_to_verify = "api.phl.blast.co.id"
+        }
       }
     }
 
@@ -191,6 +200,9 @@ module "api_integration_routes" {
         type            = "HTTP_PROXY"
         method          = "DELETE"
         uri             = data.aws_lb_listener.listener.arn
+        tls_config = {
+          server_name_to_verify = "api.phl.blast.co.id"
+        }
       }
     }
   }
