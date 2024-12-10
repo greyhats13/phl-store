@@ -175,7 +175,7 @@ module "api_integration_routes" {
           {
             status_code = 200
             mappings = {
-              "overwrite:statuscode" = "204"
+              "overwrite:statuscode" = "201"
             }
           }
         ]
