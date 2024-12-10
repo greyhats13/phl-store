@@ -30,7 +30,7 @@ data "aws_secretsmanager_secret_version" "aurora_password" {
 
 # Get AWS Secrets Manager current version
 data "aws_secretsmanager_secret_version" "argocd_ssh" {
-  secret_id     = "phl/dev/secretsmanager/iac
+  secret_id     = "phl/dev/secretsmanager/iac"
   version_stage = "AWSCURRENT"
 }
 
