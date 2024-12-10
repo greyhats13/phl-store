@@ -71,10 +71,15 @@ module "secrets_iac" {
 # CI/CD Components
 module "ecr" {
   source  = "terraform-aws-modules/ecr/aws"
-  version = "~> 2.3.0"
+  version = "~> 2.3.1"
 
-  repository_name                   = local.svc_naming_standard
-  repository_read_write_access_arns = ["arn:aws:iam::012345678901:role/terraform"]
+  repository_name = local.svc_naming_standard
+  repository_read_write_access_arns = [
+    "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/iac",
+    "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/atlantis-role",
+    "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/github",
+    "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/root"
+  ]
   repository_lifecycle_policy = jsonencode({
     rules = [
       {
@@ -106,7 +111,7 @@ module "ecr" {
     }
   ]
   repository_encryption_type = "KMS"
-  repository_kms_key = data.terraform_remote_state.cloud.outputs.main_key_arn
+  repository_kms_key         = data.terraform_remote_state.cloud.outputs.main_key_arn
   tags = {
     Terraform   = "true"
     Environment = "dev"
