@@ -1,5 +1,14 @@
 orgAllowlist: github.com/greyhats13/*
 
+environment:
+  GITHUB_OWNER: ${extra_vars.github_user}
+
+environmentSecrets:
+  - name: GITHUB_TOKEN
+    secretKeyRef:
+      name: ${unit}-${env}-${code}-${feature}-webhook
+      key: github_token
+
 github:
   user: ${extra_vars.github_user}
 
