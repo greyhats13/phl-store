@@ -118,8 +118,8 @@ module "ecr" {
   }
 }
 
-# Setup repository for argocd and atlantis
-module "repo_phl" {
+# Prepare GIthub
+module "github_action_env" {
   source                  = "../../../modules/github"
   repo_name               = var.github_repo
   owner                   = var.github_owner
