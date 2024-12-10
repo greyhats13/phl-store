@@ -25,6 +25,10 @@ terraform {
       source  = "petoju/mysql"
       version = "3.0.67"
     }
+    github = {
+      source  = "integrations/github"
+      version = "~> 6.4.0"
+    }
   }
 }
 
