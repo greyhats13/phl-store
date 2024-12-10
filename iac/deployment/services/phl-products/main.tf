@@ -120,13 +120,11 @@ module "ecr" {
 
 # Setup repository for argocd and atlantis
 module "repo_phl" {
-  source                     = "../../../modules/github"
-  repo_name                  = var.github_repo
-  owner                      = var.github_owner
-  create_deploy_key          = true
-  add_repo_ssh_key_to_argocd = true
-  is_deploy_key_read_only    = false
-  github_action_variables    = local.github_action_variables
+  source                  = "../../../modules/github"
+  repo_name               = var.github_repo
+  owner                   = var.github_owner
+  github_action_variables = local.github_action_variables
+  github_action_secrets   = local.github_action_secrets
 }
 
 ## ArgoCD Vault Plugin (AVP) Pod Identity
