@@ -913,3 +913,16 @@ module "api" {
     Terraform   = "true"
   }
 }
+
+# Create OIDC provider for GitHub Actions
+module "oidc_github" {
+  source  = "unfunco/oidc-github/aws"
+  version = "1.8.0"
+
+  attach_read_only_policy = false
+  additional_thumbprints  = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
+  iam_role_policy_arns    = ["arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"]
+  github_repositories = [
+    "greyhats13/phl-store",
+  ]
+}
