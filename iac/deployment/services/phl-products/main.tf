@@ -146,7 +146,7 @@ module "api_integration_routes" {
         request_parameters = {
           "append:header.header2" = "$request.header.header1"
           "remove:header.header1" = "''"
-          "overwrite:path"        = "/${local.svc_standard.Feature}"
+          "overwrite:path"        = "/api/${local.svc_standard.Feature}"
         }
       }
     }
@@ -171,7 +171,7 @@ module "api_integration_routes" {
         request_parameters = {
           "append:header.header2" = "$request.header.header1"
           "remove:header.header1" = "''"
-          "overwrite:path"        = "/${local.svc_standard.Feature}"
+          "overwrite:path"        = "/api/${local.svc_standard.Feature}"
         }
         response_parameters = [
           {
@@ -204,7 +204,7 @@ module "api_integration_routes" {
         request_parameters = {
           "append:header.header2" = "$request.header.header1"
           "remove:header.header1" = "''"
-          "overwrite:path"        = "/${local.svc_standard.Feature}"
+          "overwrite:path"        = "/api/${local.svc_standard.Feature}"
         }
       }
     }
@@ -229,7 +229,7 @@ module "api_integration_routes" {
         request_parameters = {
           "append:header.header2" = "$request.header.header1"
           "remove:header.header1" = "''"
-          "overwrite:path"        = "/${local.svc_standard.Feature}"
+          "overwrite:path"        = "/api/${local.svc_standard.Feature}"
         }
       }
     }
@@ -254,7 +254,7 @@ module "api_integration_routes" {
         request_parameters = {
           "append:header.header2" = "$request.header.header1"
           "remove:header.header1" = "''"
-          "overwrite:path"        = "/${local.svc_standard.Feature}"
+          "overwrite:path"        = "/api/${local.svc_standard.Feature}"
         }
         response_parameters = [
           {
