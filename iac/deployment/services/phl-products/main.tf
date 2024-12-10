@@ -144,6 +144,7 @@ module "api_integration_routes" {
           server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
         }
         request_parameters = {
+          "overwrite:header:Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
           "overwrite:path"        = "/api/${local.svc_standard.Feature}"
         }
       }
@@ -167,13 +168,14 @@ module "api_integration_routes" {
           server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
         }
         request_parameters = {
+          "overwrite:header:Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
           "overwrite:path"        = "/api/${local.svc_standard.Feature}"
         }
         response_parameters = [
           {
             status_code = 200
             mappings = {
-              "overwrite:statuscode" = "204"
+              "overwrite:statuscode" = "201"
             }
           }
         ]
@@ -198,6 +200,7 @@ module "api_integration_routes" {
           server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
         }
         request_parameters = {
+          "overwrite:header:Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
           "overwrite:path"        = "/api/${local.svc_standard.Feature}"
         }
       }
@@ -221,6 +224,7 @@ module "api_integration_routes" {
           server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
         }
         request_parameters = {
+          "overwrite:header:Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
           "overwrite:path"        = "/api/${local.svc_standard.Feature}"
         }
       }
@@ -244,6 +248,7 @@ module "api_integration_routes" {
           server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
         }
         request_parameters = {
+          "overwrite:header:Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
           "overwrite:path"        = "/api/${local.svc_standard.Feature}"
         }
         response_parameters = [
