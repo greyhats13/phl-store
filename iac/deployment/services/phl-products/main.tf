@@ -142,7 +142,7 @@ module "api_integration_routes" {
         method          = "GET"
         uri             = data.aws_lb_listener.listener.arn
         tls_config = {
-          server_name_to_verify = "api.phl.blast.co.id"
+          server_name_to_verify = data.terraform_remote_state.cloud.outputs.api_server_name_to_verify
         }
       }
     }
@@ -162,7 +162,7 @@ module "api_integration_routes" {
         method          = "POST"
         uri             = data.aws_lb_listener.listener.arn
         tls_config = {
-          server_name_to_verify = "api.phl.blast.co.id"
+          server_name_to_verify = data.terraform_remote_state.cloud.outputs.api_server_name_to_verify
         }
       }
     }
@@ -181,7 +181,7 @@ module "api_integration_routes" {
         method          = "PUT"
         uri             = data.aws_lb_listener.listener.arn
         tls_config = {
-          server_name_to_verify = "api.phl.blast.co.id"
+          server_name_to_verify = data.terraform_remote_state.cloud.outputs.api_server_name_to_verify
         }
       }
     }
@@ -201,7 +201,7 @@ module "api_integration_routes" {
         method          = "DELETE"
         uri             = data.aws_lb_listener.listener.arn
         tls_config = {
-          server_name_to_verify = "api.phl.blast.co.id"
+          server_name_to_verify = data.terraform_remote_state.cloud.outputs.api_server_name_to_verify
         }
       }
     }
