@@ -40,7 +40,7 @@ output "aurora_cluster_username" {
   value = module.aurora_main.cluster_master_username
 }
 
-# # EKS Outputs
+# EKS Outputs
 output "eks_cluster_name" {
   value = module.eks_main.cluster_name
 }
@@ -51,6 +51,11 @@ output "eks_cluster_endpoint" {
 
 output "eks_cluster_certificate_authority_data" {
   value = module.eks_main.cluster_certificate_authority_data
+}
+
+# Route 53
+output "dns_name" {
+  value = "${local.route53_domain_name}"
 }
 
 # EKS Karpenter
@@ -96,8 +101,4 @@ output "api_vpc_links" {
 
 output "api_authorizers" {
   value = module.api.authorizers
-}
-
-output "api_server_name_to_verify" {
-  value = "api.${local.route53_domain_name}"
 }
