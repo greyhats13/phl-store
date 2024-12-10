@@ -126,7 +126,7 @@ module "api_integration_routes" {
   deploy_stage                   = true
   create_routes_and_integrations = true
   routes = {
-    "ANY /{proxy+}" = {
+    "GET /{proxy+}" = {
       authorization_type     = "JWT"
       authorizer_key         = "cognito-authorizer"
       authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
@@ -139,71 +139,71 @@ module "api_integration_routes" {
         connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
         type            = "HTTP_PROXY"
         method          = "GET"
-        uri             = "https://products.phl.blast.co.id"
+        uri             = data.aws_lb_listener.listener.arn
         tls_config = {
           server_name_to_verify = data.terraform_remote_state.cloud.outputs.api_server_name_to_verify
         }
       }
     }
 
-    # "POST /api/products" = {
-    #   authorization_type     = "JWT"
-    #   authorizer_key         = "cognito-authorizer"
-    #   authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
-    #   authorization_scopes   = data.terraform_remote_state.cloud.outputs.cognito_authrization_scopes
-    #   throttling_rate_limit  = 80
-    #   throttling_burst_limit = 40
+    "POST /{proxy+}" = {
+      authorization_type     = "JWT"
+      authorizer_key         = "cognito-authorizer"
+      authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
+      authorization_scopes   = data.terraform_remote_state.cloud.outputs.cognito_authrization_scopes
+      throttling_rate_limit  = 80
+      throttling_burst_limit = 40
 
-    #   integration = {
-    #     connection_type = "VPC_LINK"
-    #     connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
-    #     type            = "HTTP_PROXY"
-    #     method          = "POST"
-    #     uri             = data.aws_lb_listener.listener.arn
-    #     tls_config = {
-    #       server_name_to_verify = data.terraform_remote_state.cloud.outputs.api_server_name_to_verify
-    #     }
-    #   }
-    # }
-    # "PUT /api/products" = {
-    #   authorization_type     = "JWT"
-    #   authorizer_key         = "cognito-authorizer"
-    #   authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
-    #   authorization_scopes   = data.terraform_remote_state.cloud.outputs.cognito_authrization_scopes
-    #   throttling_rate_limit  = 80
-    #   throttling_burst_limit = 40
+      integration = {
+        connection_type = "VPC_LINK"
+        connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
+        type            = "HTTP_PROXY"
+        method          = "POST"
+        uri             = data.aws_lb_listener.listener.arn
+        tls_config = {
+          server_name_to_verify = data.terraform_remote_state.cloud.outputs.api_server_name_to_verify
+        }
+      }
+    }
+    "PUT /{proxy+}" = {
+      authorization_type     = "JWT"
+      authorizer_key         = "cognito-authorizer"
+      authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
+      authorization_scopes   = data.terraform_remote_state.cloud.outputs.cognito_authrization_scopes
+      throttling_rate_limit  = 80
+      throttling_burst_limit = 40
 
-    #   integration = {
-    #     connection_type = "VPC_LINK"
-    #     connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
-    #     type            = "HTTP_PROXY"
-    #     method          = "PUT"
-    #     uri             = data.aws_lb_listener.listener.arn
-    #     tls_config = {
-    #       server_name_to_verify = data.terraform_remote_state.cloud.outputs.api_server_name_to_verify
-    #     }
-    #   }
-    # }
+      integration = {
+        connection_type = "VPC_LINK"
+        connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
+        type            = "HTTP_PROXY"
+        method          = "PUT"
+        uri             = data.aws_lb_listener.listener.arn
+        tls_config = {
+          server_name_to_verify = data.terraform_remote_state.cloud.outputs.api_server_name_to_verify
+        }
+      }
+    }
 
-    # "DELETE /api/products" = {
-    #   authorization_type     = "JWT"
-    #   authorizer_key         = "cognito-authorizer"
-    #   authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
-    #   authorization_scopes   = data.terraform_remote_state.cloud.outputs.cognito_authrization_scopes
-    #   throttling_rate_limit  = 80
-    #   throttling_burst_limit = 40
+    "DELETE /{proxy+}" = {
+      authorization_type     = "JWT"
+      authorizer_key         = "cognito-authorizer"
+      authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
+      authorization_scopes   = data.terraform_remote_state.cloud.outputs.cognito_authrization_scopes
+      throttling_rate_limit  = 80
+      throttling_burst_limit = 40
 
-    #   integration = {
-    #     connection_type = "VPC_LINK"
-    #     connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
-    #     type            = "HTTP_PROXY"
-    #     method          = "DELETE"
-    #     uri             = data.aws_lb_listener.listener.arn
-    #     tls_config = {
-    #       server_name_to_verify = data.terraform_remote_state.cloud.outputs.api_server_name_to_verify
-    #     }
-    #   }
-    # }
+      integration = {
+        connection_type = "VPC_LINK"
+        connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
+        type            = "HTTP_PROXY"
+        method          = "DELETE"
+        uri             = data.aws_lb_listener.listener.arn
+        tls_config = {
+          server_name_to_verify = data.terraform_remote_state.cloud.outputs.api_server_name_to_verify
+        }
+      }
+    }
   }
   tags = {
     Environment = "dev"
