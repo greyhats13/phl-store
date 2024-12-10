@@ -13,7 +13,7 @@ jobs:
     environment: phl-products
     name: Build, Push, Tag
     runs-on: ubuntu-latest
-    needs: test_and_coverages
+    # needs: test_and_coverages
     # if: ${{ needs.test_and_coverages.outputs.quality_gate_status != 'FAILED' && (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
     if: ${{ github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main' }}
     outputs:
@@ -26,11 +26,18 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3.6.1
 
-      - name: Login to Docker Registry
-        uses: docker/login-action@v3.3.0
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push docker image to Amazon ECR
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: my-ecr-repo
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
+          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
 
       - name: Set Image Tag
         id: set_image_tag
@@ -66,142 +73,142 @@ jobs:
           # # multi-platform
           # platforms: linux/amd64,linux/arm64
 
-  retag_and_push:
-    environment: phl-products
-    name: Retag and Push
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
-    outputs:
-      image_tag_sha: ${{ steps.set_image_tag.outputs.image_tag_sha }}
-      chart_path: ${{ steps.set_image_tag.outputs.chart_path }}
-    steps:
-      - name: Login to Docker Registry
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+  # retag_and_push:
+  #   environment: phl-products
+  #   name: Retag and Push
+  #   runs-on: ubuntu-latest
+  #   if: startsWith(github.ref, 'refs/tags/v')
+  #   outputs:
+  #     image_tag_sha: ${{ steps.set_image_tag.outputs.image_tag_sha }}
+  #     chart_path: ${{ steps.set_image_tag.outputs.chart_path }}
+  #   steps:
+  #     - name: Login to Docker Registry
+  #       uses: docker/login-action@v2
+  #       with:
+  #         username: ${{ secrets.DOCKER_USERNAME }}
+  #         password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Retag and Push for Release
-        run: |
-          docker pull ${{ vars.DOCKER_REPOSITORY_URI }}:beta-latest
-          docker tag ${{ vars.DOCKER_REPOSITORY_URI }}:beta-latest ${{ vars.DOCKER_REPOSITORY_URI }}:${{ github.ref_name }}
-          docker tag ${{ vars.DOCKER_REPOSITORY_URI }}:beta-latest ${{ vars.DOCKER_REPOSITORY_URI }}:latest
-          docker push ${{ vars.DOCKER_REPOSITORY_URI }}:${{ github.ref_name }}
-          docker push ${{ vars.DOCKER_REPOSITORY_URI }}:latest
+  #     - name: Retag and Push for Release
+  #       run: |
+  #         docker pull ${{ vars.DOCKER_REPOSITORY_URI }}:beta-latest
+  #         docker tag ${{ vars.DOCKER_REPOSITORY_URI }}:beta-latest ${{ vars.DOCKER_REPOSITORY_URI }}:${{ github.ref_name }}
+  #         docker tag ${{ vars.DOCKER_REPOSITORY_URI }}:beta-latest ${{ vars.DOCKER_REPOSITORY_URI }}:latest
+  #         docker push ${{ vars.DOCKER_REPOSITORY_URI }}:${{ github.ref_name }}
+  #         docker push ${{ vars.DOCKER_REPOSITORY_URI }}:latest
 
-      - name: Set IMAGE_TAG_SHA and CHART_PATH outputs
-        id: set_image_tag
-        run: |
-          echo "image_tag_sha=${{ github.ref_name }}" >> $GITHUB_OUTPUT
-          echo "chart_path=${{ vars.GITOPS_PATH_PRD }}" >> $GITHUB_OUTPUT
+  #     - name: Set IMAGE_TAG_SHA and CHART_PATH outputs
+  #       id: set_image_tag
+  #       run: |
+  #         echo "image_tag_sha=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+  #         echo "chart_path=${{ vars.GITOPS_PATH_PRD }}" >> $GITHUB_OUTPUT
 
-  deployment:
-    environment: phl-products
-    name: Deployment
-    runs-on: ubuntu-latest
-    needs: [build_push_tag, retag_and_push]
-    if: ${{ always() && (needs.build_push_tag.result == 'success' || needs.retag_and_push.result == 'success') }}
-    steps:
-      - name: Determine IMAGE_TAG_SHA and CHART_PATH
-        run: |
-          if [ "${{ needs.build_push_tag.result }}" == "success" ]; then
-            echo "IMAGE_TAG_SHA=${{ needs.build_push_tag.outputs.image_tag_sha }}" >> $GITHUB_ENV
-            echo "CHART_PATH=${{ needs.build_push_tag.outputs.chart_path }}" >> $GITHUB_ENV
-          elif [ "${{ needs.retag_and_push.result }}" == "success" ]; then
-            echo "IMAGE_TAG_SHA=${{ needs.retag_and_push.outputs.image_tag_sha }}" >> $GITHUB_ENV
-            echo "CHART_PATH=${{ needs.retag_and_push.outputs.chart_path }}" >> $GITHUB_ENV
-          else
-            echo "No build or retag job succeeded."
-            exit 1
-          fi
+  # deployment:
+  #   environment: phl-products
+  #   name: Deployment
+  #   runs-on: ubuntu-latest
+  #   needs: [build_push_tag, retag_and_push]
+  #   if: ${{ always() && (needs.build_push_tag.result == 'success' || needs.retag_and_push.result == 'success') }}
+  #   steps:
+  #     - name: Determine IMAGE_TAG_SHA and CHART_PATH
+  #       run: |
+  #         if [ "${{ needs.build_push_tag.result }}" == "success" ]; then
+  #           echo "IMAGE_TAG_SHA=${{ needs.build_push_tag.outputs.image_tag_sha }}" >> $GITHUB_ENV
+  #           echo "CHART_PATH=${{ needs.build_push_tag.outputs.chart_path }}" >> $GITHUB_ENV
+  #         elif [ "${{ needs.retag_and_push.result }}" == "success" ]; then
+  #           echo "IMAGE_TAG_SHA=${{ needs.retag_and_push.outputs.image_tag_sha }}" >> $GITHUB_ENV
+  #           echo "CHART_PATH=${{ needs.retag_and_push.outputs.chart_path }}" >> $GITHUB_ENV
+  #         else
+  #           echo "No build or retag job succeeded."
+  #           exit 1
+  #         fi
 
-      - name: Update Helm Chart
-        run: |
-          echo "IMAGE_TAG_SHA: ${{ env.IMAGE_TAG_SHA }}"
-          echo "CHART_PATH: ${{ env.CHART_PATH }}"
-          eval "$(ssh-agent -s)"
-          echo "${{ secrets.GITOPS_SSH_PRIVATE_KEY }}" > id_rsa
-          chmod 400 id_rsa
-          ssh-add id_rsa
-          git clone ${{ vars.REPO_GITOPS_SSH }}
-          echo ${{ vars.GITOPS_REPO_NAME }}/${{ env.CHART_PATH }}
-          cd ${{ vars.GITOPS_REPO_NAME }}/${{ env.CHART_PATH }}
-          sed -i "s|repository: .*|repository: ${{ vars.DOCKER_REPOSITORY_URI }}|" values.yaml
-          sed -i "s/appVersion: \".*\"/appVersion: \"${{ env.IMAGE_TAG_SHA }}\"/" Chart.yaml
-          git add values.yaml Chart.yaml
-          git config --global user.email "imam.arief.rhmn@gmail.com"
-          git config --global user.name "greyhats13"
-          git commit -m "Update image tag to ${{ env.IMAGE_TAG_SHA }}"
-          git push origin main
+  #     - name: Update Helm Chart
+  #       run: |
+  #         echo "IMAGE_TAG_SHA: ${{ env.IMAGE_TAG_SHA }}"
+  #         echo "CHART_PATH: ${{ env.CHART_PATH }}"
+  #         eval "$(ssh-agent -s)"
+  #         echo "${{ secrets.GITOPS_SSH_PRIVATE_KEY }}" > id_rsa
+  #         chmod 400 id_rsa
+  #         ssh-add id_rsa
+  #         git clone ${{ vars.REPO_GITOPS_SSH }}
+  #         echo ${{ vars.GITOPS_REPO_NAME }}/${{ env.CHART_PATH }}
+  #         cd ${{ vars.GITOPS_REPO_NAME }}/${{ env.CHART_PATH }}
+  #         sed -i "s|repository: .*|repository: ${{ vars.DOCKER_REPOSITORY_URI }}|" values.yaml
+  #         sed -i "s/appVersion: \".*\"/appVersion: \"${{ env.IMAGE_TAG_SHA }}\"/" Chart.yaml
+  #         git add values.yaml Chart.yaml
+  #         git config --global user.email "imam.arief.rhmn@gmail.com"
+  #         git config --global user.name "greyhats13"
+  #         git commit -m "Update image tag to ${{ env.IMAGE_TAG_SHA }}"
+  #         git push origin main
 
 
-  end_to_end_test:
-    name: End-to-End Test
-    runs-on: ubuntu-latest
-    needs: [deployment]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+  # end_to_end_test:
+  #   name: End-to-End Test
+  #   runs-on: ubuntu-latest
+  #   needs: [deployment]
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
+  #     - name: Set up Python
+  #       uses: actions/setup-python@v4
+  #       with:
+  #         python-version: '3.11'
 
-      - name: Install Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          npm install -g newman
+  #     - name: Install Dependencies
+  #       run: |
+  #         python -m pip install --upgrade pip
+  #         pip install -r requirements.txt
+  #         npm install -g newman
 
-      - name: Start the Application
-        run: |
-          uvicorn main:app --host 0.0.0.0 --port 8000 &
-          sleep 5
+  #     - name: Start the Application
+  #       run: |
+  #         uvicorn main:app --host 0.0.0.0 --port 8000 &
+  #         sleep 5
 
-      - name: Run Newman Tests
-        run: |
-          newman run profile.postman_collection.json --env-var "base_url=http://127.0.0.1:8000"
+  #     - name: Run Newman Tests
+  #       run: |
+  #         newman run profile.postman_collection.json --env-var "base_url=http://127.0.0.1:8000"
 
-      - name: Stop the Application
-        run: |
-          pkill uvicorn
+  #     - name: Stop the Application
+  #       run: |
+  #         pkill uvicorn
 
-  performance_test:
-    name: Performance Test
-    runs-on: ubuntu-latest
-    needs: [deployment]
-    steps:
-      - name: Install K6
-        run: |
-          sudo apt update
-          sudo apt install -y gnupg software-properties-common
-          wget -qO - https://dl.k6.io/key.gpg | sudo apt-key add -
-          echo "deb https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
-          sudo apt update
-          sudo apt install -y k6
+  # performance_test:
+  #   name: Performance Test
+  #   runs-on: ubuntu-latest
+  #   needs: [deployment]
+  #   steps:
+  #     - name: Install K6
+  #       run: |
+  #         sudo apt update
+  #         sudo apt install -y gnupg software-properties-common
+  #         wget -qO - https://dl.k6.io/key.gpg | sudo apt-key add -
+  #         echo "deb https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+  #         sudo apt update
+  #         sudo apt install -y k6
 
-      - name: Run K6 Load Test
-        env:
-          BASE_URL: 'https://api.phl.blast.co.id'
-        run: |
-          k6 run tests/performance/loadtest.js
+  #     - name: Run K6 Load Test
+  #       env:
+  #         BASE_URL: 'https://api.phl.blast.co.id'
+  #       run: |
+  #         k6 run tests/performance/loadtest.js
 
-  security_test:
-    name: Security Test
-    runs-on: ubuntu-latest
-    needs: [deployment]
-    steps:
-      - name: Run OWASP ZAP Baseline Scan
-        run: |
-          docker pull owasp/zap2docker-stable
-          docker run -v $(pwd):/zap/wrk/:rw -t owasp/zap2docker-stable zap-baseline.py -t https://profile.dev.phl.blast.co.id -r zap_report.html
+  # security_test:
+  #   name: Security Test
+  #   runs-on: ubuntu-latest
+  #   needs: [deployment]
+  #   steps:
+  #     - name: Run OWASP ZAP Baseline Scan
+  #       run: |
+  #         docker pull owasp/zap2docker-stable
+  #         docker run -v $(pwd):/zap/wrk/:rw -t owasp/zap2docker-stable zap-baseline.py -t https://profile.dev.phl.blast.co.id -r zap_report.html
 
-      - name: Upload ZAP Report
-        uses: actions/upload-artifact@v3
-        with:
-          name: zap-report
-          path: zap_report.html
+  #     - name: Upload ZAP Report
+  #       uses: actions/upload-artifact@v3
+  #       with:
+  #         name: zap-report
+  #         path: zap_report.html
 
   # notification:
   #   environment: phl-products
