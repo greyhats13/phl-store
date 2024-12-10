@@ -115,7 +115,6 @@ module "argocd_app" {
   }
 }
 
-
 module "api_integration_routes" {
   source = "../../../modules/api"
 
@@ -127,7 +126,7 @@ module "api_integration_routes" {
   deploy_stage                   = true
   create_routes_and_integrations = true
   routes = {
-    "GET /api/products" = {
+    "GET /{proxy+}" = {
       authorization_type     = "JWT"
       authorizer_key         = "cognito-authorizer"
       authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
@@ -142,12 +141,15 @@ module "api_integration_routes" {
         method          = "GET"
         uri             = data.aws_lb_listener.listener.arn
         tls_config = {
-          server_name_to_verify = data.terraform_remote_state.cloud.outputs.api_server_name_to_verify
+          server_name_to_verify = "products.phl.blast.co.id"
+        }
+        request_parameters = {
+          "header.Host" = "products.phl.blast.co.id"
         }
       }
     }
 
-    "POST /api/products" = {
+    "POST /{proxy+}" = {
       authorization_type     = "JWT"
       authorizer_key         = "cognito-authorizer"
       authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
@@ -162,11 +164,14 @@ module "api_integration_routes" {
         method          = "POST"
         uri             = data.aws_lb_listener.listener.arn
         tls_config = {
-          server_name_to_verify = data.terraform_remote_state.cloud.outputs.api_server_name_to_verify
+          server_name_to_verify = "products.phl.blast.co.id"
+        }
+        request_parameters = {
+          "header.Host" = "products.phl.blast.co.id"
         }
       }
     }
-    "PUT /api/products" = {
+    "PUT /{proxy+}" = {
       authorization_type     = "JWT"
       authorizer_key         = "cognito-authorizer"
       authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
@@ -181,12 +186,15 @@ module "api_integration_routes" {
         method          = "PUT"
         uri             = data.aws_lb_listener.listener.arn
         tls_config = {
-          server_name_to_verify = data.terraform_remote_state.cloud.outputs.api_server_name_to_verify
+          server_name_to_verify = "products.phl.blast.co.id"
+        }
+        request_parameters = {
+          "header.Host" = "products.phl.blast.co.id"
         }
       }
     }
 
-    "DELETE /api/products" = {
+    "DELETE /{proxy+}" = {
       authorization_type     = "JWT"
       authorizer_key         = "cognito-authorizer"
       authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
@@ -201,7 +209,7 @@ module "api_integration_routes" {
         method          = "DELETE"
         uri             = data.aws_lb_listener.listener.arn
         tls_config = {
-          server_name_to_verify = data.terraform_remote_state.cloud.outputs.api_server_name_to_verify
+          server_name_to_verify = "products.phl.blast.co.id"
         }
       }
     }
