@@ -233,7 +233,7 @@ module "api_integration_routes" {
         method          = "ANY"
         uri             = data.aws_lb_listener.listener.arn
         tls_config = {
-          server_name_to_verify = data.terraform_remote_state.cloud.outputs.api_server_name_to_verify
+          server_name_to_verify = "products.${data.terraform_remote_state.cloud.outputs.dns_name}"
         }
       }
     }
