@@ -143,6 +143,9 @@ module "api_integration_routes" {
         tls_config = {
           server_name_to_verify = "products.phl.blast.co.id"
         }
+        request_parameters = {
+          "header.Host" = "products.phl.blast.co.id"
+        }
       }
     }
 
@@ -163,6 +166,9 @@ module "api_integration_routes" {
         tls_config = {
           server_name_to_verify = "products.phl.blast.co.id"
         }
+        request_parameters = {
+          "header.Host" = "products.phl.blast.co.id"
+        }
       }
     }
     "PUT /{proxy+}" = {
@@ -181,6 +187,9 @@ module "api_integration_routes" {
         uri             = data.aws_lb_listener.listener.arn
         tls_config = {
           server_name_to_verify = "products.phl.blast.co.id"
+        }
+        request_parameters = {
+          "header.Host" = "products.phl.blast.co.id"
         }
       }
     }
