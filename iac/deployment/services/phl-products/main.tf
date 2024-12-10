@@ -1,14 +1,17 @@
-# Create a Database
+# Databases Config
+## Create a Database
 resource "mysql_database" "db" {
   name = local.svc_naming_standard
 }
 
+## Create a Database User
 resource "mysql_user" "db" {
   user               = local.svc_naming_standard
   host               = "%"
   plaintext_password = random_password.password.result
 }
 
+## Grant the user access to the database
 resource "mysql_grant" "db" {
   user       = mysql_user.db.user
   host       = mysql_user.db.host
@@ -16,7 +19,8 @@ resource "mysql_grant" "db" {
   privileges = ["CREATE", "SELECT", "INSERT", "UPDATE", "DELETE"]
 }
 
-# Create Secrets Manager
+# Secrets Manager
+## Create Secrets Manager
 module "secrets_iac" {
   source  = "terraform-aws-modules/secrets-manager/aws"
   version = "~> 1.3.1"
@@ -64,7 +68,57 @@ module "secrets_iac" {
   tags = merge(local.tags, local.svc_standard)
 }
 
-# ArgoCD Vault Plugin (AVP) Pod Identity
+# CI/CD Components
+module "ecr" {
+  source  = "terraform-aws-modules/ecr/aws"
+  version = "~> 2.3.0"
+
+  repository_name = local.svc_naming_standard
+  repository_read_write_access_arns = [
+    "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/iac",
+    "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/atlantis-role",
+    "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/github",
+    "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+  ]
+  repository_lifecycle_policy = jsonencode({
+    rules = [
+      {
+        rulePriority = 1,
+        description  = "Keep last 30 images",
+        selection = {
+          tagStatus     = "tagged",
+          tagPrefixList = ["v"],
+          countType     = "imageCountMoreThan",
+          countNumber   = 30
+        },
+        action = {
+          type = "expire"
+        }
+      }
+    ]
+  })
+  manage_registry_scanning_configuration = true
+  registry_scan_type                     = "BASIC"
+  registry_scan_rules = [
+    {
+      scan_frequency = "SCAN_ON_PUSH"
+      filter = [
+        {
+          filter      = "phl-*"
+          filter_type = "WILDCARD"
+        }
+      ]
+    }
+  ]
+  repository_encryption_type = "KMS"
+  repository_kms_key         = data.terraform_remote_state.cloud.outputs.main_key_arn
+  tags = {
+    Terraform   = "true"
+    Environment = "dev"
+  }
+}
+
+## ArgoCD Vault Plugin (AVP) Pod Identity
 module "svc_custom_pod_identity" {
   source  = "terraform-aws-modules/eks-pod-identity/aws"
   version = "~> 1.7.0"
@@ -90,6 +144,7 @@ module "svc_custom_pod_identity" {
   tags = local.tags
 }
 
+## Create ArgoCD App
 module "argocd_app" {
   source     = "../../../modules/helm"
   region     = var.region
@@ -145,7 +200,7 @@ module "api_integration_routes" {
         }
         request_parameters = {
           "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
-          "overwrite:path"         = "/api/${local.svc_standard.Feature}"
+          "overwrite:path"        = "/api/${local.svc_standard.Feature}"
         }
       }
     }
@@ -169,7 +224,7 @@ module "api_integration_routes" {
         }
         request_parameters = {
           "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
-          "overwrite:path"         = "/api/${local.svc_standard.Feature}"
+          "overwrite:path"        = "/api/${local.svc_standard.Feature}"
         }
         response_parameters = [
           {
@@ -201,7 +256,7 @@ module "api_integration_routes" {
         }
         request_parameters = {
           "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
-          "overwrite:path"         = "/api/${local.svc_standard.Feature}/$request.path.id"
+          "overwrite:path"        = "/api/${local.svc_standard.Feature}/$request.path.id"
         }
       }
     }
@@ -225,7 +280,7 @@ module "api_integration_routes" {
         }
         request_parameters = {
           "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
-          "overwrite:path"         = "/api/${local.svc_standard.Feature}/$request.path.id"
+          "overwrite:path"        = "/api/${local.svc_standard.Feature}/$request.path.id"
         }
       }
     }
@@ -249,7 +304,7 @@ module "api_integration_routes" {
         }
         request_parameters = {
           "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
-          "overwrite:path"         = "/api/${local.svc_standard.Feature}/$request.path.id"
+          "overwrite:path"        = "/api/${local.svc_standard.Feature}/$request.path.id"
         }
         response_parameters = [
           {
