@@ -29,3 +29,8 @@ data "aws_eks_cluster_auth" "cluster" {
 data "aws_lb" "alb" {
   name = "k8s-phldevaddoningres-009c2e8ab5"
 }
+
+data "aws_lb_listener" "listener" {
+  load_balancer_arn = data.aws_lb.alb.arn
+  port              = 443
+}
