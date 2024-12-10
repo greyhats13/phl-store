@@ -115,167 +115,167 @@ module "argocd_app" {
   }
 }
 
-# module "api_integration_routes" {
-#   source = "../../../modules/api"
+module "api_integration_routes" {
+  source = "../../../modules/api"
 
-#   existing_gateway_id = data.terraform_remote_state.cloud.outputs.api_id
-#   # Custom domain
-#   create_domain_name             = false
-#   create_certificate             = false
-#   create_stage                   = false
-#   deploy_stage                   = true
-#   create_routes_and_integrations = true
-#   routes = {
-#     "GET /${local.svc_standard.Feature}" = {
-#       authorization_type     = "JWT"
-#       authorizer_key         = "cognito-authorizer"
-#       authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
-#       authorization_scopes   = data.terraform_remote_state.cloud.outputs.cognito_authrization_scopes
-#       throttling_rate_limit  = 80
-#       throttling_burst_limit = 40
+  existing_gateway_id = data.terraform_remote_state.cloud.outputs.api_id
+  # Custom domain
+  create_domain_name             = false
+  create_certificate             = false
+  create_stage                   = false
+  deploy_stage                   = true
+  create_routes_and_integrations = true
+  routes = {
+    "GET /${local.svc_standard.Feature}" = {
+      authorization_type     = "JWT"
+      authorizer_key         = "cognito-authorizer"
+      authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
+      authorization_scopes   = data.terraform_remote_state.cloud.outputs.cognito_authrization_scopes
+      throttling_rate_limit  = 80
+      throttling_burst_limit = 40
 
-#       integration = {
-#         connection_type = "VPC_LINK"
-#         connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
-#         type            = "HTTP_PROXY"
-#         method          = "GET"
-#         uri             = data.aws_lb_listener.listener.arn
-#         tls_config = {
-#           server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
-#         }
-#         request_parameters = {
-#           "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
-#           "overwrite:path"         = "/api/${local.svc_standard.Feature}"
-#         }
-#       }
-#     }
+      integration = {
+        connection_type = "VPC_LINK"
+        connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
+        type            = "HTTP_PROXY"
+        method          = "GET"
+        uri             = data.aws_lb_listener.listener.arn
+        tls_config = {
+          server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+        }
+        request_parameters = {
+          "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          "overwrite:path"         = "/api/${local.svc_standard.Feature}"
+        }
+      }
+    }
 
-#     "POST /${local.svc_standard.Feature}" = {
-#       authorization_type     = "JWT"
-#       authorizer_key         = "cognito-authorizer"
-#       authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
-#       authorization_scopes   = data.terraform_remote_state.cloud.outputs.cognito_authrization_scopes
-#       throttling_rate_limit  = 80
-#       throttling_burst_limit = 40
+    "POST /${local.svc_standard.Feature}" = {
+      authorization_type     = "JWT"
+      authorizer_key         = "cognito-authorizer"
+      authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
+      authorization_scopes   = data.terraform_remote_state.cloud.outputs.cognito_authrization_scopes
+      throttling_rate_limit  = 80
+      throttling_burst_limit = 40
 
-#       integration = {
-#         connection_type = "VPC_LINK"
-#         connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
-#         type            = "HTTP_PROXY"
-#         method          = "POST"
-#         uri             = data.aws_lb_listener.listener.arn
-#         tls_config = {
-#           server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
-#         }
-#         request_parameters = {
-#           "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
-#           "overwrite:path"         = "/api/${local.svc_standard.Feature}"
-#         }
-#         response_parameters = [
-#           {
-#             status_code = 200
-#             mappings = {
-#               "overwrite:statuscode" = "201"
-#             }
-#           }
-#         ]
-#       }
-#     }
+      integration = {
+        connection_type = "VPC_LINK"
+        connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
+        type            = "HTTP_PROXY"
+        method          = "POST"
+        uri             = data.aws_lb_listener.listener.arn
+        tls_config = {
+          server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+        }
+        request_parameters = {
+          "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          "overwrite:path"         = "/api/${local.svc_standard.Feature}"
+        }
+        response_parameters = [
+          {
+            status_code = 200
+            mappings = {
+              "overwrite:statuscode" = "201"
+            }
+          }
+        ]
+      }
+    }
 
-#     "GET /${local.svc_standard.Feature}/{id}" = {
-#       authorization_type     = "JWT"
-#       authorizer_key         = "cognito-authorizer"
-#       authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
-#       authorization_scopes   = data.terraform_remote_state.cloud.outputs.cognito_authrization_scopes
-#       throttling_rate_limit  = 80
-#       throttling_burst_limit = 40
+    "GET /${local.svc_standard.Feature}/{id}" = {
+      authorization_type     = "JWT"
+      authorizer_key         = "cognito-authorizer"
+      authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
+      authorization_scopes   = data.terraform_remote_state.cloud.outputs.cognito_authrization_scopes
+      throttling_rate_limit  = 80
+      throttling_burst_limit = 40
 
-#       integration = {
-#         connection_type = "VPC_LINK"
-#         connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
-#         type            = "HTTP_PROXY"
-#         method          = "GET"
-#         uri             = data.aws_lb_listener.listener.arn
-#         tls_config = {
-#           server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
-#         }
-#         request_parameters = {
-#           "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
-#           "overwrite:path"         = "/api/${local.svc_standard.Feature}/$request.path.id"
-#         }
-#       }
-#     }
+      integration = {
+        connection_type = "VPC_LINK"
+        connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
+        type            = "HTTP_PROXY"
+        method          = "GET"
+        uri             = data.aws_lb_listener.listener.arn
+        tls_config = {
+          server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+        }
+        request_parameters = {
+          "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          "overwrite:path"         = "/api/${local.svc_standard.Feature}/$request.path.id"
+        }
+      }
+    }
 
-#     "PUT /${local.svc_standard.Feature}/{id}" = {
-#       authorization_type     = "JWT"
-#       authorizer_key         = "cognito-authorizer"
-#       authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
-#       authorization_scopes   = data.terraform_remote_state.cloud.outputs.cognito_authrization_scopes
-#       throttling_rate_limit  = 80
-#       throttling_burst_limit = 40
+    "PUT /${local.svc_standard.Feature}/{id}" = {
+      authorization_type     = "JWT"
+      authorizer_key         = "cognito-authorizer"
+      authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
+      authorization_scopes   = data.terraform_remote_state.cloud.outputs.cognito_authrization_scopes
+      throttling_rate_limit  = 80
+      throttling_burst_limit = 40
 
-#       integration = {
-#         connection_type = "VPC_LINK"
-#         connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
-#         type            = "HTTP_PROXY"
-#         method          = "PUT"
-#         uri             = data.aws_lb_listener.listener.arn
-#         tls_config = {
-#           server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
-#         }
-#         request_parameters = {
-#           "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
-#           "overwrite:path"         = "/api/${local.svc_standard.Feature}/$request.path.id"
-#         }
-#       }
-#     }
+      integration = {
+        connection_type = "VPC_LINK"
+        connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
+        type            = "HTTP_PROXY"
+        method          = "PUT"
+        uri             = data.aws_lb_listener.listener.arn
+        tls_config = {
+          server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+        }
+        request_parameters = {
+          "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          "overwrite:path"         = "/api/${local.svc_standard.Feature}/$request.path.id"
+        }
+      }
+    }
 
-#     "DELETE /${local.svc_standard.Feature}/{id}" = {
-#       authorization_type     = "JWT"
-#       authorizer_key         = "cognito-authorizer"
-#       authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
-#       authorization_scopes   = data.terraform_remote_state.cloud.outputs.cognito_authrization_scopes
-#       throttling_rate_limit  = 80
-#       throttling_burst_limit = 40
+    "DELETE /${local.svc_standard.Feature}/{id}" = {
+      authorization_type     = "JWT"
+      authorizer_key         = "cognito-authorizer"
+      authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
+      authorization_scopes   = data.terraform_remote_state.cloud.outputs.cognito_authrization_scopes
+      throttling_rate_limit  = 80
+      throttling_burst_limit = 40
 
-#       integration = {
-#         connection_type = "VPC_LINK"
-#         connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
-#         type            = "HTTP_PROXY"
-#         method          = "DELETE"
-#         uri             = data.aws_lb_listener.listener.arn
-#         tls_config = {
-#           server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
-#         }
-#         request_parameters = {
-#           "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
-#           "overwrite:path"         = "/api/${local.svc_standard.Feature}/$request.path.id"
-#         }
-#         response_parameters = [
-#           {
-#             status_code = 200
-#             mappings = {
-#               "overwrite:statuscode" = "204"
-#             }
-#           }
-#         ]
-#       }
-#     }
-#     "$default" = {
-#       integration = {
-#         connection_type = "VPC_LINK"
-#         connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
-#         type            = "HTTP_PROXY"
-#         method          = "ANY"
-#         uri             = data.aws_lb_listener.listener.arn
-#         tls_config = {
-#           server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
-#         }
-#       }
-#     }
-#   }
-#   tags = {
-#     Environment = "dev"
-#     Terraform   = "true"
-#   }
-# }
+      integration = {
+        connection_type = "VPC_LINK"
+        connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
+        type            = "HTTP_PROXY"
+        method          = "DELETE"
+        uri             = data.aws_lb_listener.listener.arn
+        tls_config = {
+          server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+        }
+        request_parameters = {
+          "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          "overwrite:path"         = "/api/${local.svc_standard.Feature}/$request.path.id"
+        }
+        response_parameters = [
+          {
+            status_code = 200
+            mappings = {
+              "overwrite:statuscode" = "204"
+            }
+          }
+        ]
+      }
+    }
+    "$default" = {
+      integration = {
+        connection_type = "VPC_LINK"
+        connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
+        type            = "HTTP_PROXY"
+        method          = "ANY"
+        uri             = data.aws_lb_listener.listener.arn
+        tls_config = {
+          server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+        }
+      }
+    }
+  }
+  tags = {
+    Environment = "dev"
+    Terraform   = "true"
+  }
+}
