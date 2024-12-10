@@ -70,11 +70,10 @@ module "secrets_iac" {
 
 # CI/CD Components
 module "ecr" {
-  source = "terraform-aws-modules/ecr/aws"
+  source  = "terraform-aws-modules/ecr/aws"
   version = "~> 2.3.0"
 
-  repository_name = local.svc_naming_standard
-
+  repository_name                   = local.svc_naming_standard
   repository_read_write_access_arns = ["arn:aws:iam::012345678901:role/terraform"]
   repository_lifecycle_policy = jsonencode({
     rules = [
@@ -93,7 +92,20 @@ module "ecr" {
       }
     ]
   })
-
+  manage_registry_scanning_configuration = true
+  registry_scan_type                     = "BASIC"
+  registry_scan_rules = [
+    {
+      scan_frequency = "SCAN_ON_PUSH"
+      filter = [
+        {
+          filter      = "phl-*"
+          filter_type = "WILDCARD"
+        }
+      ]
+    }
+  ]
+  repository_kms_key = data.terraform_remote_state.cloud.outputs.kms_key_arn
   tags = {
     Terraform   = "true"
     Environment = "dev"
@@ -182,7 +194,7 @@ module "api_integration_routes" {
         }
         request_parameters = {
           "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
-          "overwrite:path"         = "/api/${local.svc_standard.Feature}"
+          "overwrite:path"        = "/api/${local.svc_standard.Feature}"
         }
       }
     }
@@ -206,7 +218,7 @@ module "api_integration_routes" {
         }
         request_parameters = {
           "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
-          "overwrite:path"         = "/api/${local.svc_standard.Feature}"
+          "overwrite:path"        = "/api/${local.svc_standard.Feature}"
         }
         response_parameters = [
           {
@@ -238,7 +250,7 @@ module "api_integration_routes" {
         }
         request_parameters = {
           "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
-          "overwrite:path"         = "/api/${local.svc_standard.Feature}/$request.path.id"
+          "overwrite:path"        = "/api/${local.svc_standard.Feature}/$request.path.id"
         }
       }
     }
@@ -262,7 +274,7 @@ module "api_integration_routes" {
         }
         request_parameters = {
           "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
-          "overwrite:path"         = "/api/${local.svc_standard.Feature}/$request.path.id"
+          "overwrite:path"        = "/api/${local.svc_standard.Feature}/$request.path.id"
         }
       }
     }
@@ -286,7 +298,7 @@ module "api_integration_routes" {
         }
         request_parameters = {
           "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
-          "overwrite:path"         = "/api/${local.svc_standard.Feature}/$request.path.id"
+          "overwrite:path"        = "/api/${local.svc_standard.Feature}/$request.path.id"
         }
         response_parameters = [
           {
