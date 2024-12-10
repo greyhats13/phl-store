@@ -17,8 +17,8 @@ locals {
   ## Environment variables that will be stored in Github repo environment for Github Actions
   github_action_variables = {
     "${local.svc_standard.Feature}_svc_name" = local.svc_name
-    "gitops_repo_name"                       = var.github_repo
-    "github_owner"                           = "git@github.com:${var.github_owner}/${var.github_repo}.git"
+    "repo_name"                              = var.github_repo
+    "owner"                                  = "git@github.com:${var.github_owner}/${var.github_repo}.git"
   }
   ## Environment secrets that will be stored in Github repo environment for Github Actions
   github_action_secrets = {
