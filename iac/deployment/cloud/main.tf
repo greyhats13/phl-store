@@ -832,6 +832,10 @@ module "api" {
   name          = local.api_naming_standard
   description   = "API Gateway for ${local.api_naming_standard}"
   protocol_type = "HTTP"
+  # body = templatefile("manifest/openapi.yaml", {
+  #   vpc_link_id      = module.api.vpc_links["vpc-main"]["id"],
+  #   alb_listener_arn = data.aws_lb_listener.listener.arn,
+  # })
 
   cors_configuration = {
     allow_headers = ["content-type", "x-amz-date", "authorization", "x-api-key", "x-amz-security-token", "x-amz-user-agent"]
@@ -887,6 +891,12 @@ module "api" {
         audience = [module.cognito_pool.cognito_user_pool_client_id]
       }
     }
+  }
+
+  stage_default_route_settings = {
+    detailed_metrics_enabled = true
+    throttling_burst_limit   = 100
+    throttling_rate_limit    = 100
   }
 
   # VPC Link
