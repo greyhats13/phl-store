@@ -144,7 +144,7 @@ module "api_integration_routes" {
           server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
         }
         request_parameters = {
-          "append.header.header2" = "$request.header.header1"
+          "append:header.header2" = "$request.header.header1"
           "remove:header.header1" = "''"
           "overwrite:path"        = "/${local.svc_standard.Feature}"
         }
@@ -169,7 +169,7 @@ module "api_integration_routes" {
           server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
         }
         request_parameters = {
-          "append.header.header2" = "$request.header.header1"
+          "append:header.header2" = "$request.header.header1"
           "remove:header.header1" = "''"
           "overwrite:path"        = "/${local.svc_standard.Feature}"
         }
@@ -202,7 +202,7 @@ module "api_integration_routes" {
           server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
         }
         request_parameters = {
-          "append.header.header2" = "$request.header.header1"
+          "append:header.header2" = "$request.header.header1"
           "remove:header.header1" = "''"
           "overwrite:path"        = "/${local.svc_standard.Feature}"
         }
@@ -227,7 +227,7 @@ module "api_integration_routes" {
           server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
         }
         request_parameters = {
-          "append.header.header2" = "$request.header.header1"
+          "append:header.header2" = "$request.header.header1"
           "remove:header.header1" = "''"
           "overwrite:path"        = "/${local.svc_standard.Feature}"
         }
@@ -252,7 +252,7 @@ module "api_integration_routes" {
           server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
         }
         request_parameters = {
-          "append.header.header2" = "$request.header.header1"
+          "append:header.header2" = "$request.header.header1"
           "remove:header.header1" = "''"
           "overwrite:path"        = "/${local.svc_standard.Feature}"
         }
