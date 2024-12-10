@@ -102,3 +102,8 @@ output "api_vpc_links" {
 output "api_authorizers" {
   value = module.api.authorizers
 }
+
+# Github OIDC Outputs
+output "github_oidc_role_arn" {
+  value = module.github_oidc.iam_role_arn
+}

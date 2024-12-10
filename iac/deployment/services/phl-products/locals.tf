@@ -17,8 +17,11 @@ locals {
   ## Environment variables that will be stored in Github repo environment for Github Actions
   github_action_variables = {
     "${local.svc_standard.Feature}_svc_name" = local.svc_name
-    "repo_name"                              = var.github_repo
-    "owner"                                  = "git@github.com:${var.github_owner}/${var.github_repo}.git"
+    "gh_repo_name"                           = var.github_repo
+    "gh_owner"                               = "git@github.com:${var.github_owner}/${var.github_repo}.git"
+    "aws_region"                             = var.region
+    "aws_account_id"                         = data.aws_caller_identity.current.account_id
+    "gh_oidc_role_arn"                       = data.terraform_remote_state.cloud.outputs.github_oidc_role_arn
   }
   ## Environment secrets that will be stored in Github repo environment for Github Actions
   github_action_secrets = {
