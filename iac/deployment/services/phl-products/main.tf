@@ -75,7 +75,7 @@ module "svc_custom_pod_identity" {
   association_defaults = {
     namespace       = "app"
     service_account = local.svc_naming_full
-    tags            = { App = "products" }
+    tags            = { App = "${local.svc_standard.Feature}" }
   }
 
   associations = {
@@ -126,7 +126,7 @@ module "api_integration_routes" {
   deploy_stage                   = true
   create_routes_and_integrations = true
   routes = {
-    "GET /products" = {
+    "GET /${local.svc_standard.Feature}" = {
       authorization_type     = "JWT"
       authorizer_key         = "cognito-authorizer"
       authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
@@ -141,12 +141,16 @@ module "api_integration_routes" {
         method          = "GET"
         uri             = data.aws_lb_listener.listener.arn
         tls_config = {
-          server_name_to_verify = "products.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+        }
+        request_parameters = {
+          "overwrite.header.X-CUSTOM-HOST" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          "overwrite:path"         = "/${local.svc_standard.Feature}"
         }
       }
     }
 
-    "POST /products" = {
+    "POST /${local.svc_standard.Feature}" = {
       authorization_type     = "JWT"
       authorizer_key         = "cognito-authorizer"
       authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
@@ -161,12 +165,24 @@ module "api_integration_routes" {
         method          = "POST"
         uri             = data.aws_lb_listener.listener.arn
         tls_config = {
-          server_name_to_verify = "products.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
         }
+        request_parameters = {
+          "overwrite.header.X-CUSTOM-HOST" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          "overwrite:path"         = "/${local.svc_standard.Feature}"
+        }
+        response_parameters = [
+          {
+            status_code = 200
+            mappings = {
+              "overwrite:statuscode" = "204"
+            }
+          }
+        ]
       }
     }
 
-    "GET /products/{id}" = {
+    "GET /${local.svc_standard.Feature}/{id}" = {
       authorization_type     = "JWT"
       authorizer_key         = "cognito-authorizer"
       authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
@@ -181,12 +197,16 @@ module "api_integration_routes" {
         method          = "GET"
         uri             = data.aws_lb_listener.listener.arn
         tls_config = {
-          server_name_to_verify = "products.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+        }
+        request_parameters = {
+          "overwrite.header.X-CUSTOM-HOST" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          "overwrite:path"         = "/${local.svc_standard.Feature}"
         }
       }
     }
 
-    "PUT /products/{id}" = {
+    "PUT /${local.svc_standard.Feature}/{id}" = {
       authorization_type     = "JWT"
       authorizer_key         = "cognito-authorizer"
       authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
@@ -201,12 +221,16 @@ module "api_integration_routes" {
         method          = "PUT"
         uri             = data.aws_lb_listener.listener.arn
         tls_config = {
-          server_name_to_verify = "products.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+        }
+        request_parameters = {
+          "overwrite.header.X-CUSTOM-HOST" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          "overwrite:path"         = "/${local.svc_standard.Feature}"
         }
       }
     }
 
-    "DELETE /products/{id}" = {
+    "DELETE /${local.svc_standard.Feature}/{id}" = {
       authorization_type     = "JWT"
       authorizer_key         = "cognito-authorizer"
       authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
@@ -221,8 +245,20 @@ module "api_integration_routes" {
         method          = "DELETE"
         uri             = data.aws_lb_listener.listener.arn
         tls_config = {
-          server_name_to_verify = "products.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
         }
+        request_parameters = {
+          "overwrite.header.X-CUSTOM-HOST" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          "overwrite:path"         = "/${local.svc_standard.Feature}"
+        }
+        response_parameters = [
+          {
+            status_code = 200
+            mappings = {
+              "overwrite:statuscode" = "204"
+            }
+          }
+        ]
       }
     }
     "$default" = {
@@ -233,7 +269,7 @@ module "api_integration_routes" {
         method          = "ANY"
         uri             = data.aws_lb_listener.listener.arn
         tls_config = {
-          server_name_to_verify = "products.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
         }
       }
     }
