@@ -120,41 +120,13 @@ module "ecr" {
 
 # Setup repository for argocd and atlantis
 module "repo_phl" {
-  source    = "../../../modules/github"
-  repo_name = var.github_repo
-  owner     = var.github_owner
-  webhooks = {
-    argocd = {
-      configuration = {
-        url          = "https://argocd.phl.blast.co.id/api/webhook"
-        content_type = "json"
-        insecure_ssl = false
-        secret       = random_password.argocd_github_secret.result
-      }
-      active = true
-      events = ["push"]
-    }
-    atlantis = {
-      configuration = {
-        url          = "https://atlantis.phl.blast.co.id/events"
-        content_type = "json"
-        insecure_ssl = false
-        secret       = random_password.atlantis_github_secret.result
-      }
-      active = true
-      events = ["push", "pull_request", "pull_request_review", "issue_comment"]
-    }
-  }
+  source                     = "../../../modules/github"
+  repo_name                  = var.github_repo
+  owner                      = var.github_owner
   create_deploy_key          = true
   add_repo_ssh_key_to_argocd = true
-  public_key                 = tls_private_key.argocd_ssh.public_key_openssh
-  ssh_key                    = tls_private_key.argocd_ssh.private_key_pem
   is_deploy_key_read_only    = false
-  argocd_namespace           = "argocd"
-  depends_on = [
-    module.argocd,
-    module.atlantis,
-  ]
+  github_action_variables    = local.github_action_variables
 }
 
 ## ArgoCD Vault Plugin (AVP) Pod Identity
