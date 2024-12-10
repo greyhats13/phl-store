@@ -99,5 +99,5 @@ output "api_authorizers" {
 }
 
 output "api_server_name_to_verify" {
-  value = "https://api.${local.route53_domain_name}"
+  value = "api.${local.route53_domain_name}"
 }
