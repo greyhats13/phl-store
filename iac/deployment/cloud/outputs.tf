@@ -105,5 +105,5 @@ output "api_authorizers" {
 
 # Github OIDC Outputs
 output "github_oidc_role_arn" {
-  value = module.github_oidc.iam_role_arn
+  value = module.oidc_github.iam_role_arn
 }
