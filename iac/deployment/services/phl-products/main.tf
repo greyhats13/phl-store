@@ -139,7 +139,7 @@ module "api_integration_routes" {
         connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
         type            = "HTTP_PROXY"
         method          = "GET"
-        uri             = data.aws_lb_listener.listener.arn
+        uri             = "https://products.phl.blast.co.id"
         tls_config = {
           server_name_to_verify = data.terraform_remote_state.cloud.outputs.api_server_name_to_verify
         }
