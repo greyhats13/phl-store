@@ -1,160 +1,50 @@
-# GitHub Repository Terraform Module
+<!-- BEGIN_TF_DOCS -->
+## Requirements
 
-This Terraform module provisions GitHub repositories along with features like branch protection, webhooks, security and analysis configurations, and deploy keys. It's designed to help streamline the creation and management of GitHub repositories using Infrastructure as Code (IaC) principles.
+| Name | Version |
+|------|---------|
+| <a name="requirement_github"></a> [github](#requirement\_github) | ~> 6.4.0 |
 
-## Features
+## Providers
 
-- **Repository Creation**: Create GitHub repositories with various configurable settings such as visibility, issues, discussions, and more.
-- **Branch Protection**: Manage branch protection rules, including required status checks and pull request reviews.
-- **Webhooks**: Set up webhooks to trigger external services like CI/CD systems.
-- **Deploy Keys**: Add deploy keys to the repository for read or write access using SSH.
-- **Security & Analysis**: Enable security features such as vulnerability alerts and secret scanning.
-- **Kubernetes Integration**: Optionally integrate with Kubernetes by creating secrets for ArgoCD.
-- **GitHub Actions Secrets**: Manage secrets used in GitHub Actions for CI/CD pipelines.
+| Name | Version |
+|------|---------|
+| <a name="provider_github"></a> [github](#provider\_github) | ~> 6.4.0 |
+| <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | n/a |
 
-## Usage
+## Modules
 
-Here is an example of how to use this module to create a repository with specific configurations:
+No modules.
 
-```hcl
-locals {
-    iac_secrets_map = jsondecode(module.gsm_iac.secret_version_data)
-    repo_iac_standard = {
-      Unit    = var.unit
-      Env     = var.env
-      Code    = "repo"
-      Feature = "iac"
-    }
-}
-module "repo_iac" {
-  source                 = "../../modules/cicd/github_repo"
-  standard               = local.repo_iac_standard
-  visibility             = "public"
-  has_issues             = true
-  has_discussions        = true
-  has_projects           = true
-  has_wiki               = true
-  delete_branch_on_merge = true
-  auto_init              = false
-  gitignore_template     = "Terraform"
-  security_and_analysis = {
-    advanced_security = {
-      status = "enabled"
-    }
-    secret_scanning = {
-      status = "enabled"
-    }
-    secret_scanning_push_protection = {
-      status = "enabled"
-    }
-  }
-  topics               = ["terraform","ansible", "iac", "devops", "gcp", "argocd", "kubernetes"]
-  vulnerability_alerts = true
-  webhooks = {
-    atlantis = {
-      configuration = {
-        url          = "https://atlantis.fta.blast.co.id/events"
-        content_type = "json"
-        insecure_ssl = false
-        secret       = local.iac_secrets_map["github_webhook_atlantis"]
-      }
-      active = true
-      events = ["push", "pull_request", "pull_request_review", "issue_comment"]
-    }
-  }
-}
-```
+## Resources
+
+| Name | Type |
+|------|------|
+| [github_actions_environment_secret.secret](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/actions_environment_secret) | resource |
+| [github_actions_environment_variable.variable](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/actions_environment_variable) | resource |
+| [github_repository_deploy_key.repository_deploy_key](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_deploy_key) | resource |
+| [github_repository_environment.environment](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_environment) | resource |
+| [github_repository_webhook.webhooks](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_webhook) | resource |
+| [kubernetes_secret_v1.argocd](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret_v1) | resource |
 
 ## Inputs
 
-| Name                                | Description                                                                                   | Type           | Default  | Required |
-|-------------------------------------|-----------------------------------------------------------------------------------------------|----------------|----------|:--------:|
-| `standard`                          | A map containing standard naming convention variables for resources.                          | `map(string)`  | n/a      |   yes    |
-| `visibility`                        | The visibility of the repository. Can be `public` or `private`.                               | `string`       | n/a      |   yes    |
-| `has_issues`                        | Enable GitHub Issues features on the repository.                                               | `bool`         | `false`  |    no    |
-| `has_discussions`                   | Enable GitHub Discussions features on the repository.                                          | `bool`         | `false`  |    no    |
-| `has_projects`                      | Enable GitHub Projects features on the repository.                                             | `bool`         | `false`  |    no    |
-| `has_wiki`                          | Enable GitHub Wiki features on the repository.                                                 | `bool`         | `false`  |    no    |
-| `delete_branch_on_merge`            | Automatically delete head branches when pull requests are merged.                              | `bool`         | `false`  |    no    |
-| `auto_init`                         | Produce an initial commit in the repository.                                                   | `bool`         | `false`  |    no    |
-| `gitignore_template`                | Name of the GitHub `.gitignore` template to use (e.g., "Terraform").                           | `string`       | `null`   |    no    |
-| `security_and_analysis`             | Configuration for GitHub Security and Analysis features.                                       | `object`       | `null`   |    no    |
-| `topics`                            | List of topics to apply to the repository.                                                     | `list(string)` | `[]`     |    no    |
-| `vulnerability_alerts`              | Enable vulnerability alerts for the repository.                                                | `bool`         | `false`  |    no    |
-| `webhooks`                          | Map of webhooks to be added to the repository.                                                 | `map(object)`  | `{}`     |    no    |
-| `teams_permission`                  | List of teams permission to be added to the repository.                                        | `map(string)`  | `{}`     |    no    |
-| `argocd_namespace`                  | ArgoCD namespace where Kubernetes secrets will be created.                                     | `string`       | `null`   |    no    |
-| `github_action_secrets`             | Map of secrets to be added to GitHub Actions environments.                                     | `map(string)`  | `{}`     |    no    |
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| <a name="input_add_repo_ssh_key_to_argocd"></a> [add\_repo\_ssh\_key\_to\_argocd](#input\_add\_repo\_ssh\_key\_to\_argocd) | Set to true to add the repository SSH key to ArgoCD. | `bool` | `false` | no |
+| <a name="input_argocd_namespace"></a> [argocd\_namespace](#input\_argocd\_namespace) | ArgoCD namespace | `string` | `null` | no |
+| <a name="input_create_deploy_key"></a> [create\_deploy\_key](#input\_create\_deploy\_key) | Set to true to create a deploy key. | `bool` | `false` | no |
+| <a name="input_github_action_secrets"></a> [github\_action\_secrets](#input\_github\_action\_secrets) | List of secrets to be added to the repository github actions | `map` | `{}` | no |
+| <a name="input_github_action_variables"></a> [github\_action\_variables](#input\_github\_action\_variables) | List of environment variables to be added to the repository github actions | `map` | `{}` | no |
+| <a name="input_is_deploy_key_read_only"></a> [is\_deploy\_key\_read\_only](#input\_is\_deploy\_key\_read\_only) | Set to true to create a read-only deploy key. | `bool` | `true` | no |
+| <a name="input_owner"></a> [owner](#input\_owner) | The owner of the repository. | `string` | n/a | yes |
+| <a name="input_public_key"></a> [public\_key](#input\_public\_key) | The public key to add to the repository. | `string` | `null` | no |
+| <a name="input_repo_name"></a> [repo\_name](#input\_repo\_name) | The name of the repository. | `string` | n/a | yes |
+| <a name="input_ssh_key"></a> [ssh\_key](#input\_ssh\_key) | The SSH key to add to the repository. | `string` | `null` | no |
+| <a name="input_svc_name"></a> [svc\_name](#input\_svc\_name) | The name of the service. | `string` | `null` | no |
+| <a name="input_webhooks"></a> [webhooks](#input\_webhooks) | Map of webhooks to be added to the repository | <pre>map(object({<br/>    configuration = object({<br/>      url          = string<br/>      content_type = string<br/>      insecure_ssl = bool<br/>      secret       = string<br/>    })<br/>    active = bool<br/>    events = list(string)<br/>  }))</pre> | `{}` | no |
 
 ## Outputs
 
-| Name                         | Description                                                  |
-|------------------------------|--------------------------------------------------------------|
-| `full_name`                  | Full name of the repository in the format `orgname/reponame`. |
-| `name`                       | Name of the repository.                                      |
-| `html_url`                   | URL to the repository on the web.                            |
-| `ssh_clone_url`              | URL for SSH cloning the repository.                          |
-| `http_clone_url`             | URL for HTTPS cloning the repository.                        |
-| `git_clone_url`              | URL for anonymous cloning via the Git protocol.              |
-| `svn_url`                    | URL for SVN checkout via GitHub's Subversion protocol.       |
-| `node_id`                    | GraphQL global node ID for use with GitHub v4 API.           |
-| `repo_id`                    | GitHub ID of the repository.                                 |
-| `primary_language`           | The primary language of the repository.                      |
-| `pages`                      | GitHub Pages configuration for the repository.               |
-
-## Example
-
-```hcl
-module "repo_iac" {
-  source                 = "../../modules/cicd/github_repo"
-  standard               = {
-    Unit    = "ols"
-    Env     = "dev"
-    Code    = "repo"
-    Feature = "iac"
-  }
-  visibility             = "private"
-  has_issues             = true
-  has_discussions        = true
-  delete_branch_on_merge = true
-  auto_init              = true
-  gitignore_template     = "Terraform"
-  topics                 = ["terraform", "devops"]
-  vulnerability_alerts   = true
-  webhooks = {
-    ci = {
-      configuration = {
-        url          = "https://ci.example.com/webhooks"
-        content_type = "json"
-        insecure_ssl = false
-        secret       = "my-secret-token"
-      }
-      active = true
-      events = ["push", "pull_request"]
-    }
-  }
-}
-```
-
-## Resources Created
-
-- **GitHub Repository**: Creates a GitHub repository with the specified configurations.
-- **Branch Protection**: Configures branch protection rules for the repository.
-- **Webhooks**: Sets up GitHub webhooks to trigger external services.
-- **Deploy Keys**: Adds SSH deploy keys to the repository.
-- **GitHub Actions Secrets**: Adds secrets for GitHub Actions workflows.
-
-## Requirements
-
-- Terraform version >= 0.13
-- GitHub Provider plugin for Terraform
-
-## Notes
-
-- Be sure to grant your Terraform user the necessary permissions to create and manage repositories.
-- The `webhooks` block supports multiple webhooks, allowing integration with services like Jenkins, GitLab CI, or Atlantis.
-- You can enable security features such as `secret_scanning` and `vulnerability_alerts` to improve repository security.
-
-## Author
-
-- **Imam Arief Rahman** - [greyhats13](https://github.com/greyhats13) 
+No outputs.
+<!-- END_TF_DOCS -->
