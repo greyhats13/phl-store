@@ -3,6 +3,52 @@
 Terraform module to deploy the cloud infrastructure for the deployment of the application.
 
 <!-- BEGIN_TF_DOCS -->
+## Requirements
+
+| Name | Version |
+|------|---------|
+| aws | 5.80.0 |
+| github | ~> 6.4.0 |
+| helm | 2.16.1 |
+| kubernetes | 2.34.0 |
+
+## Providers
+
+| Name | Version |
+|------|---------|
+| aws | 5.80.0 |
+| aws.virginia | 5.80.0 |
+| external | 2.3.4 |
+| kubernetes | 2.34.0 |
+| random | 3.6.3 |
+| tls | 4.0.6 |
+
+## Modules
+
+| Name | Source | Version |
+|------|--------|---------|
+| acm\_main | terraform-aws-modules/acm/aws | ~> 4.3.2 |
+| acm\_main\_virginia | terraform-aws-modules/acm/aws | ~> 4.3.2 |
+| api | terraform-aws-modules/apigateway-v2/aws | ~> 5.2.1 |
+| api\_sg | terraform-aws-modules/security-group/aws | ~> 5.2.0 |
+| argocd | ../../modules/helm | n/a |
+| atlantis | ../../modules/helm | n/a |
+| atlantis\_custom\_pod\_identity | terraform-aws-modules/eks-pod-identity/aws | ~> 1.7.0 |
+| aurora\_main | terraform-aws-modules/rds-aurora/aws | ~> 9.10.0 |
+| avp\_custom\_pod\_identity | terraform-aws-modules/eks-pod-identity/aws | ~> 1.7.0 |
+| aws\_cloudwatch\_observability\_pod\_identity | terraform-aws-modules/eks-pod-identity/aws | ~> 1.7.0 |
+| aws\_ebs\_csi\_pod\_identity | terraform-aws-modules/eks-pod-identity/aws | ~> 1.7.0 |
+| aws\_vpc\_cni\_ipv4\_pod\_identity | terraform-aws-modules/eks-pod-identity/aws | ~> 1.7.0 |
+| bucket\_tfstate | terraform-aws-modules/s3-bucket/aws | ~> 4.2.2 |
+| cognito\_pool | ../../modules/cognito | n/a |
+| eks\_main | terraform-aws-modules/eks/aws | ~> 20.31.0 |
+| kms\_main | terraform-aws-modules/kms/aws | ~> 3.1.1 |
+| oidc\_github | unfunco/oidc-github/aws | 1.8.0 |
+| repo\_phl | ../../modules/github | n/a |
+| secrets\_iac | terraform-aws-modules/secrets-manager/aws | ~> 1.3.1 |
+| vpc\_main | terraform-aws-modules/vpc/aws | ~> 5.16.0 |
+| zones\_main | terraform-aws-modules/route53/aws//modules/zones | ~> 2.10.2 |
+
 ## Resources
 
 | Name | Type |
