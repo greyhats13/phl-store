@@ -71,7 +71,7 @@ module "secrets_iac" {
 # CI/CD Components
 module "ecr" {
   source = "terraform-aws-modules/ecr/aws"
-  version = "~> 2.3.1"
+  version = "~> 2.3.0"
 
   repository_name = local.svc_naming_standard
 
