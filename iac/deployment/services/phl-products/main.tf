@@ -105,6 +105,7 @@ module "ecr" {
       ]
     }
   ]
+  repository_encryption_type = "KMS"
   repository_kms_key = data.terraform_remote_state.cloud.outputs.main_key_arn
   tags = {
     Terraform   = "true"
