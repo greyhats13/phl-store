@@ -78,7 +78,7 @@ module "ecr" {
     "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/iac",
     "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/atlantis-role",
     "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/github",
-    "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/root"
+    "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
   ]
   repository_lifecycle_policy = jsonencode({
     rules = [
