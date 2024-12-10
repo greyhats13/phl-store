@@ -97,3 +97,7 @@ output "api_vpc_links" {
 output "api_authorizers" {
   value = module.api.authorizers
 }
+
+output "api_server_name_to_verify" {
+  value = "https://api.${local.route53_domain_name}"
+}
