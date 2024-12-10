@@ -9,7 +9,9 @@ output:
     <!-- END_TF_DOCS -->
 
 sections:
-  hide: [ modules, providers, requirements ]
+  inputs: true
+  outputs: true
+  # hide: [ modules, providers, requirements ]
 
 sort:
   enabled: true
