@@ -2,9 +2,9 @@ name: CI/CD Pipeline for phl-products
 
 on:
   push:
-    # branches:
-    #   - main
-    #   - dev
+    branches:
+      - main
+      - dev
     paths:
       - 'services/phl-products/**'
     tags:
