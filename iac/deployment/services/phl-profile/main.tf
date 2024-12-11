@@ -193,7 +193,7 @@ module "api_integration_routes" {
   create_domain_name             = false
   create_certificate             = false
   create_stage                   = false
-  deploy_stage                   = true
+  deploy_stage                   = false
   create_routes_and_integrations = true
   routes = {
     "GET /${local.svc_standard.Feature}" = {
@@ -333,18 +333,18 @@ module "api_integration_routes" {
     }
 
     # Already created
-    "$default" = {
-      integration = {
-        connection_type = "VPC_LINK"
-        connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
-        type            = "HTTP_PROXY"
-        method          = "ANY"
-        uri             = data.aws_lb_listener.listener.arn
-        tls_config = {
-          server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
-        }
-      }
-    }
+    # "$default" = {
+    #   integration = {
+    #     connection_type = "VPC_LINK"
+    #     connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
+    #     type            = "HTTP_PROXY"
+    #     method          = "ANY"
+    #     uri             = data.aws_lb_listener.listener.arn
+    #     tls_config = {
+    #       server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+    #     }
+    #   }
+    # }
   }
   tags = {
     Environment = "dev"
