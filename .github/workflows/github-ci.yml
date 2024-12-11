@@ -118,9 +118,9 @@ jobs:
       # Inject CLIENT_ID and CLIENT_SECRET into environment.json (you need a template environment.json with placeholders)
       - name: Prepare environment for tests
         run: |
-          # Assuming your environment template is at services/phl-products/tests/postman/environment-template.json
+          # The template is at services/phl-products/tests/postman/environment-template.tpl
           # and contains placeholders like CLIENT_ID_PLACEHOLDER and CLIENT_SECRET_PLACEHOLDER
-          sed "s/CLIENT_ID_PLACEHOLDER/${{ secrets.PRODUCTS_CLIENT_ID }}/g; s/CLIENT_SECRET_PLACEHOLDER/${{ secrets.PRODUCTS_CLIENT_SECRET }}/g" services/${{ vars.PRODUCTS_SVC_NAME }}/tests/postman/environment-template.json > services/${{ vars.PRODUCTS_SVC_NAME }}/tests/postman/environment.json
+          sed "s/CLIENT_ID_PLACEHOLDER/${{ secrets.PRODUCTS_CLIENT_ID }}/g; s/CLIENT_SECRET_PLACEHOLDER/${{ secrets.PRODUCTS_CLIENT_SECRET }}/g" services/${{ vars.PRODUCTS_SVC_NAME }}/tests/postman/environment-template.tpl > services/${{ vars.PRODUCTS_SVC_NAME }}/tests/postman/environment.json
 
       - name: Run Newman Tests
         run: |
