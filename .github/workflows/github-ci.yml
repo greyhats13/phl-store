@@ -119,7 +119,7 @@ jobs:
         run: |
           # Make POST request to obtain token
           BEARER_TOKEN_RESPONSE=$(curl -s -X POST "${{ vars.BASE_URL_OAUTH }}/oauth2/token" \
-            -H "Content-Type: application/json" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
             -d '{"grant_type": "'"${{ secrets.GRANT_TYPE }}"'", "client_id": "'"${{ secrets.CLIENT_ID }}"'", "client_secret": "'"${{ secrets.CLIENT_SECRET }}"'"}')
 
           echo "BEARER_TOKEN_RESPONSE: $BEARER_TOKEN_RESPONSE"
@@ -133,7 +133,7 @@ jobs:
             exit 1
           fi
 
-          echo "TOKEN=$TOKEN" >> $GITHUB_ENV
+          echo "BEARER_TOKEN=$BEARER_TOKEN" >> $GITHUB_ENV
 
       # Prepare environment.json
       # Inject CLIENT_ID and CLIENT_SECRET into environment.json (you need a template environment.json with placeholders)
