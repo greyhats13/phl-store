@@ -1,0 +1,5 @@
+.gitignore
+config.json*
+*.json
+Dockerfile
+docker-compose.yml
