@@ -120,12 +120,11 @@ jobs:
           # Make POST request to obtain token
           BEARER_TOKEN_RESPONSE=$(curl -s -X POST "${{ vars.BASE_URL_OAUTH }}/oauth2/token" \
             -H "Content-Type: application/x-www-form-urlencoded" \
-            -d '{"grant_type": "'"${{ secrets.GRANT_TYPE }}"'", "client_id": "'"${{ secrets.CLIENT_ID }}"'", "client_secret": "'"${{ secrets.CLIENT_SECRET }}"'"}')
+            -d "grant_type=${{ secrets.GRANT_TYPE }}&client_id=${{ secrets.CLIENT_ID }}&client_secret=${{ secrets.CLIENT_SECRET }}")
 
-          echo "BEARER_TOKEN_RESPONSE: $BEARER_TOKEN_RESPONSE"
           # Extract access_token using jq
           BEARER_TOKEN=$(echo $BEARER_TOKEN_RESPONSE | jq -r '.access_token')
-          echo "BEARER_TOKEN: $BEARER_TOKEN"
+
           # Check if token was retrieved successfully
           if [ "$BEARER_TOKEN" == "null" ] || [ -z "$BEARER_TOKEN" ]; then
             echo "Failed to retrieve access token."
