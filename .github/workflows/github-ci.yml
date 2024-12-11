@@ -67,7 +67,7 @@ jobs:
         with:
           context: .
           # Distroless
-          file: ./services/products/Dockerfile
+          file: services/products/Dockerfile
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ vars.PRODUCTS_SVC_NAMING_STANDARD }}:${{ env.IMAGE_TAG_SHA }}
