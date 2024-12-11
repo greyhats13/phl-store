@@ -6,7 +6,7 @@
     "version" : "2024-12-11 18:48:50UTC"
   },
   "servers" : [ {
-    "url" : "https://d8dgh3okad.execute-api.us-west-1.amazonaws.com/{basePath}",
+    "url" : "https://api.phl.blast.co.id/{basePath}",
     "variables" : {
       "basePath" : {
         "default" : ""
