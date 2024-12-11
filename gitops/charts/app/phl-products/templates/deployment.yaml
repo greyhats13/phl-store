@@ -13,8 +13,9 @@ spec:
       {{- include "phl-dev-svc-products.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
       annotations:
+        checksum/config-secret: {{ include "phl-products.configSecretChecksum" . | quote }}
+      {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:

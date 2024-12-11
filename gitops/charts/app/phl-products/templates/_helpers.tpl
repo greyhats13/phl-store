@@ -60,3 +60,24 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Generate a checksum for ConfigMap
+*/}}
+{{- define "phl-products.configmapHash" -}}
+{{- toYaml .Values.appConfig | sha256sum }}
+{{- end }}
+
+{{/*
+Generate a checksum for Secret
+*/}}
+{{- define "phl-products.secretHash" -}}
+{{- toYaml .Values.appSecret.secrets | sha256sum }}
+{{- end }}
+
+{{/*
+Combine both checksums
+*/}}
+{{- define "phl-products.configSecretChecksum" -}}
+{{ include "phl-products.configmapHash" . }}-{{ include "phl-products.secretHash" . }}
+{{- end }}
