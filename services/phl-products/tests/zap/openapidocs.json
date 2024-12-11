@@ -1,0 +1,219 @@
+{
+  "openapi" : "3.0.1",
+  "info" : {
+    "title" : "phl-dev-api-main",
+    "description" : "API Gateway for phl-dev-api-main",
+    "version" : "2024-12-11 18:48:50UTC"
+  },
+  "servers" : [ {
+    "url" : "https://d8dgh3okad.execute-api.us-west-1.amazonaws.com/{basePath}",
+    "variables" : {
+      "basePath" : {
+        "default" : ""
+      }
+    },
+    "x-amazon-apigateway-endpoint-configuration" : {
+      "disableExecuteApiEndpoint" : true
+    }
+  } ],
+  "tags" : [ {
+    "name" : "Terraform",
+    "x-amazon-apigateway-tag-value" : "true"
+  }, {
+    "name" : "Environment",
+    "x-amazon-apigateway-tag-value" : "dev"
+  }, {
+    "name" : "terraform-aws-modules",
+    "x-amazon-apigateway-tag-value" : "apigateway-v2"
+  } ],
+  "paths" : {
+    "/$default" : {
+      "x-amazon-apigateway-any-method" : {
+        "isDefaultRoute" : true,
+        "x-amazon-apigateway-integration" : {
+          "payloadFormatVersion" : "1.0",
+          "connectionId" : "ygm5f8",
+          "type" : "http_proxy",
+          "httpMethod" : "ANY",
+          "uri" : "arn:aws:elasticloadbalancing:us-west-1:124456474132:listener/app/k8s-phldevsvcingress-95c2777f2b/026a1d30cc718212/77cf745e2b7c9403",
+          "connectionType" : "VPC_LINK",
+          "tlsConfig" : {
+            "serverNameToVerify" : "products.phl.blast.co.id"
+          }
+        }
+      }
+    },
+    "/products/{id}" : {
+      "get" : {
+        "responses" : {
+          "default" : {
+            "description" : "Default response for GET /products/{id}"
+          }
+        },
+        "security" : [ {
+          "cognito-authorizer" : [ "https://api.phl.blast.co.id/all" ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "requestParameters" : {
+            "overwrite:header.Host" : "products.phl.blast.co.id",
+            "overwrite:path" : "/api/products/$request.path.id"
+          },
+          "payloadFormatVersion" : "1.0",
+          "connectionId" : "ygm5f8",
+          "type" : "http_proxy",
+          "httpMethod" : "GET",
+          "uri" : "arn:aws:elasticloadbalancing:us-west-1:124456474132:listener/app/k8s-phldevsvcingress-95c2777f2b/026a1d30cc718212/77cf745e2b7c9403",
+          "connectionType" : "VPC_LINK",
+          "tlsConfig" : {
+            "serverNameToVerify" : "products.phl.blast.co.id"
+          }
+        }
+      },
+      "put" : {
+        "responses" : {
+          "default" : {
+            "description" : "Default response for PUT /products/{id}"
+          }
+        },
+        "security" : [ {
+          "cognito-authorizer" : [ "https://api.phl.blast.co.id/all" ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "requestParameters" : {
+            "overwrite:header.Host" : "products.phl.blast.co.id",
+            "overwrite:path" : "/api/products/$request.path.id"
+          },
+          "payloadFormatVersion" : "1.0",
+          "connectionId" : "ygm5f8",
+          "type" : "http_proxy",
+          "httpMethod" : "PUT",
+          "uri" : "arn:aws:elasticloadbalancing:us-west-1:124456474132:listener/app/k8s-phldevsvcingress-95c2777f2b/026a1d30cc718212/77cf745e2b7c9403",
+          "connectionType" : "VPC_LINK",
+          "tlsConfig" : {
+            "serverNameToVerify" : "products.phl.blast.co.id"
+          }
+        }
+      },
+      "delete" : {
+        "responses" : {
+          "default" : {
+            "description" : "Default response for DELETE /products/{id}"
+          }
+        },
+        "security" : [ {
+          "cognito-authorizer" : [ "https://api.phl.blast.co.id/all" ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "responseParameters" : {
+            "200" : {
+              "overwrite:statuscode" : "204"
+            }
+          },
+          "requestParameters" : {
+            "overwrite:header.Host" : "products.phl.blast.co.id",
+            "overwrite:path" : "/api/products/$request.path.id"
+          },
+          "payloadFormatVersion" : "1.0",
+          "connectionId" : "ygm5f8",
+          "type" : "http_proxy",
+          "httpMethod" : "DELETE",
+          "uri" : "arn:aws:elasticloadbalancing:us-west-1:124456474132:listener/app/k8s-phldevsvcingress-95c2777f2b/026a1d30cc718212/77cf745e2b7c9403",
+          "connectionType" : "VPC_LINK",
+          "tlsConfig" : {
+            "serverNameToVerify" : "products.phl.blast.co.id"
+          }
+        }
+      },
+      "parameters" : [ {
+        "name" : "id",
+        "in" : "path",
+        "description" : "Generated path parameter for id",
+        "required" : true,
+        "schema" : {
+          "type" : "string"
+        }
+      } ]
+    },
+    "/products" : {
+      "get" : {
+        "responses" : {
+          "default" : {
+            "description" : "Default response for GET /products"
+          }
+        },
+        "security" : [ {
+          "cognito-authorizer" : [ "https://api.phl.blast.co.id/all" ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "requestParameters" : {
+            "overwrite:header.Host" : "products.phl.blast.co.id",
+            "overwrite:path" : "/api/products"
+          },
+          "payloadFormatVersion" : "1.0",
+          "connectionId" : "ygm5f8",
+          "type" : "http_proxy",
+          "httpMethod" : "GET",
+          "uri" : "arn:aws:elasticloadbalancing:us-west-1:124456474132:listener/app/k8s-phldevsvcingress-95c2777f2b/026a1d30cc718212/77cf745e2b7c9403",
+          "connectionType" : "VPC_LINK",
+          "tlsConfig" : {
+            "serverNameToVerify" : "products.phl.blast.co.id"
+          }
+        }
+      },
+      "post" : {
+        "responses" : {
+          "default" : {
+            "description" : "Default response for POST /products"
+          }
+        },
+        "security" : [ {
+          "cognito-authorizer" : [ "https://api.phl.blast.co.id/all" ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "responseParameters" : {
+            "200" : {
+              "overwrite:statuscode" : "201"
+            }
+          },
+          "requestParameters" : {
+            "overwrite:header.Host" : "products.phl.blast.co.id",
+            "overwrite:path" : "/api/products"
+          },
+          "payloadFormatVersion" : "1.0",
+          "connectionId" : "ygm5f8",
+          "type" : "http_proxy",
+          "httpMethod" : "POST",
+          "uri" : "arn:aws:elasticloadbalancing:us-west-1:124456474132:listener/app/k8s-phldevsvcingress-95c2777f2b/026a1d30cc718212/77cf745e2b7c9403",
+          "connectionType" : "VPC_LINK",
+          "tlsConfig" : {
+            "serverNameToVerify" : "products.phl.blast.co.id"
+          }
+        }
+      }
+    }
+  },
+  "components" : {
+    "securitySchemes" : {
+      "cognito-authorizer" : {
+        "type" : "oauth2",
+        "flows" : { },
+        "x-amazon-apigateway-authorizer" : {
+          "identitySource" : "$request.header.Authorization",
+          "jwtConfiguration" : {
+            "audience" : [ "3tkr18mpnmi6iucbpevcuvo59q" ],
+            "issuer" : "https://cognito-idp.us-west-1.amazonaws.com/us-west-1_NVoPXMnoE"
+          },
+          "type" : "jwt"
+        }
+      }
+    }
+  },
+  "x-amazon-apigateway-cors" : {
+    "allowMethods" : [ "*" ],
+    "allowHeaders" : [ "authorization", "content-type", "x-amz-date", "x-amz-security-token", "x-amz-user-agent", "x-api-key" ],
+    "maxAge" : 0,
+    "allowCredentials" : false,
+    "allowOrigins" : [ "*" ]
+  },
+  "x-amazon-apigateway-importexport-version" : "1.0"
+}
