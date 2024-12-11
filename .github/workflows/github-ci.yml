@@ -14,97 +14,97 @@ permissions:
   id-token: write # This is required for requesting the JWT
   contents: read # This is required for actions/checkout
 jobs:
-  build_push_tag:
-    name: Build, Push, Tag
-    runs-on: ubuntu-latest
-    # needs: test_and_coverages
-    # if: ${{ needs.test_and_coverages.outputs.quality_gate_status != 'FAILED' && (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
-    if: ${{ github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main' }}
-    outputs:
-      image_tag_sha: ${{ steps.set_image_tag.outputs.image_tag_sha }}
-      chart_path: ${{ steps.set_image_tag.outputs.chart_path }}
-      registry: ${{ steps.login-ecr.outputs.registry }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+  # build_push_tag:
+  #   name: Build, Push, Tag
+  #   runs-on: ubuntu-latest
+  #   # needs: test_and_coverages
+  #   # if: ${{ needs.test_and_coverages.outputs.quality_gate_status != 'FAILED' && (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
+  #   if: ${{ github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main' }}
+  #   outputs:
+  #     image_tag_sha: ${{ steps.set_image_tag.outputs.image_tag_sha }}
+  #     chart_path: ${{ steps.set_image_tag.outputs.chart_path }}
+  #     registry: ${{ steps.login-ecr.outputs.registry }}
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v3
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          # audience: sts.amazonaws.com
-          aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: ${{ vars.GH_OIDC_ROLE_ARN }}
+  #     - name: Configure AWS Credentials
+  #       uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         # audience: sts.amazonaws.com
+  #         aws-region: ${{ vars.AWS_REGION }}
+  #         role-to-assume: ${{ vars.GH_OIDC_ROLE_ARN }}
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+  #     - name: Login to Amazon ECR
+  #       id: login-ecr
+  #       uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Retrieve ECR repo and Set Image Tag vased on environment
-        id: set_image_tag
-        run: |
-          echo "GITHUB_REF: $GITHUB_REF"
-          # if the branch is dev, tag the image as alpha
-          if [[ $GITHUB_REF == refs/heads/dev ]]; then
-            echo "image_tag_sha=alpha-${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
-            echo "chart_path=gitops/charts/app/${{ vars.PRODUCTS_SVC_NAME }}" >> $GITHUB_OUTPUT
-            echo "IMAGE_TAG_SHA=alpha-${GITHUB_SHA:0:7}" >> $GITHUB_ENV
-            echo "IMAGE_TAG_LATEST=alpha-latest" >> $GITHUB_ENV
-            echo "CHART_PATH=gitops/charts/app/${{ vars.PRODUCTS_SVC_NAME }}" >> $GITHUB_ENV
-          # if the branch is main, tag the image as beta
-          elif [[ $GITHUB_REF == refs/heads/main ]]; then
-            echo "image_tag_sha=beta-${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
-            echo "chart_path=gitops/charts/app/${{ vars.PRODUCTS_SVC_NAME }}" >> $GITHUB_OUTPUT
-            echo "IMAGE_TAG_LATEST=beta-latest" >> $GITHUB_ENV
-            echo "IMAGE_TAG_SHA=beta-${GITHUB_SHA:0:7}" >> $GITHUB_ENV
-            echo "CHART_PATH=gitops/charts/app/${{ vars.PRODUCTS_SVC_NAME }}" >> $GITHUB_ENV
-          fi
+  #     - name: Retrieve ECR repo and Set Image Tag vased on environment
+  #       id: set_image_tag
+  #       run: |
+  #         echo "GITHUB_REF: $GITHUB_REF"
+  #         # if the branch is dev, tag the image as alpha
+  #         if [[ $GITHUB_REF == refs/heads/dev ]]; then
+  #           echo "image_tag_sha=alpha-${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
+  #           echo "chart_path=gitops/charts/app/${{ vars.PRODUCTS_SVC_NAME }}" >> $GITHUB_OUTPUT
+  #           echo "IMAGE_TAG_SHA=alpha-${GITHUB_SHA:0:7}" >> $GITHUB_ENV
+  #           echo "IMAGE_TAG_LATEST=alpha-latest" >> $GITHUB_ENV
+  #           echo "CHART_PATH=gitops/charts/app/${{ vars.PRODUCTS_SVC_NAME }}" >> $GITHUB_ENV
+  #         # if the branch is main, tag the image as beta
+  #         elif [[ $GITHUB_REF == refs/heads/main ]]; then
+  #           echo "image_tag_sha=beta-${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
+  #           echo "chart_path=gitops/charts/app/${{ vars.PRODUCTS_SVC_NAME }}" >> $GITHUB_OUTPUT
+  #           echo "IMAGE_TAG_LATEST=beta-latest" >> $GITHUB_ENV
+  #           echo "IMAGE_TAG_SHA=beta-${GITHUB_SHA:0:7}" >> $GITHUB_ENV
+  #           echo "CHART_PATH=gitops/charts/app/${{ vars.PRODUCTS_SVC_NAME }}" >> $GITHUB_ENV
+  #         fi
 
-      - name: Build, Tag, and Push
-        uses: docker/build-push-action@v6.9.0
-        env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        with:
-          context: ./services/phl-products/
-          # Distroless
-          # file: ./Dockerfile-distroless
-          push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ vars.PRODUCTS_SVC_NAMING_STANDARD }}:${{ env.IMAGE_TAG_SHA }}
-            ${{ env.REGISTRY }}/${{ vars.PRODUCTS_SVC_NAMING_STANDARD }}:${{ env.IMAGE_TAG_LATEST }}
-          platforms: linux/amd64
-          # # multi-platform
-          # platforms: linux/amd64,linux/arm64
+  #     - name: Build, Tag, and Push
+  #       uses: docker/build-push-action@v6.9.0
+  #       env:
+  #         REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+  #       with:
+  #         context: ./services/phl-products/
+  #         # Distroless
+  #         # file: ./Dockerfile-distroless
+  #         push: true
+  #         tags: |
+  #           ${{ env.REGISTRY }}/${{ vars.PRODUCTS_SVC_NAMING_STANDARD }}:${{ env.IMAGE_TAG_SHA }}
+  #           ${{ env.REGISTRY }}/${{ vars.PRODUCTS_SVC_NAMING_STANDARD }}:${{ env.IMAGE_TAG_LATEST }}
+  #         platforms: linux/amd64
+  #         # # multi-platform
+  #         # platforms: linux/amd64,linux/arm64
 
-  deployment:
-    environment: phl-products
-    name: Deployment
-    runs-on: ubuntu-latest
-    needs: [build_push_tag]
-    if: ${{ needs.build_push_tag.result == 'success'}}
-    steps:
-      - name: Trigger ArgoCD Sync by updating the helm chart
-        run: |
-          echo "IMAGE_TAG_SHA: ${{ needs.build_push_tag.outputs.image_tag_sha }}"
-          echo "CHART_PATH: ${{ needs.build_push_tag.outputs.chart_path }}"
-          eval "$(ssh-agent -s)"
-          echo "${{ secrets.ARGOCD_SSH }}" > id_rsa
-          chmod 400 id_rsa
-          ssh-add id_rsa
-          git clone git@github.com:${{ vars.GH_OWNER }}/${{ vars.GH_REPO_NAME }}.git
-          echo ${{ vars.GH_REPO_NAME }}/${{ needs.build_push_tag.outputs.chart_path }}
-          cd ${{ vars.GH_REPO_NAME }}/${{ needs.build_push_tag.outputs.chart_path }}
-          sed -i "s|repository: .*|repository: ${{ needs.build_push_tag.outputs.registry }}/${{ vars.PRODUCTS_SVC_NAMING_STANDARD }}|" values.yaml
-          sed -i "s/appVersion: \".*\"/appVersion: \"${{ needs.build_push_tag.outputs.image_tag_sha }}\"/" Chart.yaml
-          git add values.yaml Chart.yaml
-          git config --global user.email "imam.arief.rhmn@gmail.com"
-          git config --global user.name "greyhats13"
-          git commit -m "Update image tag to ${{ needs.build_push_tag.outputs.image_tag_sha }}"
-          git push origin main
+  # deployment:
+  #   environment: phl-products
+  #   name: Deployment
+  #   runs-on: ubuntu-latest
+  #   needs: [build_push_tag]
+  #   if: ${{ needs.build_push_tag.result == 'success'}}
+  #   steps:
+  #     - name: Trigger ArgoCD Sync by updating the helm chart
+  #       run: |
+  #         echo "IMAGE_TAG_SHA: ${{ needs.build_push_tag.outputs.image_tag_sha }}"
+  #         echo "CHART_PATH: ${{ needs.build_push_tag.outputs.chart_path }}"
+  #         eval "$(ssh-agent -s)"
+  #         echo "${{ secrets.ARGOCD_SSH }}" > id_rsa
+  #         chmod 400 id_rsa
+  #         ssh-add id_rsa
+  #         git clone git@github.com:${{ vars.GH_OWNER }}/${{ vars.GH_REPO_NAME }}.git
+  #         echo ${{ vars.GH_REPO_NAME }}/${{ needs.build_push_tag.outputs.chart_path }}
+  #         cd ${{ vars.GH_REPO_NAME }}/${{ needs.build_push_tag.outputs.chart_path }}
+  #         sed -i "s|repository: .*|repository: ${{ needs.build_push_tag.outputs.registry }}/${{ vars.PRODUCTS_SVC_NAMING_STANDARD }}|" values.yaml
+  #         sed -i "s/appVersion: \".*\"/appVersion: \"${{ needs.build_push_tag.outputs.image_tag_sha }}\"/" Chart.yaml
+  #         git add values.yaml Chart.yaml
+  #         git config --global user.email "imam.arief.rhmn@gmail.com"
+  #         git config --global user.name "greyhats13"
+  #         git commit -m "Update image tag to ${{ needs.build_push_tag.outputs.image_tag_sha }}"
+  #         git push origin main
 
   end_to_end_test:
     name: End to End Testing
     runs-on: ubuntu-latest
-    needs: [deployment] # run after deployment is successful
+    # needs: [deployment] # run after deployment is successful
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -122,9 +122,10 @@ jobs:
             -H "Content-Type: application/json" \
             -d '{"grant_type": "'"${{ secrets.GRANT_TYPE }}"'", "client_id": "'"${{ secrets.CLIENT_ID }}"'", "client_secret": "'"${{ secrets.CLIENT_SECRET }}"'"}')
 
+          echo "BEARER_TOKEN_RESPONSE: $BEARER_TOKEN_RESPONSE"
           # Extract access_token using jq
           BEARER_TOKEN=$(echo $BEARER_TOKEN_RESPONSE | jq -r '.access_token')
-
+          echo "BEARER_TOKEN: $BEARER_TOKEN"
           # Check if token was retrieved successfully
           if [ "$BEARER_TOKEN" == "null" ] || [ -z "$BEARER_TOKEN" ]; then
             echo "Failed to retrieve access token."
