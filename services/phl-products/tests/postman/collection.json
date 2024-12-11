@@ -35,15 +35,15 @@
 													"pm.variables.set(\"productBody\", JSON.stringify(requestBody));",
 													"",
 													"// Set the request headers, including Content-Type and Authorization",
-													"// Authorization header uses the token from the environment",
+													"// Authorization header uses the bearer token from the environment",
 													"pm.request.headers.upsert({key: 'Content-Type', value: 'application/json'});",
 													"pm.request.headers.upsert({key: 'Authorization', value: 'Bearer ' + pm.environment.get(\"bearer_token\")});",
 													"",
 													"// Attach the body to the request",
 													"pm.request.body.raw = pm.variables.get(\"productBody\");",
 													"",
-													"// Validate that token is available before sending the request",
-													"pm.test(\"Token is available\", function() {",
+													"// Validate that bearer token is available before sending the request",
+													"pm.test(\"Bearer Token is available\", function() {",
 													"    pm.expect(pm.environment.get(\"bearer_token\")).to.not.be.undefined;",
 													"});"
 											],
@@ -108,8 +108,8 @@
 									"type": "bearer",
 									"bearer": [
 											{
-													"key": "token",
-													"value": "{{token}}",
+													"key": "bearer_token",
+													"value": "{{bearer_token}}",
 													"type": "string"
 											}
 									]
@@ -215,8 +215,8 @@
 													"// If query parameters needed (e.g., pagination), set them here",
 													"// pm.request.url.addQueryParams({limit: '10', offset: '0'});",
 													"",
-													"// Validate that token is available",
-													"pm.test(\"Token is available for GET products\", function() {",
+													"// Validate that bearer token is available",
+													"pm.test(\"Bearer Token is available for GET products\", function() {",
 													"    pm.expect(pm.environment.get(\"bearer_token\")).to.not.be.undefined;",
 													"});"
 											],
@@ -230,8 +230,8 @@
 									"type": "bearer",
 									"bearer": [
 											{
-													"key": "token",
-													"value": "{{token}}",
+													"key": "bearer_token",
+													"value": "{{bearer_token}}",
 													"type": "string"
 											}
 									]
@@ -328,8 +328,8 @@
 									"type": "bearer",
 									"bearer": [
 											{
-													"key": "token",
-													"value": "{{token}}",
+													"key": "bearer_token",
+													"value": "{{bearer_token}}",
 													"type": "string"
 											}
 									]
@@ -445,8 +445,8 @@
 									"type": "bearer",
 									"bearer": [
 											{
-													"key": "token",
-													"value": "{{token}}",
+													"key": "bearer_token",
+													"value": "{{bearer_token}}",
 													"type": "string"
 											}
 									]
@@ -521,8 +521,8 @@
 									"type": "bearer",
 									"bearer": [
 											{
-													"key": "token",
-													"value": "{{token}}",
+													"key": "bearer_token",
+													"value": "{{bearer_token}}",
 													"type": "string"
 											}
 									]
