@@ -5,8 +5,10 @@ on:
     branches:
       - main
       - dev
+    paths:
+      - 'services/phl-products/**'
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   build_push_tag:
@@ -23,34 +25,31 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3.6.1
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          # audience: sts.amazonaws.com
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.GH_OIDC_ROLE_ARN }}
 
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build, tag, and push docker image to Amazon ECR
-        env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          REPOSITORY: my-ecr-repo
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
-          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
-
-      - name: Set Image Tag
+      - name: Retrieve ECR repo and Set Image Tag vased on environment
         id: set_image_tag
         run: |
           echo "GITHUB_REF: $GITHUB_REF"
           echo "GITOPS_PATH_DEV FROM VARS: ${{ vars.GITOPS_PATH_DEV }}"
           echo "GITOPS_PATH_STG FROM VARS: ${{ vars.GITOPS_PATH_STG }}"
+          # if the branch is dev, tag the image as alpha
           if [[ $GITHUB_REF == refs/heads/dev ]]; then
             echo "image_tag_sha=alpha-${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
             echo "chart_path=${{ vars.GITOPS_PATH_DEV }}" >> $GITHUB_OUTPUT
             echo "IMAGE_TAG_SHA=alpha-${GITHUB_SHA:0:7}" >> $GITHUB_ENV
             echo "IMAGE_TAG_LATEST=alpha-latest" >> $GITHUB_ENV
             echo "CHART_PATH=${{ vars.GITOPS_PATH_DEV }}" >> $GITHUB_ENV
+          # if the branch is main, tag the image as beta
           elif [[ $GITHUB_REF == refs/heads/main ]]; then
             echo "image_tag_sha=beta-${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
             echo "chart_path=${{ vars.GITOPS_PATH_STG }}" >> $GITHUB_OUTPUT
@@ -61,14 +60,16 @@ jobs:
 
       - name: Build, Tag, and Push
         uses: docker/build-push-action@v6.9.0
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         with:
           context: .
           # Distroless
-          file: ./Dockerfile-distroless
+          file: ./services/products/Dockerfile
           push: true
           tags: |
-            ${{ vars.DOCKER_REPOSITORY_URI }}:${{ env.IMAGE_TAG_SHA }}
-            ${{ vars.DOCKER_REPOSITORY_URI }}:${{ env.IMAGE_TAG_LATEST }}
+            ${{ env.REGISTRY }}/${{ var.REPOSITORY }}:${{ env.IMAGE_TAG_SHA }}
+            ${{ env.REGISTRY }}/${{ var.REPOSITORY }}:${{ env.IMAGE_TAG_LATEST }}
           platforms: linux/amd64
           # # multi-platform
           # platforms: linux/amd64,linux/arm64
@@ -140,7 +141,6 @@ jobs:
   #         git config --global user.name "greyhats13"
   #         git commit -m "Update image tag to ${{ env.IMAGE_TAG_SHA }}"
   #         git push origin main
-
 
   # end_to_end_test:
   #   name: End-to-End Test
