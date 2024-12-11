@@ -23,6 +23,7 @@ jobs:
     outputs:
       image_tag_sha: ${{ steps.set_image_tag.outputs.image_tag_sha }}
       chart_path: ${{ steps.set_image_tag.outputs.chart_path }}
+      registry: ${{ steps.login-ecr.outputs.registry }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -92,14 +93,13 @@ jobs:
           git clone git@github.com:${{ vars.GH_OWNER }}/${{ vars.GH_REPO_NAME }}.git
           echo ${{ vars.GH_REPO_NAME }}/${{ needs.build_push_tag.outputs.chart_path }}
           cd ${{ vars.GH_REPO_NAME }}/${{ needs.build_push_tag.outputs.chart_path }}
-          sed -i "s|repository: .*|repository: ${{ env.REGISTRY }}/${{ vars.PRODUCTS_SVC_NAMING_STANDARD }}|" values.yaml
+          sed -i "s|repository: .*|repository: ${{ needs.build_push_tag.outputs.registry }}/${{ vars.PRODUCTS_SVC_NAMING_STANDARD }}|" values.yaml
           sed -i "s/appVersion: \".*\"/appVersion: \"${{ needs.build_push_tag.outputs.image_tag_sha }}\"/" Chart.yaml
           git add values.yaml Chart.yaml
           git config --global user.email "imam.arief.rhmn@gmail.com"
           git config --global user.name "greyhats13"
           git commit -m "Update image tag to ${{ needs.build_push_tag.outputs.image_tag_sha }}"
           git push origin main
-          
 
   # end_to_end_test:
   #   name: End-to-End Test
