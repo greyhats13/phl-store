@@ -23,7 +23,7 @@ projects:
     apply_requirements: ["mergeable"]
     autoplan:
       when_modified: ["*.tf*"]
-  # - dir: iac/deployment/services/phl-profile
-  #   apply_requirements: ["mergeable"]
-  #   autoplan:
-  #     when_modified: ["*.tf*"]
+  - dir: iac/deployment/services/phl-profile
+    apply_requirements: ["mergeable"]
+    autoplan:
+      when_modified: ["*.tf*"]

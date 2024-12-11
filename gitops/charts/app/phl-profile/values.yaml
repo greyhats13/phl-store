@@ -7,7 +7,7 @@ replicaCount: 1
 
 # This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
 image:
-  repository: nginx
+  repository: 124456474132.dkr.ecr.us-west-1.amazonaws.com/phl-svc-profile
   # This sets the pull policy for images.
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
@@ -19,6 +19,19 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
+appSecret:
+  annotations:
+    avp.kubernetes.io/path: "phl/svc/phl-profile"
+    avp.kubernetes.io/secret-version: "AWSCURRENT"
+  # ArgoCD Vault Plugin will replace the placeholders with the actual values from the AWS Secret Manager
+  # Reading from os env not file
+  secrets:
+    DB_USER: <db_user>
+    DB_PASSWORD: <port>
+    DB_HOST: <db_host>
+    DB_PORT: <db_port>
+    DB_NAME: <db_name>
+
 # This section builds out the service account more information can be found here: https://kubernetes.io/docs/concepts/security/service-accounts/
 serviceAccount:
   # Specifies whether a service account should be created
@@ -29,7 +42,7 @@ serviceAccount:
   annotations: {}
   # The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template
-  name: ""
+  name: phl-dev-svc-profile
 
 # This is for setting Kubernetes Annotations to a Pod.
 # For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
@@ -38,10 +51,12 @@ podAnnotations: {}
 # For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
 podLabels: {}
 
-podSecurityContext: {}
+podSecurityContext:
+  {}
   # fsGroup: 2000
 
-securityContext: {}
+securityContext:
+  {}
   # capabilities:
   #   drop:
   #   - ALL
@@ -58,22 +73,36 @@ service:
 
 # This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
 ingress:
-  enabled: false
-  className: ""
-  annotations: {}
+  enabled: true
+  className: "alb"
+  annotations:
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
+    external-dns.alpha.kubernetes.io/hostname: "profile.phl.blast.co.id"
+    external-dns.alpha.kubernetes.io/ttl: "300"
+    alb.ingress.kubernetes.io/group.name: phl-dev-svc-ingress
+    alb.ingress.kubernetes.io/healthcheck-path: /api/profile
+    alb.ingress.kubernetes.io/success-codes: "200"
+    alb.ingress.kubernetes.io/listener-attributes.HTTP-8080: routing.http.response.server.enabled=true
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-west-1:124456474132:certificate/155ec9de-d537-4b5f-9fc3-bbf43c8f91d5
+    alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS13-1-2-2021-06
+    alb.ingress.kubernetes.io/backend-protocol: HTTP
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80},{"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/scheme: internal
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/group.order: "1"
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
   hosts:
-    - host: chart-example.local
+    - host: profile.phl.blast.co.id
       paths:
-        - path: /
-          pathType: ImplementationSpecific
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
+        - path: /api/profile
+          pathType: Prefix
+  tls:
+    - hosts:
+        - profile.phl.blast.co.id
 
-resources: {}
+resources:
+  {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
@@ -98,10 +127,10 @@ readinessProbe:
 # This section is for setting up autoscaling more information can be found here: https://kubernetes.io/docs/concepts/workloads/autoscaling/
 autoscaling:
   enabled: false
-  minReplicas: 1
-  maxReplicas: 100
-  targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
+  minReplicas: 2
+  maxReplicas: 20
+  targetCPUUtilizationPercentage: 75
+  targetMemoryUtilizationPercentage: 75
 
 # Additional volumes on the output Deployment definition.
 volumes: []
@@ -121,3 +150,7 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
