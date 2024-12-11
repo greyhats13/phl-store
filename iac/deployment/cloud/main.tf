@@ -6,7 +6,10 @@ module "kms_main" {
   description           = "${local.kms_naming_standard} cluster encryption key"
   enable_default_policy = true
   key_owners            = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/iac"]
-  key_users             = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/iac"]
+  key_users = [
+    "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/iac",
+    "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/github"
+  ]
   key_service_roles_for_autoscaling = [
     # required for the ASG to manage encrypted volumes for nodes
     "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling",
@@ -743,6 +746,21 @@ module "repo_phl" {
   ]
 }
 
+# Create OIDC provider for GitHub Actions
+module "oidc_github" {
+  source  = "unfunco/oidc-github/aws"
+  version = "1.8.0"
+
+  attach_read_only_policy = false
+  additional_thumbprints  = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
+  # Policy to push image to ECR and upload test report to S3
+  iam_role_policy_arns    = ["arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser", "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/phl-dev-svc-products"]
+
+  github_repositories = [
+    "greyhats13/phl-store",
+  ]
+}
+
 # # AWS required resources for Karpenter
 # module "eks_karpenter" {
 #   source  = "terraform-aws-modules/eks/aws//modules/karpenter"
@@ -912,17 +930,4 @@ module "api" {
     Environment = "dev"
     Terraform   = "true"
   }
-}
-
-# Create OIDC provider for GitHub Actions
-module "oidc_github" {
-  source  = "unfunco/oidc-github/aws"
-  version = "1.8.0"
-
-  attach_read_only_policy = false
-  additional_thumbprints  = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
-  iam_role_policy_arns    = ["arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"]
-  github_repositories = [
-    "greyhats13/phl-store",
-  ]
 }
