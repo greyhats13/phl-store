@@ -140,7 +140,7 @@ jobs:
         run: |
           # The template is at services/phl-products/tests/postman/environment-template.tpl
           # and contains placeholders like {{ BEARER_TOKEN }} and {{ BASE_URL }}
-          sed "s/{{ BEARER_TOKEN }}/${{ env.BEARER_TOKEN }}/g"; s/{{ BASE_URL }}/${{ vars.BASE_URL }}/g" services/${{ env.PRODUCTS_SVC_NAME }}/tests/postman/environment-template.tpl > services/${{ vars.PRODUCTS_SVC_NAME }}/tests/postman/environment.json
+          sed "s/{{ BEARER_TOKEN }}/${{ env.BEARER_TOKEN }}/g; s/{{ BASE_URL }}/${{ vars.BASE_URL }}/g" services/${{ vars.PRODUCTS_SVC_NAME }}/tests/postman/environment-template.tpl > services/${{ vars.PRODUCTS_SVC_NAME }}/tests/postman/environment.json
 
 
       - name: Run Newman Tests
