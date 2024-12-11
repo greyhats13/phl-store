@@ -4,22 +4,12 @@
   "values": [
       {
           "key": "base_url",
-          "value": "https://api.phl.blast.co.id",
+          "value": "{{ BASE_URL }}",
           "enabled": true
       },
       {
-          "key": "base_url_oauth",
-          "value": "https://oauth.phl.blast.co.id",
-          "enabled": true
-      },
-      {
-          "key": "client_id",
-          "value": "CLIENT_ID_PLACEHOLDER",
-          "enabled": true
-      },
-      {
-          "key": "client_secret",
-          "value": "CLIENT_SECRET_PLACEHOLDER",
+          "key": "bearer_token",
+          "value": "{{ BEARER_TOKEN }}",
           "enabled": true
       }
   ],
