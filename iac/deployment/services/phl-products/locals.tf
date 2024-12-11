@@ -20,7 +20,7 @@ locals {
     "${local.svc_standard.Feature}_svc_naming_standard" = local.svc_naming_standard
     "${local.svc_standard.Feature}_svc_naming_full"     = local.svc_naming_full
     "gh_repo_name"                                      = var.github_repo
-    "gh_owner"                                          = "git@github.com:${var.github_owner}/${var.github_repo}.git"
+    "gh_owner"                                          = var.github_owner
     "aws_region"                                        = var.region
     "aws_account_id"                                    = data.aws_caller_identity.current.account_id
     "gh_oidc_role_arn"                                  = data.terraform_remote_state.cloud.outputs.github_oidc_role_arn
