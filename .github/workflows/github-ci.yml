@@ -118,7 +118,7 @@ jobs:
         id: generate_token
         run: |
           # Make POST request to obtain token
-          BEARER_TOKEN_RESPONSE=$(curl -s -X POST "${{ vars.BASE_URL_OAUTH }}" \
+          BEARER_TOKEN_RESPONSE=$(curl -s -X POST "${{ vars.BASE_URL_OAUTH }}/oauth2/token" \
             -H "Content-Type: application/json" \
             -d '{"grant_type": "'"${{ secrets.GRANT_TYPE }}"'", "client_id": "'"${{ secrets.CLIENT_ID }}"'", "client_secret": "'"${{ secrets.CLIENT_SECRET }}"'"}')
 
