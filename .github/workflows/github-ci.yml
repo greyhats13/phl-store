@@ -65,9 +65,9 @@ jobs:
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         with:
-          context: "{{defaultContext}}:services/phl-products
+          context: ./services/phl-products/
           # Distroless
-          file: ./Dockerfile
+          # file: ./Dockerfile-distroless
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ vars.PRODUCTS_SVC_NAMING_STANDARD }}:${{ env.IMAGE_TAG_SHA }}
