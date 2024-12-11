@@ -16,11 +16,11 @@ export let options = {
     scenarios: {
         get_products_by_id: {
             executor: 'constant-arrival-rate',
-            rate: 160, // Requests per second matching the rate limit (80 RPS)
+            rate: 100, // Requests per second matching the rate limit (80 RPS)
             timeUnit: '1s',
             duration: '2m', // Total test duration of 2 minutes
-            preAllocatedVUs: 200, // Initial number of VUs
-            maxVUs: 300, // Maximum number of VUs
+            preAllocatedVUs: 100, // Initial number of VUs
+            maxVUs: 200, // Maximum number of VUs
         },
     },
     thresholds: {

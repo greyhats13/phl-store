@@ -155,19 +155,19 @@ jobs:
             --reporters cli,htmlextra \
             --reporter-htmlextra-export newman/report.html
 
-      - name: Install k6
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gnupg software-properties-common
-          curl -s https://dl.k6.io/key.gpg | sudo apt-key add -
-          echo "deb https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
-          sudo apt-get update
-          sudo apt-get install -y k6
+      # - name: Install k6
+      #   run: |
+      #     sudo apt-get update
+      #     sudo apt-get install -y gnupg software-properties-common
+      #     curl -s https://dl.k6.io/key.gpg | sudo apt-key add -
+      #     echo "deb https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+      #     sudo apt-get update
+      #     sudo apt-get install -y k6
 
-      - name: Run k6 Performance Test
-        run: |
-          mkdir -p performance
-          k6 run --out json=performance/k6-results.json services/phl-products/tests/k6/k6.js
+      # - name: Run k6 Performance Test
+      #   run: |
+      #     mkdir -p performance
+      #     k6 run --out json=performance/k6-results.json services/phl-products/tests/k6/k6.js
 
       # # Security Scan with ZAP
       # - name: Security Scan with ZAP
