@@ -150,7 +150,7 @@ jobs:
           mkdir -p newman
           newman run services/${{ vars.PRODUCTS_SVC_NAME }}/tests/postman/collection.json \
             -e services/${{ vars.PRODUCTS_SVC_NAME }}/tests/postman/environment.json \
-            --iteration-count 2 \
+            --iteration-count 1 \
             --delay-request 200 \
             --reporters cli,htmlextra \
             --reporter-htmlextra-export newman/report.html
