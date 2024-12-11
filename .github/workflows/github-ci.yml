@@ -42,22 +42,20 @@ jobs:
         id: set_image_tag
         run: |
           echo "GITHUB_REF: $GITHUB_REF"
-          echo "GITOPS_PATH_DEV FROM VARS: ${{ vars.GITOPS_PATH_DEV }}"
-          echo "GITOPS_PATH_STG FROM VARS: ${{ vars.GITOPS_PATH_STG }}"
           # if the branch is dev, tag the image as alpha
           if [[ $GITHUB_REF == refs/heads/dev ]]; then
             echo "image_tag_sha=alpha-${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
-            echo "chart_path=${{ vars.GITOPS_PATH_DEV }}" >> $GITHUB_OUTPUT
+            echo "chart_path=gitops/charts/app/${{ vars.PRODUCTS_SVC_NAME }}" >> $GITHUB_OUTPUT
             echo "IMAGE_TAG_SHA=alpha-${GITHUB_SHA:0:7}" >> $GITHUB_ENV
             echo "IMAGE_TAG_LATEST=alpha-latest" >> $GITHUB_ENV
-            echo "CHART_PATH=${{ vars.GITOPS_PATH_DEV }}" >> $GITHUB_ENV
+            echo "CHART_PATH=gitops/charts/app/${{ vars.PRODUCTS_SVC_NAME }}" >> $GITHUB_ENV
           # if the branch is main, tag the image as beta
           elif [[ $GITHUB_REF == refs/heads/main ]]; then
             echo "image_tag_sha=beta-${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
-            echo "chart_path=${{ vars.GITOPS_PATH_STG }}" >> $GITHUB_OUTPUT
+            echo "chart_path=gitops/charts/test/app/${{ vars.PRODUCTS_SVC_NAME }}" >> $GITHUB_OUTPUT
             echo "IMAGE_TAG_LATEST=beta-latest" >> $GITHUB_ENV
             echo "IMAGE_TAG_SHA=beta-${GITHUB_SHA:0:7}" >> $GITHUB_ENV
-            echo "CHART_PATH=${{ vars.GITOPS_PATH_STG }}" >> $GITHUB_ENV
+            echo "CHART_PATH=gitops/charts/test/app/${{ vars.PRODUCTS_SVC_NAME }}" >> $GITHUB_ENV
           fi
 
       - name: Build, Tag, and Push
@@ -91,9 +89,9 @@ jobs:
           echo "${{ secrets.ARGOCD_SSH }}" > id_rsa
           chmod 400 id_rsa
           ssh-add id_rsa
-          git clone git@github.com:${{ vars.GITHUB_OWNER }}/${{ vars.GITHUB_REPO_NAME }}.git
-          echo ${{ vars.GITOPS_REPO_NAME }}/${{ needs.build_push_tag.outputs.chart_path }}
-          cd ${{ vars.GITOPS_REPO_NAME }}/${{ needs.build_push_tag.outputs.chart_path }}
+          git clone git@github.com:${{ vars.GITHUB_OWNER }}/${{ vars.GH_OWNER }}.git
+          echo ${{ vars.GH_REPO_NAME }}/${{ needs.build_push_tag.outputs.chart_path }}
+          cd ${{ vars.GH_REPO_NAME }}/${{ needs.build_push_tag.outputs.chart_path }}
           sed -i "s|repository: .*|repository: ${{ env.REGISTRY }}/${{ vars.PRODUCTS_SVC_NAMING_STANDARD }}|" values.yaml
           sed -i "s/appVersion: \".*\"/appVersion: \"${{ needs.build_push_tag.outputs.image_tag_sha }}\"/" Chart.yaml
           git add values.yaml Chart.yaml
