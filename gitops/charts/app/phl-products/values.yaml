@@ -19,6 +19,9 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
+appConfig:
+  app_name: "phl-products"
+
 # ArgoCD Vault Plugin will replace the placeholders with the actual values from the AWS Secret Manager
 appSecret:
   annotations:

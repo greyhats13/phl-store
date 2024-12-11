@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "phl_profile.fullname" . }}
+  name: {{ include "phl-profile.fullname" . }}
   labels:
-    {{- include "phl_profile.labels" . | nindent 4 }}
+    {{- include "phl-profile.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
   ports:
@@ -12,4 +12,4 @@ spec:
       protocol: TCP
       name: http
   selector:
-    {{- include "phl_profile.selectorLabels" . | nindent 4 }}
+    {{- include "phl-profile.selectorLabels" . | nindent 4 }}
