@@ -12,7 +12,6 @@ on:
 
 jobs:
   build_push_tag:
-    environment: phl-products
     name: Build, Push, Tag
     runs-on: ubuntu-latest
     # needs: test_and_coverages
@@ -29,8 +28,8 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           # audience: sts.amazonaws.com
-          aws-region: ${{ secrets.AWS_REGION }}
-          role-to-assume: ${{ secrets.GH_OIDC_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ vars.GH_OIDC_ROLE_ARN }}
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -68,8 +67,8 @@ jobs:
           file: ./services/products/Dockerfile
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ vars.REPOSITORY }}:${{ env.IMAGE_TAG_SHA }}
-            ${{ env.REGISTRY }}/${{ vars.REPOSITORY }}:${{ env.IMAGE_TAG_LATEST }}
+            ${{ env.REGISTRY }}/${{ vars.PRODUCTS_SVC_NAMING_STANDARD }}:${{ env.IMAGE_TAG_SHA }}
+            ${{ env.REGISTRY }}/${{ vars.PRODUCTS_SVC_NAMING_STANDARD }}:${{ env.IMAGE_TAG_LATEST }}
           platforms: linux/amd64
           # # multi-platform
           # platforms: linux/amd64,linux/arm64
