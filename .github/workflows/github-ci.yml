@@ -7,6 +7,9 @@ on:
       - dev
     paths:
       - 'services/phl-products/**'
+    paths-ignore:
+      - 'gitops/**'
+      - 'iac/**'
     tags:
       - "v*"
 
@@ -68,8 +71,8 @@ jobs:
           file: ./services/products/Dockerfile
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ var.REPOSITORY }}:${{ env.IMAGE_TAG_SHA }}
-            ${{ env.REGISTRY }}/${{ var.REPOSITORY }}:${{ env.IMAGE_TAG_LATEST }}
+            ${{ env.REGISTRY }}/${{ vars.REPOSITORY }}:${{ env.IMAGE_TAG_SHA }}
+            ${{ env.REGISTRY }}/${{ vars.REPOSITORY }}:${{ env.IMAGE_TAG_LATEST }}
           platforms: linux/amd64
           # # multi-platform
           # platforms: linux/amd64,linux/arm64
