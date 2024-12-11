@@ -10,4 +10,3 @@ COPY ./app /build/app
 
 # Run binary
 CMD ["/build/app"]
-
