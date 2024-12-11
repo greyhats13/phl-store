@@ -80,6 +80,7 @@ module "ecr" {
     "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/github",
     "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
   ]
+  repository_image_tag_mutability = "MUTABLE"
   repository_lifecycle_policy = jsonencode({
     rules = [
       {
