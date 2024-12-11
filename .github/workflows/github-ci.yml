@@ -65,7 +65,7 @@ jobs:
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         with:
-          context: services/phl-products
+          context: "{{defaultContext}}:services/phl-products
           # Distroless
           file: ./Dockerfile
           push: true
