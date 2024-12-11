@@ -52,10 +52,10 @@ jobs:
           # if the branch is main, tag the image as beta
           elif [[ $GITHUB_REF == refs/heads/main ]]; then
             echo "image_tag_sha=beta-${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
-            echo "chart_path=gitops/charts/test/app/${{ vars.PRODUCTS_SVC_NAME }}" >> $GITHUB_OUTPUT
+            echo "chart_path=gitops/charts/app/${{ vars.PRODUCTS_SVC_NAME }}" >> $GITHUB_OUTPUT
             echo "IMAGE_TAG_LATEST=beta-latest" >> $GITHUB_ENV
             echo "IMAGE_TAG_SHA=beta-${GITHUB_SHA:0:7}" >> $GITHUB_ENV
-            echo "CHART_PATH=gitops/charts/test/app/${{ vars.PRODUCTS_SVC_NAME }}" >> $GITHUB_ENV
+            echo "CHART_PATH=gitops/charts/app/${{ vars.PRODUCTS_SVC_NAME }}" >> $GITHUB_ENV
           fi
 
       - name: Build, Tag, and Push
