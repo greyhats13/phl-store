@@ -101,6 +101,49 @@ jobs:
           git commit -m "Update image tag to ${{ needs.build_push_tag.outputs.image_tag_sha }}"
           git push origin main
 
+  end_to_end_test:
+    name: End to End Testing
+    runs-on: ubuntu-latest
+    needs: [deployment] # run after deployment is successful
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Install Newman and htmlextra reporter
+      - name: Install Newman & Reporter
+        run: |
+          npm install -g newman newman-reporter-htmlextra
+
+      # Prepare environment.json
+      # Inject CLIENT_ID and CLIENT_SECRET into environment.json (you need a template environment.json with placeholders)
+      - name: Prepare environment for tests
+        run: |
+          # Assuming your environment template is at services/phl-products/tests/postman/environment-template.json
+          # and contains placeholders like CLIENT_ID_PLACEHOLDER and CLIENT_SECRET_PLACEHOLDER
+          sed "s/CLIENT_ID_PLACEHOLDER/${{ secrets.PRODUCTS_CLIENT_ID }}/g; s/CLIENT_SECRET_PLACEHOLDER/${{ secrets.PRODUCTS_CLIENT_SECRET }}/g" services/${{ vars.PRODUCTS_SVC_NAME }}/tests/postman/environment-template.json > services/${{ vars.PRODUCTS_SVC_NAME }}/tests/postman/environment.json
+
+      - name: Run Newman Tests
+        run: |
+          # Make sure collection.json and environment.json are present in tests/postman/
+          mkdir -p newman
+          newman run tests/postman/collection.json \
+            -e tests/postman/environment.json \
+            --iteration-count 5 \
+            --delay-request 200 \
+            --reporters cli,htmlextra \
+            --reporter-htmlextra-export newman/report.html
+
+      # Configure AWS credentials using GitHub OIDC
+      - name: Configure AWS Credentials for S3 Upload
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ vars.GH_OIDC_ROLE_ARN }}
+
+      - name: Upload Test Report to S3
+        run: |
+          aws s3 cp newman/report.html s3://${{ vars.AWS_S3_BUCKET }}/reports/phl-products/end-to-end/report-$(date +%s).html
+
   # end_to_end_test:
   #   name: End-to-End Test
   #   runs-on: ubuntu-latest
