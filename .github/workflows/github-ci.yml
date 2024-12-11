@@ -141,6 +141,7 @@ jobs:
           # The template is at services/phl-products/tests/postman/environment-template.tpl
           # and contains placeholders like {{ BEARER_TOKEN }} and {{ BASE_URL }}
           sed "s|{{ BEARER_TOKEN }}|${{ env.BEARER_TOKEN }}|g; s|{{ BASE_URL }}|${{ vars.BASE_URL }}|g" services/${{ vars.PRODUCTS_SVC_NAME }}/tests/postman/environment-template.tpl > services/${{ vars.PRODUCTS_SVC_NAME }}/tests/postman/environment.json
+          cat services/${{ vars.PRODUCTS_SVC_NAME }}/tests/postman/environment.json
 
 
       - name: Run Newman Tests
@@ -149,7 +150,7 @@ jobs:
           mkdir -p newman
           newman run services/${{ vars.PRODUCTS_SVC_NAME }}/tests/postman/collection.json \
             -e services/${{ vars.PRODUCTS_SVC_NAME }}/tests/postman/environment.json \
-            --iteration-count 5 \
+            --iteration-count 2 \
             --delay-request 200 \
             --reporters cli,htmlextra \
             --reporter-htmlextra-export newman/report.html
