@@ -143,7 +143,6 @@ jobs:
           sed "s|{{ BEARER_TOKEN }}|${{ env.BEARER_TOKEN }}|g; s|{{ BASE_URL }}|${{ vars.BASE_URL }}|g" services/${{ vars.PRODUCTS_SVC_NAME }}/tests/postman/environment-template.tpl > services/${{ vars.PRODUCTS_SVC_NAME }}/tests/postman/environment.json
           cat services/${{ vars.PRODUCTS_SVC_NAME }}/tests/postman/environment.json
 
-
       - name: Run Newman Tests
         run: |
           # Make sure collection.json and environment.json are present in tests/postman/
