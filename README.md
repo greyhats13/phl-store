@@ -7,8 +7,7 @@ MySQL as the database to store and retrieve data. The config file is mounted as 
 attached below for your reference.
 For the application deployment, use any CI/CD tools of your choice.
 
-# Instructions
-Submission
+# Submission
 For your submission, create a private Github repository and include the following
 1. Architectural diagram to explain your architecture.
 2. The relevant configuration scripts (eg: Terraform).
