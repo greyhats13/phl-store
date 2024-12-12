@@ -344,8 +344,22 @@ Once all components are installed, we can create a self-service model using Atla
   <img src="img/atlantis.png" alt="atlantis">
 </p>
 
-When we want to provision, set up, or update infrastructure, just make a pull request in the repository set up by Atlantis. The infra or devops team reviews & approves the pull request. We require at least two approvals & that the pull request is mergeable. After approval, Atlantis applies the infrastructure defined in the pull request.
+When we want to provision, set up, or update infrastructure, just make a pull request in the repository set up by Atlantis. 
+- Developer want to provision the new service call `phl-products`. Here's for the [example](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/services/phl-products#1)
+- Developer also need to add this part so Atlantis can detect the changes in the directory
+````yml
+projects:
+  - dir: iac/deployment/services/phl-profiles
+    apply_requirements: ["mergeable,approved"]
+    autoplan:
+      when_modified: ["*.tf*"]
+```
 
+- The delivery team will create the pull request from their feature branch e.g newservices/DEV-1005 to main/master .
+- Atlantis will create the autoplan for the infrastructure changes.
+-  The infra or devops team reviews & approves the pull request. Let's say, we require at least two approvals & that the pull request is mergeable.
+- After approval, developer can start perform the `atlantis apply` to apply the changes to the infrastructure.
+- [atlantis.yaml](https://github.com/greyhats13/phl-store/blob/main/iac/atlantis.yaml#26)
 ````yml
 version: 3
 projects:
@@ -355,32 +369,18 @@ projects:
       when_modified: ["*.tf*"]
 ```
 
-Check out an example pull request here:
-https://github.com/greyhats13/phl-store/pull/36
+that's how we setup the infrastructure for the new service. The same process can be applied to other services.
 
-### Example Service Deployment
+Check out an example that's have been done [here](https://github.com/greyhats13/phl-store/pull/36)
 
-This part isn’t CI/CD yet, but it’s about preparing a new service. Before deploying a service on Kubernetes, we need to set up components like repository, database, users, Secrets Manager, ArgoCD Application, S3 bucket (if needed), & API Gateway integrations & routing. Doing this manually can slow things down & increase workload. So, we need a self-service model for creating new services.
+
+This part isn’t CI/CD yet, but it’s about preparing a new service. Before deploying a service on Kubernetes, We need to set up components like repository, database, users, Secrets Manager, ArgoCD Application, S3 bucket (if needed), & API Gateway integrations & routing. Doing this manually can slow things down & increase workload. So, we need a self-service model for creating new services.
 
 With Atlantis, developers can use templates provided by devops to create new services on their own. They just fill in details like database name & access user. Terraform code will automatically add secrets to AWS Secret Manager, create ECR repository, set up ArgoCD Application, & configure API Gateway.
 
-### Register Service with Atlantis
 
-To make sure Atlantis detects our service, add it to iac/atlantis.yaml:
 
-```yaml
-  - dir: iac/deployment/services/phl-products
-    apply_requirements: ["mergeable"]
-    autoplan:
-      when_modified: ["*.tf*"]
-```
-If not listed, Atlantis won’t run autoplan & apply on changes in that path.
-
-### Developer Workflow
-
-Developers can now create a pull request with the branch name as a Jira ticket, like newservice/DEV-001. Then, make a pull request to master or main. Atlantis will run autoplan & show the plan in the pull request. After reviewing & approving, Atlantis will apply the infrastructure changes defined in the pull request.
-
-### Deploying Service using GitOps
+## Deploying Service using GitOps
 
 To deploy our service to EKS, we need CI/CD to speed up getting our app to market. So, we use ArgoCD as our GitOps tool to deploy our service to EKS. We will design our CI/CD pipeline like the picture below.
 
@@ -391,16 +391,16 @@ To deploy our service to EKS, we need CI/CD to speed up getting our app to marke
 In this case, we use a mono repo where Terraform code, GitOps repo (Helm), & services are all stored in one repository. CI/CD triggers can vary for each community or company. Here, we use the Gitflow branching strategy. Okay, let’s continue.
 
 From the diagram, there are 5 stages:
-  1.	Check out code
-  2.	Unit Test & Coverage
-  •	In the second step, we run unit tests & check coverage. GitHub Actions do the unit tests, & the reports are uploaded to artifacts for Sonar analysis. We use SonarQube for code quality & security analysis. But since we only have Docker images, we use SonarCloud.io as an alternative. I also removed the ./app binary from the zylwin/phl-store:latest image.
-  3.	Build & Tagging
+- Check out code
+- Unit Test & Coverage stages
+- In the second step, we run unit tests & check coverage. GitHub Actions do the unit tests, & the reports are uploaded to artifacts for Sonar analysis. We use SonarQube for code quality & security analysis. But since we only have Docker images, we use SonarCloud.io as an alternative. I also removed the ./app binary from the zylwin/phl-store:latest image.
+- Build & Tagging stages
   •	Here, GitHub Actions build Docker images & tag them with the image SHA based on push events to the master or dev branch. After tagging, the images are pushed to the ECR registry. Authentication is done using GitHub OIDC.
-  4.	Deployment with ArgoCD
-  •	In this step, deployment happens after GitHub Actions have pushed the image tags.
-  •	ArgoCD clones the repository & uses sed to replace the image tag with the pushed image SHA in the Helm chart.
+- Deployment with ArgoCD
+In this step, deployment happens after GitHub Actions have pushed the image tags.
+ArgoCD clones the repository & uses sed to replace the image tag with the pushed image SHA in the Helm chart.
   •	We replace appVersion in Chart.yaml with the new image tag. ArgoCD sees the change & syncs the desired state with the live state in EKS. Ideally, we use canary deployments, but due to time constraints, we do a rolling update instead.
-  5.	End to End Testing
+- End to End Testing
   •	After deployment, we run end-to-end tests.
 a. API Testing with Newman
   •	We use a Postman collection with pre-request & post-response scripts.
