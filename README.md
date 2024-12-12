@@ -385,7 +385,7 @@ With Atlantis, developers can use templates provided by devops to create new ser
 To deploy our service to EKS, we need CI/CD to speed up getting our app to market. So, we use ArgoCD as our GitOps tool to deploy our service to EKS. We will design our CI/CD pipeline like the picture below.
 
 <p align="center">
-  <img src="img/atlantis.png" alt="aws">
+  <img src="img/cicd.png" alt="aws">
 </p>
 
 In this case, we use a mono repo where Terraform code, GitOps repo (Helm), & services are all stored in one repository. CI/CD triggers can vary for each community or company. Here, we use the Gitflow branching strategy. Okay, let’s continue.
