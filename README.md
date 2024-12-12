@@ -1,23 +1,23 @@
 # Instructions
 
-Starting from an AWS empty environment, setup a Kubernetes cluster and Aurora MySQL cluster including all the necessary resources
+Starting from an AWS empty environment, setup  Kubernetes cluster and Aurora MySQL cluster including all the necessary resources
 using Terraform.
-Next deploy a sample application phl-store to the Kubernetes Cluster (preferably with Helm). It is a simple CRUD application and should
+Next deploy a sample application phl-store to the Kubernetes Cluster (preferably with Helm). It's a simple CRUD application and should
 be accessible from the outside world. The docker image URL can be found at https://hub.docker.com/r/zylwin/phl-store . The app uses
-MySQL as the database to store and retrieve data. The config file is mounted as /config/config.json . The docker-compose file is
-attached below for your reference.
-For the application deployment, use any CI/CD tools of your choice.
+MySQL as the database to store & retrieve data. The config file is mounted as /config/config.json . The docker-compose file is
+attached below for our reference.
+For the application deployment, use any CI/CD tools of our choice.
 
 # Submission
 
-For your submission, create a private Github repository and include the following
+For our submission, create a private Github repository & include the following
 
-1. Architectural diagram to explain your architecture.
+1. Architectural diagram to explain yur architecture.
 2. The relevant configuration scripts (eg: Terraform).
 3. In the README, include
-   a. Instruction on how to setup/run the infrastructure and deploy the app
-   b. Include high level steps on how would you manage the secrets and configuration changes
-   c. Also include high level steps to make this infrastructure more secure, automate and reliable
+   a. Instruction on how to setup/run the infrastructure & deploy the app
+   b. Include high level steps on how would you manage the secrets & configuration change
+   c. Also include high level steps to make this infrastructure more secure, automate & reliable
 
 # AWS Infrastructure Design
 
@@ -27,31 +27,31 @@ For your submission, create a private Github repository and include the followin
 
 ## VPC
 
-Our Virtual Private Cloud (VPC) is the heart of our AWS setup. It makes sure all our AWS resources can talk to each other securely and work well together. We designed the VPC to be scalable, highly available, high-performing, secure, and cost-effective.
+Our VPC is the heart of our AWS setup. It makes sure all our AWS resources can talk to each other securely & work well together. We designed the VPC to be scalable, highly available, high-performing, secure, & cost-effective.
 
 ### Core Design
 
-- Scalable: We use a CIDR block of 10.0.0.0/16 which gives us lots of IP addresses. This helps us add more resources easily as we grow. We also added a second CIDR block 100.64.0.0/16 for Kubernetes pods. This keeps pod IPs separate and avoids conflicts, so we never run out of IPs as our cluster gets bigger.
-- Highly Available: Our VPC spreads resources across multiple Availability Zones (AZs). This means if one AZ has problems, our services stay up and running in other AZs. No single point of failure!
-- High Performance: We use AWS services like NAT Gateways and Application Load Balancers (ALBs) to ensure fast and reliable communication between our resources. This setup helps keep our applications running smoothly.
-- Secure: Security is a top priority. We isolate critical resources in private subnets and use security groups and network ACLs to control who can access what. Data is encrypted both in transit and at rest using AWS KMS and SSL certificates.
-- Cost Optimized: We balance performance and cost by using resources wisely. For example, we use one NAT Gateway in development to save money and multiple NAT Gateways in production for reliability.
+- Scalable: We use a CIDR block of 10.0.0.0/16 which gives us lots of IP addresses. This helps us add more resources easily as we grow. We also added second CIDR block 100.64.0.0/16 for Kubernetes pods. This keeps pod IPs separate & avoids conflicts, so we never run out of IPs as our cluster gets bigger.
+- Highly Available: Our VPC spreads resources across multiple Availability Zones (AZs). This means if one AZ has problems, our services stay up & running in other AZs. No single point of failure!
+- High Performance: We use AWS services like NAT Gateways & Application Load Balancers (ALBs) to ensure fast & reliable communication between our resources. This setup helps keep our applications running smoothly.
+- Secure: Security is a top priority. We isolate critical resources in private subnets & use security groups & network ACLs to control who can access what. Data is encrypted both in transit & at rest using AWS KMS & SSL certificates.
+- Cost Optimized: We balance performance & cost by using resources wisely. For example, we use one NAT Gateway in development to save money & multiple NAT Gateways in production for reliability.
 
 ### Subnet Design
 
 Our VPC has three types of subnets, each with a specific role. These subnets are spread across different AZs to keep things running even if one AZ fails.
 
 - Public Subnets:
-- Purpose: Host internet-facing services like NAT Gateways, ALBs, and bastion hosts for secure admin access.
-- Interaction: ALBs handle incoming internet traffic and send it to our internal services. NAT Gateways let our private resources access the internet securely without being exposed directly.
-- Setup: These subnets have public IPs and proper routing to manage both incoming and outgoing internet traffic.
+- Purpose: Host internet-facing services like NAT Gateways, ALBs, & bastion hosts for secure admin access.
+- Interaction: ALBs h&le incoming internet traffic & send it to our internal services. NAT Gateways let our private resources access the internet securely without being exposed directly.
+- Setup: These subnets have public IPs & proper routing to manage both incoming & outgoing internet traffic.
 - Private Subnets:
-- Purpose: Hold important internal resources like EKS worker nodes and application pods.
-- Interaction: These resources don’t have direct internet access. They use NAT Gateways to go out when needed. Tags like kubernetes.io/role/internal-elb help Kubernetes manage internal load balancers, and karpenter.sh/discovery helps with autoscaling.
-- Setup: Private subnets keep our critical resources secure and allow them to scale easily as demand grows.
+- Purpose: Hold important internal resources like EKS worker nodes & application pods.
+- Interaction: These resources don’t have direct internet access. They use NAT Gateways to go out when needed. Tags like kubernetes.io/role/internal-elb help Kubernetes manage internal load balancers, & karpenter.sh/discovery helps with autoscaling.
+- Setup: Private subnets keep our critical resources secure & allow them to scale easily as dem& grows.
 - Database Subnets:
 - Purpose: Only for our Aurora database instances.
-- Interaction: These subnets are extra secure and separate from other traffic. Only authorized application workloads can talk to the databases.
+- Interaction: These subnets are extra secure & separate from other traffic. Only authorized application workloads can talk to the databases.
 - Setup: Strict access controls keep our databases safe from unauthorized access.
 
 ### NAT Gateways
@@ -61,77 +61,77 @@ We use NAT Gateways to manage outbound internet traffic from our private subnets
 - Development: One NAT Gateway helps keep costs low.
 - Production: Each AZ has its own NAT Gateway for better reliability. If one AZ or NAT Gateway fails, others keep working.
 
-NAT Gateways are important because they let our private resources access the internet securely without being exposed. They also scale automatically to handle more traffic when needed.
+NAT Gateways are important because they let our private resources access the internet securely without being exposed. They also scale automatically to h&le more traffic when needed.
 
 Why This VPC Design Works
 
-- Scalability: With a large IP range and separate blocks for pods, we can keep adding more resources without running out of IPs. Our setup supports growing workloads without issues.
+- Scalability: With a large IP range & separate blocks for pods, we can keep adding more resources without running out of IPs. Our setup supports growing workloads without issues.
 - High Availability: By spreading subnets across multiple AZs, our services stay available even if one AZ has problems. This makes our system more resilient.
-- High Performance: Using AWS services like NAT Gateways and ALBs ensures that our resources communicate quickly and reliably. This keeps our applications running smoothly.
-- Security: Private subnets and strict access controls keep our important resources safe from the internet. Encryption protects our data both when it’s stored and when it’s moving around.
-- Cost Optimization: We save money by using fewer NAT Gateways in development and scaling them in production as needed. This way, we get the best performance without overspending.
+- High Performance: Using AWS services like NAT Gateways & ALBs ensures that our resources communicate quickly & reliably. This keeps our applications running smoothly.
+- Security: Private subnets & strict access controls keep our important resources safe from the internet. Encryption protects our data both when it’s stored & when it’s moving around.
+- Cost Optimization: We save money by using fewer NAT Gateways in development & scaling them in production as needed. This way, we get the best performance without overspending.
 
 ### Security Measures
 
 Security is built into every part of our VPC:
 
 - Network Isolation: Private subnets keep critical resources hidden from the internet. Only necessary services are in public subnets.
-- Access Controls: Security groups and network ACLs control who can access what. Only allowed traffic can move between resources.
+- Access Controls: Security groups & network ACLs control who can access what. Only allowed traffic can move between resources.
 - Data Encryption: We use AWS KMS to encrypt sensitive data at rest. ALBs use SSL certificates from AWS ACM to secure data in transit.
 - Managed Security Services: Tools like AWS WAF protect our APIs from common web attacks, adding an extra layer of security.
 
 ## Elastic Kubernetes Service (EKS)
 
-The EKS setup in this design is built for running containerized workloads efficiently. It takes advantage of AWS-native tools and Kubernetes features to ensure high performance, availability, and robust security. By using modules, we’ve automated many configurations, such as creating all required security groups for the control plane, nodes, and other components.
+The EKS setup in this design is built for running containerized workloads efficiently. It takes advantage of AWS-native tools & Kubernetes features to ensure high performance, availability, & robust security. By using modules, we’ve automated many configurations, such as creating all required security groups for the control plane, nodes, & other components.
 
 ### EKS Cluster Configuration
 
-The EKS cluster runs Kubernetes version 1.31 and is designed to operate in a private networking setup. The control plane spans multiple AZs, ensuring high availability. All communication between the control plane and worker nodes is encrypted for security.
+The EKS cluster runs Kubernetes version 1.31 & is designed to operate in a private networking setup. The control plane spans multiple AZs, ensuring high availability. All communication between the control plane & worker nodes is encrypted for security.
 
 The VPC’s subnets are configured to support the cluster’s needs:
 
 - The control plane uses private subnets for communication, ensuring that it is isolated from public exposure.
-- Worker nodes and pods run in private subnets to minimize exposure while allowing managed traffic routing through NAT Gateways and ALBs.
+- Worker nodes & pods run in private subnets to minimize exposure while allowing managed traffic routing through NAT Gateways & ALBs.
 
 ### Why BottleRocket?
 
-The worker nodes in the managed node group use BottleRocket as the AMI. This is a lightweight, purpose-built OS for containerized workloads, and it comes with several advantages:
+The worker nodes in the managed node group use BottleRocket as the AMI. This is a lightweight, purpose-built OS for containerized workloads, & it comes with several advantages:
 
-- Performance: Since it’s stripped down to just the essentials for running containers, it boots faster and uses fewer resources compared to general-purpose OSes.
-- Security: BottleRocket minimizes the attack surface by removing unnecessary packages and includes built-in hardening features like kernel lockdown. It integrates seamlessly with AWS services like SSM for secure management.
+- Performance: Since it’s stripped down to just the essentials for running containers, it boots faster & uses fewer resources compared to general-purpose OSes.
+- Security: BottleRocket minimizes the attack surface by removing unnecessary packages & includes built-in hardening features like kernel lockdown. It integrates seamlessly with AWS services like SSM for secure management.
 
-### Node Groups and Autoscaling
+### Node Groups & Autoscaling
 
 The cluster has a managed node group for critical workloads that require high reliability. These nodes:
 
-- Run on On-Demand instances to ensure stability during normal traffic conditions.
+- Run on On-Dem& instances to ensure stability during normal traffic conditions.
 - Have a fixed size (2 nodes) to avoid disruption from frequent scaling events.
 
-For handling dynamic workloads, the cluster relies on Karpenter. Karpenter automatically provisions nodes based on demand, offering rapid scaling and cost efficiency. This separation of critical and dynamic workloads ensures stability while maintaining flexibility.
+For h&ling dynamic workloads, the cluster relies on Karpenter. Karpenter automatically provisions nodes based on dem&, offering rapid scaling & cost efficiency. This separation of critical & dynamic workloads ensures stability while maintaining flexibility.
 
-### Storage and Volume Management
+### Storage & Volume Management
 
 The setup includes EBS CSI (Container Storage Interface) for Kubernetes, which allows the cluster to provision storage dynamically. We’ve configured gp3 volumes as the default storage class. The benefits of gp3 are:
 
-- Higher performance: With up to 3,000 IOPS and 125 MiB/s throughput, gp3 volumes provide consistent performance.
+- Higher performance: With up to 3,000 IOPS & 125 MiB/s throughput, gp3 volumes provide consistent performance.
 - Cost efficiency: gp3 is cheaper than gp2 for equivalent performance.
 - Encryption: All volumes are encrypted using AWS KMS secure data at rest.
 
 ### Networking with VPC CNI
 
-The cluster uses the AWS VPC CNI plugin to manage pod networking. It’s configured to use the secondary CIDR block (RFC6598, 100.64.0.0/16) to ensure there are enough IPs for pods, even in large-scale deployments. This separation also avoids conflicts with the primary CIDR and simplifies integration with on-prem networks.
+The cluster uses the AWS VPC CNI plugin to manage pod networking. It’s configured to use the secondary CIDR block (RFC6598, 100.64.0.0/16) to ensure there are enough IPs for pods, even in large-scale deployments. This separation also avoids conflicts with the primary CIDR & simplifies integration with on-prem networks.
 
 The VPC CNI plugin is enhanced with:
 
 - Prefix delegation: This increases the number of available IPs per ENI, reducing the risk of IP exhaustion.
-- Custom ENI configuration: Subnets and security groups are explicitly defined, providing fine-grained control over network access.
+- Custom ENI configuration: Subnets & security groups are explicitly defined, providing fine-grained control over network access.
 
-### Add-ons for Observability and Scalability
+### Add-ons for Observability & Scalability
 
-Several add-ons are installed to enhance the functionality and observability of the cluster:
+Several add-ons are installed to enhance the functionality & observability of the cluster:
 
-- CloudWatch Observability: Provides centralized monitoring and logging for Kubernetes workloads. This simplifies debugging and ensures better visibility into the system performance.
-- CoreDNS: Handles service discovery within the cluster.
+- CloudWatch Observability: Provides centralized monitoring & logging for Kubernetes workloads. This simplifies debugging & ensures better visibility into the system performance.
+- CoreDNS: H&les service discovery within the cluster.
 - Kube-proxy: Manages network proxying for Kubernetes services.
 
 ### IAM Integration with Pod Identity
@@ -141,37 +141,37 @@ For managing permissions, the cluster uses EKS Pod Identity instead of the tradi
 - Granular permissions: Pods can assume roles with minimal required permissions, enhancing security.
 - Simpler configuration: It reduces the need for managing trust relationships manually.
 
-## ALB as Ingress Controller and API Gateway
+## ALB as Ingress Controller & API Gateway
 
-The design is how we expose our backend APIs to the public securely and efficiently. To do this, we use AWS API Gateway combined with an internal Application Load Balancer (ALB) as an ingress controller in our EKS cluster.
+The design is how we expose our backend APIs to the public securely & efficiently. To do this, we use AWS API Gateway combined with an internal Application Load Balancer (ALB) as an ingress controller in our EKS cluster.
 
 ### Exposing APIs with API Gateway
 
-To make our backend APIs accessible to users, I use AWS API Gateway. This service acts as a front door for our APIs, handling all the incoming requests from the internet. By using API Gateway, we can easily manage and scale our API traffic without worrying about the underlying infrastructure.
+To make our backend APIs accessible to users, I use AWS API Gateway. This service acts as a front door for our APIs, h&ling all the incoming requests from the internet. By using API Gateway, we can easily manage & scale our API traffic without worrying about the underlying infrastructure.
 
 ### Secure Authentication with AWS Cognito
 
-Security is a top priority, so I use AWS Cognito to handle authentication. Cognito serves as our authorizer, ensuring that only authenticated clients can access our APIs. We set it up to use client credentials, which means that our applications need to provide valid credentials to get access tokens. This way, we keep unauthorized users out and protect our backend services from misuse.
+Security is a top priority, so I use AWS Cognito to h&le authentication. Cognito serves as our authorizer, ensuring that only authenticated clients can access our APIs. We set it up to use client credentials, which means that our applications need to provide valid credentials to get access tokens. This way, we keep unauthorized users out & protect our backend services from misuse.
 
 ### Integration with EKS ALB via VPC Link
 
 Our EKS cluster uses an internal ALB as an ingress controller to manage traffic within the VPC. To connect API Gateway with this internal ALB, we use a VPC Link. This setup ensures that the API Gateway can securely route requests to our backend services running inside the EKS cluster without exposing the internal ALB to the public internet.
 
-### Enhancing Security and Performance
+### Enhancing Security & Performance
 
-To keep our application safe and perform well, I’ve added several security and performance features to API Gateway:
+To keep our application safe & perform well, I’ve added several security & performance features to API Gateway:
 
-- Throttling Rate Limits: We set up throttling to control the number of requests a client can make in a given time period. This helps prevent abuse and ensures that our services remain available even under high load.
-- CORS Configuration: Cross-Origin Resource Sharing (CORS) is configured to allow our frontend applications to interact with the API Gateway securely. This setup specifies which domains can make requests, what methods are allowed, and which headers can be used.
-- Web Application Firewall (WAF): AWS WAF is integrated with API Gateway to protect our APIs from common web exploits like SQL injection and cross-site scripting. WAF rules help filter out malicious traffic before it reaches our backend services.
+- Throttling Rate Limits: We set up throttling to control the number of requests a client can make in a given time period. This helps prevent abuse & ensures that our services remain available even under high load.
+- CORS Configuration: Cross-Origin Resource Sharing (CORS) is configured to allow our frontend applications to interact with the API Gateway securely. This setup specifies which domains can make requests, what methods are allowed, & which headers can be used.
+- Web Application Firewall (WAF): AWS WAF is integrated with API Gateway to protect our APIs from common web exploits like SQL injection & cross-site scripting. WAF rules help filter out malicious traffic before it reaches our backend services.
 
 ### Putting It All Together
 
-By combining API Gateway with an internal ALB in EKS, and securing everything with Cognito, throttling, CORS, and WAF, we’ve built a robust and secure way to expose our backend APIs to the public. This architecture not only ensures that our APIs are safe and reliable but also makes it easy to scale and manage as our application grows.
+By combining API Gateway with an internal ALB in EKS, & securing everything with Cognito, throttling, CORS, & WAF, we’ve built a robust & secure way to expose our backend APIs to the public. This architecture not only ensures that our APIs are safe & reliable but also makes it easy to scale & manage as our application grows.
 
 ## Aurora MySQL
 
-Aurora MySQL is combination of performance, cost-efficiency, and MySQL compatibility. Aurora MySQL offers s built-in autoscaling for both compute and storage, making it ideal for handling variable workloads.
+Aurora MySQL is combination of performance, cost-efficiency, & MySQL compatibility. Aurora MySQL offers s built-in autoscaling for both compute & storage, making it ideal for h&ling variable workloads.
 
 ### Private Database Setup
 
@@ -179,38 +179,38 @@ The Aurora cluster is deployed in database subnets, ensuring that it’s not exp
 
 ### Storage Encryption with KMS
 
-All data stored in Aurora is encrypted using AWS KMS. This ensures that sensitive information is protected at rest. The KMS key used for encryption is managed centrally, giving us control over key rotation and access policies. Encryption extends to automated backups, snapshots, and replicas, ensuring end-to-end data security.
+All data stored in Aurora is encrypted using AWS KMS. This ensures that sensitive information is protected at rest. The KMS key used for encryption is managed centrally, giving us control over key rotation & access policies. Encryption extends to automated backups, snapshots, & replicas, ensuring end-to-end data security.
 
 ### IAM Database Authentication
 
 The Aurora cluster is configured with IAM database authentication, which allows us to use IAM roles for database access instead of traditional username/password credentials. This approach is more secure because:
 
 - There’s no need to manage passwords in the application code.
-- Access is tied to IAM roles, making it easier to enforce least-privilege policies and revoke access when needed.
+- Access is tied to IAM roles, making it easier to enforce least-privilege policies & revoke access when needed.
 
-### Autoscaling and Read Replicas
+### Autoscaling & Read Replicas
 
-Autoscaling is enabled for the Aurora cluster, allowing it to dynamically adjust compute capacity based on traffic. This is particularly important for handling:
+Autoscaling is enabled for the Aurora cluster, allowing it to dynamically adjust compute capacity based on traffic. This is particularly important for h&ling:
 
-- High Traffic Spikes: During peak traffic, read replicas can scale up to handle increased read workloads, preventing bottlenecks.
-- Connection Pooling Issues: By adding more read replicas during high traffic, Aurora ensures the application doesn’t hit connection limits, improving response times and user experience.
+- High Traffic Spikes: During peak traffic, read replicas can scale up to h&le increased read workloads, preventing bottlenecks.
+- Connection Pooling Issues: By adding more read replicas during high traffic, Aurora ensures the application doesn’t hit connection limits, improving response times & user experience.
 
 ### Read Replicas
 
 Aurora read replicas are crucial for scaling read-heavy workloads. Traffic can be distributed across replicas using a load balancer or connection pooling strategy. This not only improves performance but also reduces the load on the primary instance, ensuring smooth operation during traffic spikes.
 
-### Secrets Management and Rotation
+### Secrets Management & Rotation
 
-The Aurora cluster’s master password is managed using AWS Secrets Manager. Secrets Manager automatically rotates the password, ensuring it’s always up-to-date and reducing the risk of credential leaks. By integrating Secrets Manager with Aurora, applications can securely retrieve database credentials without hardcoding them.
+The Aurora cluster’s master password is managed using AWS Secrets Manager. Secrets Manager automatically rotates the password, ensuring it’s always up-to-date & reducing the risk of credential leaks. By integrating Secrets Manager with Aurora, applications can securely retrieve database credentials without hardcoding them.
 
 Why Automatic Rotation?
 
 - It eliminates manual processes for updating passwords, reducing human error.
 - Credentials are updated seamlessly, ensuring minimal disruption to services.
 
-### Snapshots for Backup and Recovery
+### Snapshots for Backup & Recovery
 
-Snapshots are an integral part of this setup for disaster recovery and data retention. While Aurora automatically performs backups, manual snapshots allow us to:
+Snapshots are an integral part of this setup for disaster recovery & data retention. While Aurora automatically performs backups, manual snapshots allow us to:
 
 - Preserve Point-in-Time Data: Snapshots capture the state of the database at a specific time, which is helpful for compliance or testing.
 - Disaster Recovery: In case of accidental data loss, snapshots can be used to restore the database quickly.
@@ -220,337 +220,59 @@ Snapshots are an integral part of this setup for disaster recovery and data rete
 Aurora is configured with Performance Insights, which provides detailed metrics for database performance. This helps in:
 
 - Identifying slow queries or performance bottlenecks.
-- Optimizing database configurations and query execution.
+- Optimizing database configurations & query execution.
 
-How to Setup/Run the Infrastructure and Deploy the App
+How to Setup/Run the Infrastructure & Deploy the App
 
-Prerequisites
+### Prerequisites
 
-To quickly set up and run our infrastructure, we use Terraform. Here’s what you need to do: 1. Install Terraform
-Download and install Terraform from the official website. 2. Develop Terraform Code
-Write Terraform code for the AWS resources we need. 3. Run Terraform Commands
-Initialize, plan, and apply your Terraform configurations:
-
+FOr initial setup up tu run our infrastructure, we use Terraform. Here’s what we need to do: 
+1. Install Terraform
+Download & install Terraform from the official website. 
+2. Develop Terraform Code
+Write Terraform code for the AWS resources we need. 
+3. Run Terraform Commands
+Initialize, plan, & apply our Terraform configurations:
+```sh
 terraform init
 terraform plan
 terraform apply
-
-To deploy our app, we use Helm: 1. Install Helm
-Follow the Helm installation guide to get Helm on your machine. 2. Add Helm Repository
-Add the Atlantis Helm chart repository:
-
-helm repo add https://runatlantis.github.io/helm-char
-
-    3.	Install with Helm
-
-Deploy Atlantis using your values.yaml file:
-
-helm install -f values.yaml
-
-At the start, setting up resources with Terraform manually can be slow and not very efficient. We need to move towards a self-service model so developers can manage their own applications. To do this, make sure EKS is ready, and Atlantis and ArgoCD are installed. Then, use ArgoCD for deployments.
-
-Terraform Provider Setup 1. Deploy Atlantis and ArgoCD on EKS
-Use the Helm provider to install Atlantis and ArgoCD on your EKS cluster. Make sure aws-alb-ingress-controller and external-dns are installed on the EKS cluster. This allows ALB Ingress Controller to create ALBs and External DNS to automatically create Route53 records. 2. Create IAM Provider
-Set up IAM roles and policies for Atlantis and ArgoCD. You can use EKS Pod Identity or IRSA. Here, we use EKS Pod Identity. Ensure the service account name matches the one associated with the pod identity.
-
-Example Terraform Code
-```hcl
-
 ```
 
-Prepare Manifests for Atlantis and ArgoCD
+To speed up development, I use existing AWS Terraform modules.
+To check cloud resource deployment, you can see the path in this repo: `iac/deployment/cloud/`
 
-We need to set up manifests for Atlantis and ArgoCD. We can inject secrets from AWS Secret Manager into the Helm charts using the Helm provider and set helm_sets_sensitive to install ArgoCD.
+Setelah semua resource yang dibutuhkan terbuat seperti s3 (tfstate), KMS, ACM, Route53, EKS. 
+I started installing the EKS addons with their EKS Pods Identity (IRSA replacement) such as Atlantis and ArgoCD.
+I
+Some of the EKS addons are managed by ArgoCD such as AWS Load Balancer Controler, and External DNS.
 
-Atlantis Manifest (iac/deployment/cloud/manifest/atlantis.yaml):
-```yaml
-orgAllowlist: github.com/greyhats13/\*
+At the start, setting up resources with Terraform manually can be slow & not very efficient. We need to move towards a self-service model so developers can manage their own applications in the long run. To do this, make sure EKS is ready, & Atlantis & ArgoCD are installed. Then, we use atlantis to provisiour our resource AWS and use ArgoCD for deployments.
 
-environment:
-GITHUB_OWNER: ${extra_vars.github_user}
+Terraform Provider Setup 
+- Deploy Atlantis & ArgoCD on EKS
+Use the Helm provider to install Atlantis & ArgoCD on our EKS cluster. Make sure aws-alb-ingress-controller & external-dns are installed on the EKS cluster. This allows ALB Ingress Controller to create ALBs & External DNS to automatically create Route53 records. 
+- Create IAM Provider
+- Set up IAM roles & policies for Atlantis & ArgoCD. we can use EKS Pod Identity or IRSA. Here, we use EKS Pod Identity. Ensure the service account name match the one associated with the pod identity.
 
-environmentSecrets:
+(iac/deployment/cloud/main.tf)
 
-- name: GITHUB_TOKEN
-  secretKeyRef:
-  name: ${unit}-${env}-${code}-${feature}-webhook
-  key: github_token
+## Prepare Manifests for Atlantis & ArgoCD
+First, we need to set up manifests for Atlantis & ArgoCD. We can inject secrets from AWS Secret Manager into the Helm charts using the Helm provider & set `helm_sets_sensitive` to install ArgoCD.
 
-github:
-user: ${extra_vars.github_user}
+- Prepare Atlantis Manifest (iac/deployment/cloud/manifest/atlantis.yaml):
 
-repoConfig: |
+Create Webhooks with Terraform & GitHub Provider
 
----
+### Self Service Model with Atlantis
 
-repos:
-
-- id: /._/
-  branch: /._/
-  repo_config_file: iac/atlantis.yaml
-  plan_requirements: []
-  apply_requirements: []
-  workflow: default
-  allowed_overrides: [apply_requirements, plan_requirements]
-  allow_custom_workflows: false
-  workflows:
-  default:
-  plan:
-  steps: [init, plan]
-  apply:
-  steps: [apply]
-  serviceAccount:
-  name: ${feature}-sa
-
-service:
-type: ClusterIP
-port: 80
-targetPort: 4141
-
-ingress:
-enabled: ${extra_vars.ingress_enabled}
-  ingressClassName: ${extra_vars.ingress_class_name}
-  annotations:
-    external-dns.alpha.kubernetes.io/hostname: ${feature}.${dns_name}
-external-dns.alpha.kubernetes.io/ttl: '300'
-alb.ingress.kubernetes.io/group.name: ${extra_vars.alb_group_name}
-    alb.ingress.kubernetes.io/certificate-arn: ${extra_vars.alb_certificate_arn}
-    alb.ingress.kubernetes.io/ssl-policy: ${extra_vars.alb_ssl_policy}
-    alb.ingress.kubernetes.io/backend-protocol: ${extra_vars.alb_backend_protocol}
-    alb.ingress.kubernetes.io/listen-ports: '${extra_vars.alb_listen_ports}'
-alb.ingress.kubernetes.io/scheme: ${extra_vars.alb_scheme}
-    alb.ingress.kubernetes.io/target-type: ${extra_vars.alb_target_type}
-    alb.ingress.kubernetes.io/group.order: '${extra_vars.alb_group_order}'
-alb.ingress.kubernetes.io/healthcheck-path: ${extra_vars.alb_healthcheck_path}
-    alb.ingress.kubernetes.io/ssl-redirect: '${extra_vars.alb_ssl_redirect}'
-host: ${feature}.${dns_name}
-tls: - hosts: - ${feature}.${dns_name}
-
-volumeClaim:
-storageClassName: gp3
-
-ArgoCD Manifest (iac/deployment/cloud/manifest/argocd.yaml):
-
-global:
-domain: "${feature}.${dns_name}"
-
-configs:
-cm:
-url: "https://${feature}.${dns_name}"
-dex.config: |
-connectors: - type: github
-id: github
-name: GitHub
-config:
-clientID: ${extra_vars.github_client_id}
-            clientSecret: $argocd-secret:dex.github.clientSecret
-            redirectURI: 'https://${feature}.${dns_name}/api/dex/callback'
-orgs: - name: ${extra_vars.github_orgs}
-params:
-server.insecure: ${extra_vars.server_insecure}
-rbac:
-policy.default: role:readonly
-policy.csv: | # default policy
-p, role:readonly, applications, get, _/_, allow
-p, role:readonly, certificates, get, _, allow
-p, role:readonly, clusters, get, _, allow
-p, role:readonly, repositories, get, _, allow
-p, role:readonly, projects, get, _, allow
-p, role:readonly, accounts, get, _, allow
-p, role:readonly, gpgkeys, get, _, allow
-p, role:readonly, logs, get, _/_, allow # admin policy
-p, role:devops-role, applications, create, _/_, allow
-p, role:devops-role, applications, update, _/_, allow
-p, role:devops-role, applications, delete, _/_, allow
-p, role:devops-role, applications, sync, _/_, allow
-p, role:devops-role, applications, override, _/_, allow
-p, role:devops-role, applications, action/_, _/_, allow
-p, role:devops-role, applicationsets, get, _/_, allow
-p, role:devops-role, applicationsets, create, _/_, allow
-p, role:devops-role, applicationsets, update, _/_, allow
-p, role:devops-role, applicationsets, delete, _/_, allow
-p, role:devops-role, certificates, create, _, allow
-p, role:devops-role, certificates, update, _, allow
-p, role:devops-role, certificates, delete, _, allow
-p, role:devops-role, clusters, create, _, allow
-p, role:devops-role, clusters, update, _, allow
-p, role:devops-role, clusters, delete, _, allow
-p, role:devops-role, repositories, create, _, allow
-p, role:devops-role, repositories, update, _, allow
-p, role:devops-role, repositories, delete, _, allow
-p, role:devops-role, projects, create, _, allow
-p, role:devops-role, projects, update, _, allow
-p, role:devops-role, projects, delete, _, allow
-p, role:devops-role, accounts, update, _, allow
-p, role:devops-role, gpgkeys, create, _, allow
-p, role:devops-role, gpgkeys, delete, _, allow
-p, role:devops-role, exec, create, _/_, allow # set admin policy for devops team in github orgs
-g, ${extra_vars.github_orgs}:devops, role:devops-role
-g, devops, role:devops-role
-cmp:
-create: true
-plugins:
-argocd-vault-plugin-helm:
-allowConcurrency: true
-discover:
-find:
-command: - sh - "-c" - "find . -name 'Chart.yaml' && find . -name 'values.yaml'"
-generate:
-command: - sh - "-c" - |
-helm template $ARGOCD_APP_NAME -n $ARGOCD_APP_NAMESPACE . --include-crds |
-argocd-vault-plugin generate -
-lockRepo: false
-argocd-vault-plugin:
-allowConcurrency: true
-discover:
-find:
-command: - sh - "-c" - "find . -name '\*.yaml' | xargs -I {} grep \"<path\\|avp\\.kubernetes\\.io\" {} | grep ."
-generate:
-command: - argocd-vault-plugin - generate - "."
-lockRepo: false
-
-server:
-ingress:
-enabled: ${extra_vars.ingress_enabled}
-    controller: ${extra_vars.ingress_controller}
-    ingressClassName: ${extra_vars.ingress_class_name}
-    annotations:
-      external-dns.alpha.kubernetes.io/hostname: ${feature}.${dns_name}
-external-dns.alpha.kubernetes.io/ttl: '300'
-alb.ingress.kubernetes.io/group.name: ${extra_vars.alb_group_name}
-      alb.ingress.kubernetes.io/certificate-arn: ${extra_vars.alb_certificate_arn}
-      alb.ingress.kubernetes.io/ssl-policy: ${extra_vars.alb_ssl_policy}
-      alb.ingress.kubernetes.io/backend-protocol: ${extra_vars.alb_backend_protocol}
-      alb.ingress.kubernetes.io/listen-ports: '${extra_vars.alb_listen_ports}'
-alb.ingress.kubernetes.io/scheme: ${extra_vars.alb_scheme}
-      alb.ingress.kubernetes.io/target-type: ${extra_vars.alb_target_type}
-      alb.ingress.kubernetes.io/group.order: '${extra_vars.alb_group_order}'
-alb.ingress.kubernetes.io/healthcheck-path: ${extra_vars.alb_healthcheck_path}
-      alb.ingress.kubernetes.io/ssl-redirect: '${extra_vars.alb_ssl_redirect}'
-aws:
-serviceType: ${extra_vars.aws_alb_service_type}
-backendProtocolVersion: ${extra_vars.aws_alb_backend_protocol_version}
-
-repoServer:
-serviceAccount:
-name: ${feature}-repo-server
-    automountServiceAccountToken: true
-  volumes:
-    - configMap:
-        name: argocd-cmp-cm
-      name: argocd-cmp-cm
-    - name: cmp-tmp
-      emptyDir: {}
-    - name: custom-tools
-      emptyDir: {}
-  initContainers:
-    - name: download-tools
-      image: registry.access.redhat.com/ubi8
-      env:
-        - name: AVP_VERSION
-          value: ${extra_vars.AVP_VERSION}
-      command: [sh, -c]
-      args:
-        - >-
-          curl -L https://github.com/argoproj-labs/argocd-vault-plugin/releases/download/v${extra*vars.AVP_VERSION}/argocd-vault-plugin*${extra_vars.AVP_VERSION}_linux_amd64 -o argocd-vault-plugin &&
-          chmod +x argocd-vault-plugin &&
-          mv argocd-vault-plugin /custom-tools/
-      volumeMounts:
-        - mountPath: /custom-tools
-          name: custom-tools
-  extraContainers:
-    - name: avp-helm
-      command: [/var/run/argocd/argocd-cmp-server]
-      image: quay.io/argoproj/argocd:${extra_vars.ARGOCD_VERSION}
-securityContext:
-runAsNonRoot: true
-runAsUser: 999
-volumeMounts: - mountPath: /var/run/argocd
-name: var-files - mountPath: /home/argocd/cmp-server/plugins
-name: plugins - mountPath: /tmp
-name: cmp-tmp - mountPath: /home/argocd/cmp-server/config/plugin.yaml
-subPath: argocd-vault-plugin-helm.yaml
-name: argocd-cmp-cm - name: custom-tools
-subPath: argocd-vault-plugin
-mountPath: /usr/local/bin/argocd-vault-plugin - name: avp
-command: [/var/run/argocd/argocd-cmp-server]
-image: quay.io/argoproj/argocd:${extra_vars.ARGOCD_VERSION}
-securityContext:
-runAsNonRoot: true
-runAsUser: 999
-volumeMounts: - mountPath: /var/run/argocd
-name: var-files - mountPath: /home/argocd/cmp-server/plugins
-name: plugins - mountPath: /tmp
-name: cmp-tmp - mountPath: /home/argocd/cmp-server/config/plugin.yaml
-subPath: argocd-vault-plugin.yaml
-name: argocd-cmp-cm - name: custom-tools
-subPath: argocd-vault-plugin
-mountPath: /usr/local/bin/argocd-vault-plugin
-```
-
-Create Webhooks with Terraform and GitHub Provider
-
-Set up webhooks for ArgoCD and Atlantis to trigger pipelines. Also, create deploy SSH keys for the repo managed by ArgoCD.
-```hcl
-module "repo_phl" {
-  source    = "../../modules/github"
-  repo_name = var.github_repo
-  owner     = var.github_owner
-  webhooks = {
-    argocd = {
-      configuration = {
-        url          = "https://argocd.phl.blast.co.id/api/webhook"
-        content_type = "json"
-        insecure_ssl = false
-        secret       = random_password.argocd_github_secret.result
-      }
-      active = true
-      events = ["push"]
-    }
-    atlantis = {
-      configuration = {
-        url          = "https://atlantis.phl.blast.co.id/events"
-        content_type = "json"
-        insecure_ssl = false
-        secret       = random_password.atlantis_github_secret.result
-      }
-      active = true
-      events = ["push", "pull_request", "pull_request_review", "issue_comment"]
-    }
-  }
-  create_deploy_key          = true
-  add_repo_ssh_key_to_argocd = true
-  public_key                 = tls_private_key.argocd_ssh.public_key_openssh
-  ssh_key                    = tls_private_key.argocd_ssh.private_key_pem
-  is_deploy_key_read_only    = false
-  argocd_namespace           = "argocd"
-  depends_on = [
-    module.argocd,
-    module.atlantis,
-  ]
-}
-
-resource "kubernetes_secret_v1" "argocd" {
-  count = var.add_repo_ssh_key_to_argocd ? 1 : 0
-  metadata {
-    name      = var.repo_name
-    namespace = var.argocd_namespace
-    labels = {
-      "argocd.argoproj.io/secret-type" = "repository"
-    }
-  }
-}
-```
-
-Self Service Model with Atlantis
-
-Once all components are installed, we can create a self-service model using Atlantis and GitOps. Git is the Single Source of Truth (SSoT), and all changes must go through Git. Here’s how it works:
+Once all components are installed, we can create a self-service model using Atlantis & GitOps. Git is the Single Source of Truth (SSoT), & all changes must go through Git. Here’s how it works:
 
 <p align="center">
   <img src="img/atlantis.png" alt="atlantis">
 </p>
 
-When you want to provision, set up, or update infrastructure, just make a pull request in the repository set up by Atlantis. The infra or devops team reviews and approves the pull request. We require at least two approvals and that the pull request is mergeable. After approval, Atlantis applies the infrastructure defined in the pull request.
+When we want to provision, set up, or update infrastructure, just make a pull request in the repository set up by Atlantis. The infra or devops team reviews & approves the pull request. We require at least two approvals & that the pull request is mergeable. After approval, Atlantis applies the infrastructure defined in the pull request.
 
 ````yml
 version: 3
@@ -566,21 +288,21 @@ https://github.com/greyhats13/phl-store/pull/36
 
 ### Example Service Deployment
 
-This part isn’t CI/CD yet, but it’s about preparing a new service. Before deploying a service on Kubernetes, you need to set up components like repository, database, users, Secrets Manager, ArgoCD Application, S3 bucket (if needed), and API Gateway integrations and routing. Doing this manually can slow things down and increase workload. So, we need a self-service model for creating new services.
+This part isn’t CI/CD yet, but it’s about preparing a new service. Before deploying a service on Kubernetes, we need to set up components like repository, database, users, Secrets Manager, ArgoCD Application, S3 bucket (if needed), & API Gateway integrations & routing. Doing this manually can slow things down & increase workload. So, we need a self-service model for creating new services.
 
-With Atlantis, developers can use templates provided by devops to create new services on their own. They just fill in details like database name and access user. Terraform code will automatically add secrets to AWS Secret Manager, create ECR repository, set up ArgoCD Application, and configure API Gateway.
+With Atlantis, developers can use templates provided by devops to create new services on their own. They just fill in details like database name & access user. Terraform code will automatically add secrets to AWS Secret Manager, create ECR repository, set up ArgoCD Application, & configure API Gateway.
 ```hcl
 # Databases Config
 ## Create a Database
 resource "mysql_database" "db" {
-  name = local.svc_naming_standard
+  name = local.svc_naming_st&ard
 }
 
 ## Create a Database User
 resource "mysql_user" "db" {
-  user               = local.svc_naming_standard
+  user               = local.svc_naming_st&ard
   host               = "%"
-  plaintext_password = random_password.password.result
+  plaintext_password = r&om_password.password.result
 }
 
 ## Grant the user access to the database
@@ -597,8 +319,8 @@ module "secrets_iac" {
   source  = "terraform-aws-modules/secrets-manager/aws"
   version = "~> 1.3.1"
 
-  name                    = local.svc_secret_standard
-  description             = "Secrets for ${local.svc_secret_standard}"
+  name                    = local.svc_secret_st&ard
+  description             = "Secrets for ${local.svc_secret_st&ard}"
   recovery_window_in_days = 0
   create_policy           = true
   block_public_policy     = true
@@ -630,11 +352,11 @@ module "secrets_iac" {
 
   ignore_secret_changes = false
   secret_string = jsonencode({
-    connection_string = "${mysql_user.db.user}:${random_password.password.result}@tcp(${data.terraform_remote_state.cloud.outputs.aurora_cluster_endpoint}:${data.terraform_remote_state.cloud.outputs.aurora_cluster_port})/${mysql_database.db.name}"
+    connection_string = "${mysql_user.db.user}:${r&om_password.password.result}@tcp(${data.terraform_remote_state.cloud.outputs.aurora_cluster_endpoint}:${data.terraform_remote_state.cloud.outputs.aurora_cluster_port})/${mysql_database.db.name}"
     port              = "8080"
   })
 
-  tags = merge(local.tags, local.svc_standard)
+  tags = merge(local.tags, local.svc_st&ard)
 }
 
 # CI/CD Components
@@ -642,7 +364,7 @@ module "ecr" {
   source  = "terraform-aws-modules/ecr/aws"
   version = "~> 2.3.0"
 
-  repository_name = local.svc_naming_standard
+  repository_name = local.svc_naming_st&ard
   repository_read_write_access_arns = [
     "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/iac",
     "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/atlantis-role",
@@ -693,7 +415,7 @@ module "github_action_env" {
   source                  = "../../../modules/github"
   repo_name               = var.github_repo
   owner                   = var.github_owner
-  svc_name                = local.svc_naming_standard
+  svc_name                = local.svc_naming_st&ard
   github_action_variables = local.github_action_variables
   github_action_secrets   = local.github_action_secrets
 }
@@ -709,7 +431,7 @@ module "svc_custom_pod_identity" {
   association_defaults = {
     namespace       = "app"
     service_account = local.svc_naming_full
-    tags            = { App = "${local.svc_standard.Feature}" }
+    tags            = { App = "${local.svc_st&ard.Feature}" }
   }
 
   associations = {
@@ -728,12 +450,12 @@ module "svc_custom_pod_identity" {
 module "argocd_app" {
   source     = "../../../modules/helm"
   region     = var.region
-  standard   = local.svc_standard
+  st&ard   = local.svc_st&ard
   repository = "https://argoproj.github.io/argo-helm"
   chart      = "argocd-apps"
-  values     = [file("manifest/${local.svc_standard.Feature}.yaml")]
+  values     = [file("manifest/${local.svc_st&ard.Feature}.yaml")]
   namespace  = "argocd"
-  dns_name   = "${local.svc_standard.Feature}.${var.unit}.blast.co.id"
+  dns_name   = "${local.svc_st&ard.Feature}.${var.unit}.blast.co.id"
   extra_vars = {
     argocd_namespace                       = "argocd"
     source_repoURL                         = "git@github.com:${var.github_owner}/${var.github_repo}.git"
@@ -758,9 +480,9 @@ module "api_integration_routes" {
   create_certificate             = false
   create_stage                   = false
   deploy_stage                   = true
-  create_routes_and_integrations = true
+  create_routes_&_integrations = true
   routes = {
-    "GET /${local.svc_standard.Feature}" = {
+    "GET /${local.svc_st&ard.Feature}" = {
       authorization_type     = "JWT"
       authorizer_key         = "cognito-authorizer"
       authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
@@ -775,16 +497,16 @@ module "api_integration_routes" {
         method          = "GET"
         uri             = data.aws_lb_listener.listener.arn
         tls_config = {
-          server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          server_name_to_verify = "${local.svc_st&ard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
         }
         request_parameters = {
-          "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
-          "overwrite:path"        = "/api/${local.svc_standard.Feature}"
+          "overwrite:header.Host" = "${local.svc_st&ard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          "overwrite:path"        = "/api/${local.svc_st&ard.Feature}"
         }
       }
     }
 
-    "POST /${local.svc_standard.Feature}" = {
+    "POST /${local.svc_st&ard.Feature}" = {
       authorization_type     = "JWT"
       authorizer_key         = "cognito-authorizer"
       authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
@@ -799,11 +521,11 @@ module "api_integration_routes" {
         method          = "POST"
         uri             = data.aws_lb_listener.listener.arn
         tls_config = {
-          server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          server_name_to_verify = "${local.svc_st&ard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
         }
         request_parameters = {
-          "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
-          "overwrite:path"        = "/api/${local.svc_standard.Feature}"
+          "overwrite:header.Host" = "${local.svc_st&ard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          "overwrite:path"        = "/api/${local.svc_st&ard.Feature}"
         }
         response_parameters = [
           {
@@ -816,7 +538,7 @@ module "api_integration_routes" {
       }
     }
 
-    "GET /${local.svc_standard.Feature}/{id}" = {
+    "GET /${local.svc_st&ard.Feature}/{id}" = {
       authorization_type     = "JWT"
       authorizer_key         = "cognito-authorizer"
       authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
@@ -831,16 +553,16 @@ module "api_integration_routes" {
         method          = "GET"
         uri             = data.aws_lb_listener.listener.arn
         tls_config = {
-          server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          server_name_to_verify = "${local.svc_st&ard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
         }
         request_parameters = {
-          "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
-          "overwrite:path"        = "/api/${local.svc_standard.Feature}/$request.path.id"
+          "overwrite:header.Host" = "${local.svc_st&ard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          "overwrite:path"        = "/api/${local.svc_st&ard.Feature}/$request.path.id"
         }
       }
     }
 
-    "PUT /${local.svc_standard.Feature}/{id}" = {
+    "PUT /${local.svc_st&ard.Feature}/{id}" = {
       authorization_type     = "JWT"
       authorizer_key         = "cognito-authorizer"
       authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
@@ -855,16 +577,16 @@ module "api_integration_routes" {
         method          = "PUT"
         uri             = data.aws_lb_listener.listener.arn
         tls_config = {
-          server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          server_name_to_verify = "${local.svc_st&ard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
         }
         request_parameters = {
-          "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
-          "overwrite:path"        = "/api/${local.svc_standard.Feature}/$request.path.id"
+          "overwrite:header.Host" = "${local.svc_st&ard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          "overwrite:path"        = "/api/${local.svc_st&ard.Feature}/$request.path.id"
         }
       }
     }
 
-    "DELETE /${local.svc_standard.Feature}/{id}" = {
+    "DELETE /${local.svc_st&ard.Feature}/{id}" = {
       authorization_type     = "JWT"
       authorizer_key         = "cognito-authorizer"
       authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
@@ -879,11 +601,11 @@ module "api_integration_routes" {
         method          = "DELETE"
         uri             = data.aws_lb_listener.listener.arn
         tls_config = {
-          server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          server_name_to_verify = "${local.svc_st&ard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
         }
         request_parameters = {
-          "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
-          "overwrite:path"        = "/api/${local.svc_standard.Feature}/$request.path.id"
+          "overwrite:header.Host" = "${local.svc_st&ard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          "overwrite:path"        = "/api/${local.svc_st&ard.Feature}/$request.path.id"
         }
         response_parameters = [
           {
@@ -903,7 +625,7 @@ module "api_integration_routes" {
         method          = "ANY"
         uri             = data.aws_lb_listener.listener.arn
         tls_config = {
-          server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          server_name_to_verify = "${local.svc_st&ard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
         }
       }
     }
@@ -917,7 +639,7 @@ module "api_integration_routes" {
 
 ### Register Service with Atlantis
 
-To make sure Atlantis detects your service, add it to iac/atlantis.yaml:
+To make sure Atlantis detects our service, add it to iac/atlantis.yaml:
 
 ```yaml
   - dir: iac/deployment/services/phl-products
@@ -925,11 +647,11 @@ To make sure Atlantis detects your service, add it to iac/atlantis.yaml:
     autoplan:
       when_modified: ["*.tf*"]
 ```
-If not listed, Atlantis won’t run autoplan and apply on changes in that path.
+If not listed, Atlantis won’t run autoplan & apply on changes in that path.
 
 ### Developer Workflow
 
-Developers can now create a pull request with the branch name as a Jira ticket, like newservice/DEV-001. Then, make a pull request to master or main. Atlantis will run autoplan and show the plan in the pull request. After reviewing and approving, Atlantis will apply the infrastructure changes defined in the pull request.
+Developers can now create a pull request with the branch name as a Jira ticket, like newservice/DEV-001. Then, make a pull request to master or main. Atlantis will run autoplan & show the plan in the pull request. After reviewing & approving, Atlantis will apply the infrastructure changes defined in the pull request.
 
 ### Deploying Service using GitOps
 
@@ -939,29 +661,29 @@ To deploy our service to EKS, we need CI/CD to speed up getting our app to marke
   <img src="img/atlantis.png" alt="aws">
 </p>
 
-In this case, we use a mono repo where Terraform code, GitOps repo (Helm), and services are all stored in one repository. CI/CD triggers can vary for each community or company. Here, we use the Gitflow branching strategy. Okay, let’s continue.
+In this case, we use a mono repo where Terraform code, GitOps repo (Helm), & services are all stored in one repository. CI/CD triggers can vary for each community or company. Here, we use the Gitflow branching strategy. Okay, let’s continue.
 
 From the diagram, there are 5 stages:
 	1.	Check out code
-	2.	Unit Test and Coverage
-	•	In the second step, we run unit tests and check coverage. GitHub Actions do the unit tests, and the reports are uploaded to artifacts for Sonar analysis. We use SonarQube for code quality and security analysis. But since we only have Docker images, we use SonarCloud.io as an alternative. I also removed the ./app binary from the zylwin/phl-store:latest image.
+	2.	Unit Test & Coverage
+	•	In the second step, we run unit tests & check coverage. GitHub Actions do the unit tests, & the reports are uploaded to artifacts for Sonar analysis. We use SonarQube for code quality & security analysis. But since we only have Docker images, we use SonarCloud.io as an alternative. I also removed the ./app binary from the zylwin/phl-store:latest image.
 	3.	Build & Tagging
-	•	Here, GitHub Actions build Docker images and tag them with the image SHA based on push events to the master or dev branch. After tagging, the images are pushed to the ECR registry. Authentication is done using GitHub OIDC.
+	•	Here, GitHub Actions build Docker images & tag them with the image SHA based on push events to the master or dev branch. After tagging, the images are pushed to the ECR registry. Authentication is done using GitHub OIDC.
 	4.	Deployment with ArgoCD
 	•	In this step, deployment happens after GitHub Actions have pushed the image tags.
-	•	ArgoCD clones the repository and uses sed to replace the image tag with the pushed image SHA in the Helm chart.
-	•	We replace appVersion in Chart.yaml with the new image tag. ArgoCD sees the change and syncs the desired state with the live state in EKS. Ideally, we use canary deployments, but due to time constraints, we do a rolling update instead.
+	•	ArgoCD clones the repository & uses sed to replace the image tag with the pushed image SHA in the Helm chart.
+	•	We replace appVersion in Chart.yaml with the new image tag. ArgoCD sees the change & syncs the desired state with the live state in EKS. Ideally, we use canary deployments, but due to time constraints, we do a rolling update instead.
 	5.	End to End Testing
 	•	After deployment, we run end-to-end tests.
 a. API Testing with Newman
-	•	We use a Postman collection with pre-request and post-response scripts.
+	•	We use a Postman collection with pre-request & post-response scripts.
 	•	Since our endpoint needs Authorization, we generate a Bearer Token by hitting the oauth.phl.blast.co.id endpoint.
 	•	This endpoint is a custom domain from Cognito, which acts as the authorizer for our AWS API Gateway.
 	•	After getting the token, we save it to a Postman environment variable.
-	•	Then, we run the Postman collection with Newman for 5 iterations and a 200ms delay between each.
+	•	Then, we run the Postman collection with Newman for 5 iterations & a 200ms delay between each.
 b. Performance Testing with k6.io
-	•	We set up performance testing scenarios and develop a k6.js script.
-	•	Then, we run k6.io with 5 iterations and a 200ms delay between each.
+	•	We set up performance testing scenarios & develop a k6.js script.
+	•	Then, we run k6.io with 5 iterations & a 200ms delay between each.
 c. Security Testing with OWASP ZAP
 	•	We perform security testing with OWASP ZAP by preparing the OpenAPI spec of our service.
 	•	Using the Bearer Token saved in $GITHUB_ENV, we run OWASP ZAP.
@@ -1010,7 +732,7 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Retrieve ECR repo and Set Image Tag based on environment
+      - name: Retrieve ECR repo & Set Image Tag based on environment
         id: set_image_tag
         run: |
           echo "GITHUB_REF: $GITHUB_REF"
@@ -1030,7 +752,7 @@ jobs:
             echo "CHART_PATH=gitops/charts/app/${{ vars.PRODUCTS_SVC_NAME }}" >> $GITHUB_ENV
           fi
 
-      - name: Build, Tag, and Push
+      - name: Build, Tag, & Push
         uses: docker/build-push-action@v6.9.0
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
@@ -1038,8 +760,8 @@ jobs:
           context: ./services/phl-products/
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ vars.PRODUCTS_SVC_NAMING_STANDARD }}:${{ env.IMAGE_TAG_SHA }}
-            ${{ env.REGISTRY }}/${{ vars.PRODUCTS_SVC_NAMING_STANDARD }}:${{ env.IMAGE_TAG_LATEST }}
+            ${{ env.REGISTRY }}/${{ vars.PRODUCTS_SVC_NAMING_ST&ARD }}:${{ env.IMAGE_TAG_SHA }}
+            ${{ env.REGISTRY }}/${{ vars.PRODUCTS_SVC_NAMING_ST&ARD }}:${{ env.IMAGE_TAG_LATEST }}
           platforms: linux/amd64
 
   deployment:
@@ -1059,7 +781,7 @@ jobs:
           ssh-add id_rsa
           git clone git@github.com:${{ vars.GH_OWNER }}/${{ vars.GH_REPO_NAME }}.git
           cd ${{ vars.GH_REPO_NAME }}/${{ needs.build_push_tag.outputs.chart_path }}
-          sed -i "s|repository: .*|repository: ${{ needs.build_push_tag.outputs.registry }}/${{ vars.PRODUCTS_SVC_NAMING_STANDARD }}|" values.yaml
+          sed -i "s|repository: .*|repository: ${{ needs.build_push_tag.outputs.registry }}/${{ vars.PRODUCTS_SVC_NAMING_ST&ARD }}|" values.yaml
           sed -i "s/appVersion: \".*\"/appVersion: \"${{ needs.build_push_tag.outputs.image_tag_sha }}\"/" Chart.yaml
           git add values.yaml Chart.yaml
           git config --global user.email "imam.arief.rhmn@gmail.com"
@@ -1074,7 +796,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Install Newman and htmlextra reporter
+      # Install Newman & htmlextra reporter
       - name: Install Newman & Reporter
         run: |
           npm install -g newman newman-reporter-htmlextra
@@ -1097,7 +819,7 @@ jobs:
             exit 1
           fi
 
-          # Set BASE_URL and BEARER_TOKEN
+          # Set BASE_URL & BEARER_TOKEN
           echo "BASE_URL=${{ vars.BASE_URL }}" >> $GITHUB_ENV
           echo "BEARER_TOKEN=$BEARER_TOKEN" >> $GITHUB_ENV
 
@@ -1105,7 +827,7 @@ jobs:
       - name: Prepare environment for tests
         run: |
           # Template is at services/phl-products/tests/postman/environment-template.tpl
-          # with placeholders like {{ BEARER_TOKEN }} and {{ BASE_URL }}
+          # with placeholders like {{ BEARER_TOKEN }} & {{ BASE_URL }}
           sed "s|{{ BEARER_TOKEN }}|${{ env.BEARER_TOKEN }}|g; s|{{ BASE_URL }}|${{ vars.BASE_URL }}|g" services/${{ vars.PRODUCTS_SVC_NAME }}/tests/env/environment.tpl > services/${{ vars.PRODUCTS_SVC_NAME }}/tests/env/environment.json
 
       - name: Run Newman Tests
@@ -1165,8 +887,8 @@ There are many ways to secure secrets. We can use AWS Secret Store CSI Driver, E
 
 
 We will secure secrets using ArgoCD Vault Plugin (AVP) with AWS Secrets Manager. Here are the steps:
-	1.	Install ArgoCD and AVP on EKS
-	•	We already installed ArgoCD on our EKS cluster and added the ArgoCD Vault Plugin (AVP).
+	1.	Install ArgoCD & AVP on EKS
+	•	We already installed ArgoCD on our EKS cluster & added the ArgoCD Vault Plugin (AVP).
 	2.	Set Up IAM Policy for AVP
 	•	To use AVP, ArgoCD repo server needs permission to read secrets from Secrets Manager. First, we create an IAM policy:
 
@@ -1187,7 +909,7 @@ data "aws_iam_policy_document" "avp_policy" {
 
 
 	3.	Attach IAM Policy to ArgoCD Repo Server
-	•	Next, we attach this policy to the IAM Role used by argocd-repo-server and associate the IAM Role with the Kubernetes service account.
+	•	Next, we attach this policy to the IAM Role used by argocd-repo-server & associate the IAM Role with the Kubernetes service account.
 ```hcl
 module "avp_custom_pod_identity" {
   source  = "terraform-aws-modules/eks-pod-identity/aws"
@@ -1243,7 +965,7 @@ stringData:
     {{- end }}
     }
 ```
-In this manifest, we allow values.yaml to accept appSecret. Our service phl-products reads secrets from this file, so we need to create stringData and convert key-value secrets from Secrets Manager into JSON.
+In this manifest, we allow values.yaml to accept appSecret. Our service phl-products reads secrets from this file, so we need to create stringData & convert key-value secrets from Secrets Manager into JSON.
 
 ```yaml
 stringData:
@@ -1271,13 +993,13 @@ appSecret:
 ```
 
 ```yaml
-    avp.kubernetes.io/path: This is the name of your secret in AWS.
-	  avp.kubernetes.io/secret-version: This is the latest version of your secret.
+    avp.kubernetes.io/path: This is the name of our secret in AWS.
+	  avp.kubernetes.io/secret-version: This is the latest version of our secret.
 ```
 6. Replace Placeholders with Secrets
 When ArgoCD syncs, it replaces the placeholders with values from Secrets Manager.
 7.	Use Distroless Image for Security
-To make secrets more secure, use a distroless image for your service. This way, no one can access secrets from the container.
+To make secrets more secure, use a distroless image for our service. This way, no one can access secrets from the container.
 ```Dockerfile
 # Use a minimal base image for distroless
 FROM gcr.io/distroless/static:nonroot
@@ -1293,4 +1015,4 @@ EXPOSE 8080
 CMD ["/build/app"]
 ```
 
-We set up a GitOps pipeline using ArgoCD to deploy services to EKS. Our CI/CD pipeline includes building and tagging Docker images, deploying with ArgoCD, and running end-to-end tests. We also secured our application secrets using ArgoCD Vault Plugin with AWS Secrets Manager. This setup helps us deploy quickly, keep our services secure, and maintain a smooth workflow for our developers.!
+We set up a GitOps pipeline using ArgoCD to deploy services to EKS. Our CI/CD pipeline includes building & tagging Docker images, deploying with ArgoCD, & running end-to-end tests. We also secured our application secrets using ArgoCD Vault Plugin with AWS Secrets Manager. This setup helps us deploy quickly, keep our services secure, & maintain a smooth workflow for our developers.!
