@@ -56,9 +56,6 @@ This VPC setup is a solid foundation for our infrastructure. It’s scalable, se
 ### VPC Terraform
 Path: iac/deployment/cloud/main.tf
 ```hcl
-Satu menggunakan RFC 1918 CIDR block dan satu lagi menggunakan RFC 6598 CIDR block.
-locals.tf
-```hcl
  # VPC Locals
   vpc_cidr     = "10.0.0.0/16"
   rfc6598_cidr = "100.64.0.0/16"
@@ -473,10 +470,10 @@ module "aws_cloudwatch_observability_pod_identity" {
 ## Aurora MySQL
 
   Aurora MySQL is combination of performance, cost-efficiency, and MySQL compatibility. Aurora MySQL offers several advantages over standard RDS instances:
-	•	Performance: Aurora is optimized for high throughput and low latency. It can handle millions of requests per second, which is critical for applications that need to scale.
-	•	Managed Service: Aurora handles maintenance tasks like backups, failover, and updates automatically, freeing up operational overhead.
-	•	MySQL Compatibility: It’s fully compatible with MySQL, making it easy to migrate and integrate with existing systems.
-	•	Autoscaling: Aurora MySQL provides built-in autoscaling for both compute and storage, making it ideal for handling variable workloads.
+	- Performance: Aurora is optimized for high throughput and low latency. It can handle millions of requests per second, which is critical for applications that need to scale.
+  - Managed Service: Aurora handles maintenance tasks like backups, failover, and updates automatically, freeing up operational overhead.
+	- MySQL Compatibility: It’s fully compatible with MySQL, making it easy to migrate and integrate with existing systems.
+	- Autoscaling: Aurora MySQL provides built-in autoscaling for both compute and storage, making it ideal for handling variable workloads.
 
 ### Private Database Setup
 
@@ -489,14 +486,14 @@ All data stored in Aurora is encrypted using AWS KMS. This ensures that sensitiv
 ### IAM Database Authentication
 
 The Aurora cluster is configured with IAM database authentication, which allows us to use IAM roles for database access instead of traditional username/password credentials. This approach is more secure because:
-	•	There’s no need to manage passwords in the application code.
-	•	Access is tied to IAM roles, making it easier to enforce least-privilege policies and revoke access when needed.
+- There’s no need to manage passwords in the application code.
+-	Access is tied to IAM roles, making it easier to enforce least-privilege policies and revoke access when needed.
 
 ### Autoscaling and Read Replicas
 
 Autoscaling is enabled for the Aurora cluster, allowing it to dynamically adjust compute capacity based on traffic. This is particularly important for handling:
-	•	High Traffic Spikes: During peak traffic, read replicas can scale up to handle increased read workloads, preventing bottlenecks.
-	•	Connection Pooling Issues: By adding more read replicas during high traffic, Aurora ensures the application doesn’t hit connection limits, improving response times and user experience.
+- High Traffic Spikes: During peak traffic, read replicas can scale up to handle increased read workloads, preventing bottlenecks.
+- Connection Pooling Issues: By adding more read replicas during high traffic, Aurora ensures the application doesn’t hit connection limits, improving response times and user experience.
 
 ### Read Replicas
 
@@ -507,20 +504,20 @@ Aurora read replicas are crucial for scaling read-heavy workloads. Traffic can b
 The Aurora cluster’s master password is managed using AWS Secrets Manager. Secrets Manager automatically rotates the password, ensuring it’s always up-to-date and reducing the risk of credential leaks. By integrating Secrets Manager with Aurora, applications can securely retrieve database credentials without hardcoding them.
 
 Why Automatic Rotation?
-	•	It eliminates manual processes for updating passwords, reducing human error.
-	•	Credentials are updated seamlessly, ensuring minimal disruption to services.
+- It eliminates manual processes for updating passwords, reducing human error.
+- Credentials are updated seamlessly, ensuring minimal disruption to services.
 
 ### Snapshots for Backup and Recovery
 
 Snapshots are an integral part of this setup for disaster recovery and data retention. While Aurora automatically performs backups, manual snapshots allow us to:
-	•	Preserve Point-in-Time Data: Snapshots capture the state of the database at a specific time, which is helpful for compliance or testing.
-	•	Disaster Recovery: In case of accidental data loss, snapshots can be used to restore the database quickly.
+- Preserve Point-in-Time Data: Snapshots capture the state of the database at a specific time, which is helpful for compliance or testing.
+- Disaster Recovery: In case of accidental data loss, snapshots can be used to restore the database quickly.
 
 Performance Insights
 
 Aurora is configured with Performance Insights, which provides detailed metrics for database performance. This helps in:
-	•	Identifying slow queries or performance bottlenecks.
-	•	Optimizing database configurations and query execution.
+- Identifying slow queries or performance bottlenecks.
+- Optimizing database configurations and query execution.
 
 ### Aurora Terraform
 Path: iac/deployment/cloud/main.tf
