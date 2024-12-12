@@ -469,3 +469,107 @@ module "aws_cloudwatch_observability_pod_identity" {
   }
 }
 ```
+
+## Aurora MySQL
+
+  Aurora MySQL is combination of performance, cost-efficiency, and MySQL compatibility. Aurora MySQL offers several advantages over standard RDS instances:
+	•	Performance: Aurora is optimized for high throughput and low latency. It can handle millions of requests per second, which is critical for applications that need to scale.
+	•	Managed Service: Aurora handles maintenance tasks like backups, failover, and updates automatically, freeing up operational overhead.
+	•	MySQL Compatibility: It’s fully compatible with MySQL, making it easy to migrate and integrate with existing systems.
+	•	Autoscaling: Aurora MySQL provides built-in autoscaling for both compute and storage, making it ideal for handling variable workloads.
+
+### Private Database Setup
+
+The Aurora cluster is deployed in private subnets, ensuring that it’s not exposed to the internet. This design significantly reduces the attack surface by restricting access to internal workloads running in private subnets, such as Kubernetes pods. Only authorized resources within the VPC can communicate with the database.
+
+### Storage Encryption with KMS
+
+All data stored in Aurora is encrypted using AWS KMS. This ensures that sensitive information is protected at rest. The KMS key used for encryption is managed centrally, giving us control over key rotation and access policies. Encryption extends to automated backups, snapshots, and replicas, ensuring end-to-end data security.
+
+### IAM Database Authentication
+
+The Aurora cluster is configured with IAM database authentication, which allows us to use IAM roles for database access instead of traditional username/password credentials. This approach is more secure because:
+	•	There’s no need to manage passwords in the application code.
+	•	Access is tied to IAM roles, making it easier to enforce least-privilege policies and revoke access when needed.
+
+### Autoscaling and Read Replicas
+
+Autoscaling is enabled for the Aurora cluster, allowing it to dynamically adjust compute capacity based on traffic. This is particularly important for handling:
+	•	High Traffic Spikes: During peak traffic, read replicas can scale up to handle increased read workloads, preventing bottlenecks.
+	•	Connection Pooling Issues: By adding more read replicas during high traffic, Aurora ensures the application doesn’t hit connection limits, improving response times and user experience.
+
+### Read Replicas
+
+Aurora read replicas are crucial for scaling read-heavy workloads. Traffic can be distributed across replicas using a load balancer or connection pooling strategy. This not only improves performance but also reduces the load on the primary instance, ensuring smooth operation during traffic spikes.
+
+### Secrets Management and Rotation
+
+The Aurora cluster’s master password is managed using AWS Secrets Manager. Secrets Manager automatically rotates the password, ensuring it’s always up-to-date and reducing the risk of credential leaks. By integrating Secrets Manager with Aurora, applications can securely retrieve database credentials without hardcoding them.
+
+Why Automatic Rotation?
+	•	It eliminates manual processes for updating passwords, reducing human error.
+	•	Credentials are updated seamlessly, ensuring minimal disruption to services.
+
+### Snapshots for Backup and Recovery
+
+Snapshots are an integral part of this setup for disaster recovery and data retention. While Aurora automatically performs backups, manual snapshots allow us to:
+	•	Preserve Point-in-Time Data: Snapshots capture the state of the database at a specific time, which is helpful for compliance or testing.
+	•	Disaster Recovery: In case of accidental data loss, snapshots can be used to restore the database quickly.
+
+Performance Insights
+
+Aurora is configured with Performance Insights, which provides detailed metrics for database performance. This helps in:
+	•	Identifying slow queries or performance bottlenecks.
+	•	Optimizing database configurations and query execution.
+
+### Aurora Terraform
+Path: iac/deployment/cloud/main.tf
+```hcl
+  aurora_standard = {
+    Unit    = var.unit
+    Env     = var.env
+    Code    = "rds-aurora"
+    Feature = "main"
+  }
+  aurora_naming_standard = "${local.aurora_standard.Unit}-${local.aurora_standard.Env}-${local.aurora_standard.Code}-${local.aurora_standard.Feature}"
+
+
+# Aurora
+module "aurora_main" {
+  source          = "terraform-aws-modules/rds-aurora/aws"
+  version         = "~> 9.10.0"
+  name            = local.aurora_naming_standard
+  engine          = "aurora-mysql"
+  engine_version  = "8.0"
+  master_username = "root"
+  instance_class  = var.env == "dev" ? "db.t4g.large" : "db.r6g.large"
+  instances = {
+    one = {}
+  }
+  vpc_id               = module.vpc_main.vpc_id
+  db_subnet_group_name = module.vpc_main.database_subnet_group_name
+  security_group_rules = {
+    vpc_ingress = {
+      cidr_blocks = module.vpc_main.private_subnets_cidr_blocks // allow all private subnets (nodes and app subnets) to access the database
+    }
+  }
+  storage_encrypted                     = true
+  kms_key_id                            = module.kms_main.key_arn
+  manage_master_user_password           = true
+  iam_database_authentication_enabled   = true
+  autoscaling_enabled                   = true
+  autoscaling_min_capacity              = 1
+  autoscaling_max_capacity              = 5
+  apply_immediately                     = true
+  skip_final_snapshot                   = true
+  create_db_cluster_parameter_group     = false
+  create_db_parameter_group             = false
+  performance_insights_enabled          = true
+  performance_insights_kms_key_id       = module.kms_main.key_arn
+  performance_insights_retention_period = 7
+  publicly_accessible                   = false
+  enabled_cloudwatch_logs_exports       = ["audit", "error", "slowquery"]
+
+  tags = local.tags
+}
+  ```
