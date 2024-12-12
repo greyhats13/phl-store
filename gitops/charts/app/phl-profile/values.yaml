@@ -32,7 +32,7 @@ appSecret:
     DB_USER: <db_user>
     DB_PASSWORD: <db_password>
     DB_HOST: <db_host>
-    DB_PORT: "<db_port>"
+    DB_PORT: <db_port>
     DB_NAME: <db_name>
 
 # This section builds out the service account more information can be found here: https://kubernetes.io/docs/concepts/security/service-accounts/
