@@ -16,11 +16,12 @@ a. Instruction on how to setup/run the infrastructure and deploy the app
 b. Include high level steps on how would you manage the secrets and configuration changes
 c. Also include high level steps to make this infrastructure more secure, automate and reliable
 
-# AWS Infrastructure
+# AWS Infrastructure Design
 
 <p align="center">
   <img src="img/aws.png" alt="aws">
 </p>
+
 ## VPC
 
 The VPC in this setup is designed to be the backbone of our AWS infrastructure. It provides isolated networking for all resources, ensuring efficient communication while maintaining strict security boundaries. The CIDR block for the VPC is 10.0.0.0/16, giving us a large pool of IP addresses to allocate across subnets for different use cases.
@@ -52,7 +53,7 @@ The encryption is handled using AWS KMS for sensitive data, and the ALBs use SSL
 
 This VPC setup is a solid foundation for our infrastructure. It’s scalable, secure, and built to handle failures without downtime. By following AWS best practices and using tools like Terraform, I’ve ensured that the network is robust and future-proof.
 
-### VPC Terraform Configuration
+### VPC Terraform 
 ```hcl
 Satu menggunakan RFC 1918 CIDR block dan satu lagi menggunakan RFC 6598 CIDR block.
 locals.tf
@@ -69,10 +70,7 @@ locals.tf
     Feature = "main"
   }
   vpc_naming_standard = "${local.vpc_standard.Unit}-${local.vpc_standard.Env}-${local.vpc_standard.Code}-${local.vpc_standard.Feature}"
-```
 
-##
-```hcl
 module "vpc_main" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "~> 5.16.0"
@@ -108,23 +106,56 @@ module "vpc_main" {
   tags = merge(local.tags, local.vpc_standard)
 }
 ```
-### Public Subnet
-Public subnet dirancang memiliki 2 subnet sebanyak AZ yang ada diregion
-```hcl
-1. Public Subnet digunakan untuk menempatkan resource berikut:
-1. NAT Gateway untuk aplikasi yang ada di private subnet dan database subnet agar bisa mengakses internat dan melakukan patching
-2. Elastic Load Balancer (ELB) untuk menempatkan aplikasi yang bisa diakses dari internet seperti ArgoCD dan
 
-2. Public Subnet digunakan untuk menempatkan
-- Argo
+## Elastic Kubernetes Service (EKS)
+The EKS setup in this design is built for running containerized workloads efficiently. It takes advantage of AWS-native tools and Kubernetes features to ensure high performance, availability, and robust security. By using modules, we’ve automated many configurations, such as creating all required security groups for the control plane, nodes, and other components.
 
+### EKS Cluster Configuration
 
-# Self Service Model
-<p align="center">
-  <img src="img/atlantis.png" alt="atlantis">
-</p>
+The EKS cluster runs Kubernetes version 1.31 and is designed to operate in a private networking setup. The control plane spans multiple AZs, ensuring high availability. All communication between the control plane and worker nodes is encrypted for security.
 
-# CI/CD with GitOps
-<p align="center">
-  <img src="img/cicd.png" alt="cicd">
-</p>
+The VPC’s subnets are configured to support the cluster’s needs:
+	•	The control plane uses private subnets for communication, ensuring that it is isolated from public exposure.
+	•	Worker nodes and pods run in private subnets to minimize exposure while allowing managed traffic routing through NAT Gateways and ALBs.
+
+### Why BottleRocket?
+
+The worker nodes in the managed node group use BottleRocket as the AMI. This is a lightweight, purpose-built OS for containerized workloads, and it comes with several advantages:
+	•	Performance: Since it’s stripped down to just the essentials for running containers, it boots faster and uses fewer resources compared to general-purpose OSes.
+	•	Security: BottleRocket minimizes the attack surface by removing unnecessary packages and includes built-in hardening features like kernel lockdown. It integrates seamlessly with AWS services like SSM for secure management.
+
+### Node Groups and Autoscaling
+
+The cluster has a managed node group for critical workloads that require high reliability. These nodes:
+	•	Run on On-Demand instances to ensure stability during normal traffic conditions.
+	•	Have a fixed size (2 nodes) to avoid disruption from frequent scaling events.
+
+For handling dynamic workloads, the cluster relies on Karpenter. Karpenter automatically provisions nodes based on demand, offering rapid scaling and cost efficiency. This separation of critical and dynamic workloads ensures stability while maintaining flexibility.
+
+### Storage and Volume Management
+
+The setup includes EBS CSI (Container Storage Interface) for Kubernetes, which allows the cluster to provision storage dynamically. We’ve configured gp3 volumes as the default storage class. The benefits of gp3 are:
+	•	Higher performance: With up to 3,000 IOPS and 125 MiB/s throughput, gp3 volumes provide consistent performance.
+	•	Cost efficiency: gp3 is cheaper than gp2 for equivalent performance.
+	•	Encryption: All volumes are encrypted using AWS KMS secure data at rest.
+
+### Networking with VPC CNI
+
+The cluster uses the AWS VPC CNI plugin to manage pod networking. It’s configured to use the secondary CIDR block (RFC6598, 100.64.0.0/16) to ensure there are enough IPs for pods, even in large-scale deployments. This separation also avoids conflicts with the primary CIDR and simplifies integration with on-prem networks.
+
+The VPC CNI plugin is enhanced with:
+	•	Prefix delegation: This increases the number of available IPs per ENI, reducing the risk of IP exhaustion.
+	•	Custom ENI configuration: Subnets and security groups are explicitly defined, providing fine-grained control over network access.
+
+Add-ons for Observability and Scalability
+
+Several add-ons are installed to enhance the functionality and observability of the cluster:
+	•	CloudWatch Observability: Provides centralized monitoring and logging for Kubernetes workloads. This simplifies debugging and ensures better visibility into the system performance.
+	•	CoreDNS: Handles service discovery within the cluster.
+	•	Kube-proxy: Manages network proxying for Kubernetes services.
+
+### IAM Integration with Pod Identity
+
+For managing permissions, the cluster uses EKS Pod Identity instead of the traditional IAM Roles for Service Accounts (IRSA). Pod Identity provides:
+	•	Granular permissions: Pods can assume roles with minimal required permissions, enhancing security.
+	•	Simpler configuration: It reduces the need for managing trust relationships manually.
