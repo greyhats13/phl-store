@@ -202,9 +202,8 @@ Aurora is configured with Performance Insights, which provides detailed metrics 
 
 
 # How to Setup/Run the Infrastructure and Deploy the App
-<p align="center">
-  <img src="img/atlantis.png" alt="aws">
-</p>
+
+## Prerequisites
 
 Cara cepatnya untuk setup/run infrastructure  menggunakan Terraform.
 1. Install Terraform
@@ -225,7 +224,8 @@ Kita membutuhkan EKS telah ready, Atlantis dan ArgoCD  telah terinstall lalu men
 Berikut terraform provider
 1. Deploy Atlantis dan ArgoCD pada EKS cluster menggunakan helm provider.
 Untuk mendeploy atlantis dan ArgocD, kita harus makesure aws-alb-ingress-controller dan external-dns telah terinstall pada eks cluster. Agar saat ingress kita terbuat, alb-ingress-controller dapat membuat ALB dan external-dns dapat membuat record di route53 secara otomatis.
-2. Lalu kita membuatkan IAM provider untuk membuat role dan policy yang dibutuhkan oleh atlantis dan argocd kita bisa menggunakan EKS Pod Identity atau IRSA. Tapi disini saya menggunakan EKS Pod Identity.
+2. Lalu kita membuatkan IAM provider untuk membuat role dan policy yang dibutuhkan oleh atlantis dan argocd kita bisa menggunakan EKS Pod Identity atau IRSA. Tapi disini saya menggunakan EKS Pod Identity. Pastikan nama service account yang dibuat akan sama denagan yang diassociate dengan pod identity.
+
 Contoh terraform code:
 ```hcl
 provider "aws" {
@@ -406,11 +406,13 @@ module "avp_custom_pod_identity" {
 }
 ```
 
+Lalu kita siapkan manifest untuk atlantis dan argocd.
 Berikut manifestnya:
 iac/deployment/cloud/manifest/atlantis.yaml
 ```yaml
 orgAllowlist: github.com/greyhats13/*
 
+# so we can create github resource from atlantis pod
 environment:
   GITHUB_OWNER: ${extra_vars.github_user}
 
@@ -474,6 +476,8 @@ volumeClaim:
 ```
 
 Berikut manifestnya:
+
+Pada ArgoCD dibawah saya telah menginstall ArgoCD Vault Plugin yang akan saya gunakan untuk mensecure secret yang akan kita bahasa detail pada bagian selanjutnya. Saya juga telah mensetup Github connector untuk login ke ArgoCD.
 iac/deployment/cloud/manifest/argocd.yaml
 ```yaml
 # Ref: https://github.com/argoproj/argo-helm/tree/main/charts/argo-cd
@@ -682,5 +686,7 @@ repoServer:
           mountPath: /usr/local/bin/argocd-vault-plugin
 ```
 
-
+<p align="center">
+  <img src="img/atlantis.png" alt="aws">
+</p>
 2. Setelah kita atlantis terinstall. Untuk 
