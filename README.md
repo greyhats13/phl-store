@@ -320,15 +320,14 @@ kubectl port-forward svc/argocd-server -n argocd 8080:80
 ```
 We can start creating the ArgoCD Application for 
 - [AWS ALB Controller](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/addons/aws-load-balancer-controller/main.tf#18)
-**1.** [Create the AWS ALB Controller Application in ArgoCD](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/addons/aws-load-balancer-controller/main.tf#18)
-**2.** [Prepared the manifest for the AWS ALB Controller](https://github.com/greyhats13/phl-store/blob/main/gitops/charts/addons/aws-load-balancer-controller/values.yaml#18)
-**3.** Install the AWS ALB Controller
+1. [Create the AWS ALB Controller Application in ArgoCD](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/addons/aws-load-balancer-controller/main.tf#18)
+2.  [Prepared the manifest for the AWS ALB Controller](https://github.com/greyhats13/phl-store/blob/main/gitops/charts/addons/aws-load-balancer-controller/values.yaml#18)
+3. Install the AWS ALB Controller
 - External DNS.
 - Leter, Karpenter
 
 
 We can managed those using ArgoCD.
-
 Then, open the browser & go to `https://localhost:8080` & login with the default username & password (admin & the password is the name of the server pod).
 We can start deploy/install the EKS addons with their EKS Pods Identity (IRSA replacement) such as Atlantis and ArgoCD. However, we need to install aws-alb-controller and external-dns first so our work will be much easier.
 
