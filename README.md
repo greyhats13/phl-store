@@ -406,7 +406,8 @@ module "avp_custom_pod_identity" {
 }
 ```
 
-Lalu kita siapkan manifest untuk atlantis dan argocd.
+Lalu kita siapkan manifest untuk atlantis dan argocd. Kita bisa menginject secret dari AWS Secret Manager ke helm chart menggunakan helm provider dan mengeset helm_sets_sensitive untuk menginstall ArgoCD dibawah ini.
+
 Berikut manifestnya:
 iac/deployment/cloud/manifest/atlantis.yaml
 ```yaml
@@ -686,7 +687,455 @@ repoServer:
           mountPath: /usr/local/bin/argocd-vault-plugin
 ```
 
+Setelah itu kita bisa membuat webhooknya menggunakan terraform dan github provider.
+Pada bagian ini kita membuat webhook untuk argocd dan atlantis. Webhook ini akan digunakan untuk trigger pipeline pada argocd dan atlantis. Gue juga membuat deploy ssg key untuk repo yang akan di manage oleh argocd.
+```hcl
+module "repo_phl" {
+  source    = "../../modules/github"
+  repo_name = var.github_repo
+  owner     = var.github_owner
+  webhooks = {
+    argocd = {
+      configuration = {
+        url          = "https://argocd.phl.blast.co.id/api/webhook"
+        content_type = "json"
+        insecure_ssl = false
+        secret       = random_password.argocd_github_secret.result
+      }
+      active = true
+      events = ["push"]
+    }
+    atlantis = {
+      configuration = {
+        url          = "https://atlantis.phl.blast.co.id/events"
+        content_type = "json"
+        insecure_ssl = false
+        secret       = random_password.atlantis_github_secret.result
+      }
+      active = true
+      events = ["push", "pull_request", "pull_request_review", "issue_comment"]
+    }
+  }
+  create_deploy_key          = true
+  add_repo_ssh_key_to_argocd = true
+  public_key                 = tls_private_key.argocd_ssh.public_key_openssh
+  ssh_key                    = tls_private_key.argocd_ssh.private_key_pem
+  is_deploy_key_read_only    = false
+  argocd_namespace           = "argocd"
+  depends_on = [
+    module.argocd,
+    module.atlantis,
+  ]
+}
+```
+
+
+ Gue juga membuat deploy ssg key untuk repo yang akan di manage oleh argocd
+```hcl
+resource "kubernetes_secret_v1" "argocd" {
+  count = var.add_repo_ssh_key_to_argocd ? 1 : 0
+  metadata {
+    name      = var.repo_name
+    namespace = var.argocd_namespace
+    labels = {
+      "argocd.argoproj.io/secret-type" = "repository"
+    }
+  }
+```
+
+### Self Service Model menggunakan atlantis
+Setelah komponen yang kita butuhkan sudah ada atau terinstall, maka kita bisa mulai membuat self service model menggunakan atlantis melalui pendekatan GitOps dimana git menjadi Single Source of Truth (SSoT) dan semua perubahan pada infrastruktur dan aplikasi harus dilakukan melalui git. Gambar ini akan cukup menjelaskan bagaimana flow kerja atlantis.
 <p align="center">
   <img src="img/atlantis.png" alt="aws">
 </p>
-2. Setelah kita atlantis terinstall. Untuk 
+
+Ketika kita ingin memprovisioning, setup, atau update infrastruktur, kita hanya perlu membuat pull request pada repository yang telah di setup oleh atlantis. Lalu team infra atau devops akan melakukan review dan approve pull request tersebut. Kita bisa mensyaratkan bahwa terraform apply hanya bisa dilakukan jika direview paling tidak oleh 2 orang dan mergeable Setelah pull request di approve, atlantis akan melakukan apply pada infrastruktur yang di define pada pull request tersebut.
+
+```yml
+version: 3
+projects:
+  - dir: iac/deployment/services/phl-profile
+    apply_requirements: ["mergeable,approved"]
+    autoplan:
+      when_modified: ["*.tf*"]
+``````
+
+Untuk contohnya bisa dilihat dibawah ini:
+# Create link url
+https://github.com/greyhats13/phl-store/pull/36
+
+### Contoh Service Deployment
+Bagian ini belum merupakan bagian CI/CD, tapi lebih kenapa menyiapkan service baru.
+Sebelum service bisa dideploy di kubernetes, kita tentu harus menyiapkan komponen-komponen yang dibutuhkan sservice tersebut seperti repository, database, users,, Secrets Manager, ArgoCD Application, S3 bucket (jika dibutuhkan), dan membuat integration dan routing API Gatewaynya. Tentu jika dibuat manual hal itu akan menjadi bottleneck, meningkatkan operation burden, dan memperlambat time to market. Oleh karena itu kita perlu membuat self service model untuk membuat service baru.
+
+Menggunakan atlantis, developer bisa dengan mandiri menggunakan template yang disediakan devops untuk membuat service baru. Dengan cara ini, developer bisa membuat service baru tanpa harus menunggu devops untuk membuatkan resource yang dibutuhkan. Mereka tinggal mengisi nama database, access user database yang mereka butuh.
+Code terraform ini juga akan otomatis setelah pembuatan database menambahkan secret ke AWS Secret Manager, membuat ECR repository, membuat ArgoCD Application, dan membuat service di API Gateway.
+
+```hcl
+# Databases Config
+## Create a Database
+resource "mysql_database" "db" {
+  name = local.svc_naming_standard
+}
+
+## Create a Database User
+resource "mysql_user" "db" {
+  user               = local.svc_naming_standard
+  host               = "%"
+  plaintext_password = random_password.password.result
+}
+
+## Grant the user access to the database
+resource "mysql_grant" "db" {
+  user       = mysql_user.db.user
+  host       = mysql_user.db.host
+  database   = mysql_database.db.name
+  privileges = ["CREATE", "SELECT", "INSERT", "UPDATE", "DELETE"]
+}
+
+# Secrets Manager
+## Create Secrets Manager
+module "secrets_iac" {
+  source  = "terraform-aws-modules/secrets-manager/aws"
+  version = "~> 1.3.1"
+
+  # Secret
+  name                    = local.svc_secret_standard
+  description             = "Secrets for ${local.svc_secret_standard}"
+  recovery_window_in_days = 0
+  # Policy
+  create_policy       = true
+  block_public_policy = true
+  policy_statements = {
+    admin = {
+      sid = "IacSecretAdmin"
+      principals = [
+        {
+          type        = "AWS"
+          identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+        },
+        {
+          type        = "AWS"
+          identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/imam.arief.rhmn@gmail.com"]
+        },
+        {
+          type        = "AWS"
+          identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/idanfreak@gmail.com"]
+        },
+        {
+          type        = "AWS"
+          identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/iac"]
+        },
+      ]
+      actions   = ["secretsmanager:GetSecretValue"]
+      resources = ["*"]
+    }
+  }
+
+  # Version
+  ignore_secret_changes = false
+  secret_string = jsonencode({
+    connection_string = "${mysql_user.db.user}:${random_password.password.result}@tcp(${data.terraform_remote_state.cloud.outputs.aurora_cluster_endpoint}:${data.terraform_remote_state.cloud.outputs.aurora_cluster_port})/${mysql_database.db.name}"
+    port              = "8080"
+  })
+
+  tags = merge(local.tags, local.svc_standard)
+}
+
+# CI/CD Components
+module "ecr" {
+  source  = "terraform-aws-modules/ecr/aws"
+  version = "~> 2.3.0"
+
+  repository_name = local.svc_naming_standard
+  repository_read_write_access_arns = [
+    "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/iac",
+    "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/atlantis-role",
+    "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/github",
+    "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+  ]
+  repository_image_tag_mutability = "MUTABLE"
+  repository_lifecycle_policy = jsonencode({
+    rules = [
+      {
+        rulePriority = 1,
+        description  = "Keep last 30 images",
+        selection = {
+          tagStatus     = "tagged",
+          tagPrefixList = ["v"],
+          countType     = "imageCountMoreThan",
+          countNumber   = 30
+        },
+        action = {
+          type = "expire"
+        }
+      }
+    ]
+  })
+  manage_registry_scanning_configuration = true
+  registry_scan_type                     = "BASIC"
+  registry_scan_rules = [
+    {
+      scan_frequency = "SCAN_ON_PUSH"
+      filter = [
+        {
+          filter      = "phl-*"
+          filter_type = "WILDCARD"
+        }
+      ]
+    }
+  ]
+  repository_encryption_type = "KMS"
+  repository_kms_key         = data.terraform_remote_state.cloud.outputs.main_key_arn
+  tags = {
+    Terraform   = "true"
+    Environment = "dev"
+  }
+}
+
+# Prepare GIthub
+module "github_action_env" {
+  source                  = "../../../modules/github"
+  repo_name               = var.github_repo
+  owner                   = var.github_owner
+  svc_name                = local.svc_naming_standard
+  github_action_variables = local.github_action_variables
+  github_action_secrets   = local.github_action_secrets
+}
+
+## ArgoCD Vault Plugin (AVP) Pod Identity
+module "svc_custom_pod_identity" {
+  source  = "terraform-aws-modules/eks-pod-identity/aws"
+  version = "~> 1.7.0"
+
+  name            = local.svc_naming_full
+  use_name_prefix = false
+
+  association_defaults = {
+    namespace       = "app"
+    service_account = local.svc_naming_full
+    tags            = { App = "${local.svc_standard.Feature}" }
+  }
+
+  associations = {
+    main = {
+      cluster_name = data.terraform_remote_state.cloud.outputs.eks_cluster_name
+    }
+  }
+
+  attach_custom_policy    = true
+  source_policy_documents = [data.aws_iam_policy_document.svc_policy.json]
+
+  tags = local.tags
+}
+
+## Create ArgoCD App
+module "argocd_app" {
+  source     = "../../../modules/helm"
+  region     = var.region
+  standard   = local.svc_standard
+  repository = "https://argoproj.github.io/argo-helm"
+  chart      = "argocd-apps"
+  values     = ["${file("manifest/${local.svc_standard.Feature}.yaml")}"]
+  namespace  = "argocd"
+  dns_name   = "${local.svc_standard.Feature}.${var.unit}.blast.co.id"
+  extra_vars = {
+    argocd_namespace                       = "argocd"
+    source_repoURL                         = "git@github.com:${var.github_owner}/${var.github_repo}.git"
+    source_targetRevision                  = "HEAD"
+    source_path                            = "gitops/charts/app/${local.svc_name}"
+    project                                = "default"
+    destination_server                     = "https://kubernetes.default.svc"
+    destination_namespace                  = var.env
+    avp_type                               = "awssecretsmanager"
+    region                                 = var.region
+    syncPolicy_automated_prune             = true
+    syncPolicy_automated_selfHeal          = true
+    syncPolicy_syncOptions_CreateNamespace = true
+  }
+}
+
+module "api_integration_routes" {
+  source = "../../../modules/api"
+
+  existing_gateway_id = data.terraform_remote_state.cloud.outputs.api_id
+  # Custom domain
+  create_domain_name             = false
+  create_certificate             = false
+  create_stage                   = false
+  deploy_stage                   = true
+  create_routes_and_integrations = true
+  routes = {
+    "GET /${local.svc_standard.Feature}" = {
+      authorization_type     = "JWT"
+      authorizer_key         = "cognito-authorizer"
+      authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
+      authorization_scopes   = data.terraform_remote_state.cloud.outputs.cognito_authrization_scopes
+      throttling_rate_limit  = 80
+      throttling_burst_limit = 40
+
+      integration = {
+        connection_type = "VPC_LINK"
+        connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
+        type            = "HTTP_PROXY"
+        method          = "GET"
+        uri             = data.aws_lb_listener.listener.arn
+        tls_config = {
+          server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+        }
+        request_parameters = {
+          "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          "overwrite:path"        = "/api/${local.svc_standard.Feature}"
+        }
+      }
+    }
+
+    "POST /${local.svc_standard.Feature}" = {
+      authorization_type     = "JWT"
+      authorizer_key         = "cognito-authorizer"
+      authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
+      authorization_scopes   = data.terraform_remote_state.cloud.outputs.cognito_authrization_scopes
+      throttling_rate_limit  = 80
+      throttling_burst_limit = 40
+
+      integration = {
+        connection_type = "VPC_LINK"
+        connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
+        type            = "HTTP_PROXY"
+        method          = "POST"
+        uri             = data.aws_lb_listener.listener.arn
+        tls_config = {
+          server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+        }
+        request_parameters = {
+          "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          "overwrite:path"        = "/api/${local.svc_standard.Feature}"
+        }
+        response_parameters = [
+          {
+            status_code = 200
+            mappings = {
+              "overwrite:statuscode" = "201"
+            }
+          }
+        ]
+      }
+    }
+
+    "GET /${local.svc_standard.Feature}/{id}" = {
+      authorization_type     = "JWT"
+      authorizer_key         = "cognito-authorizer"
+      authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
+      authorization_scopes   = data.terraform_remote_state.cloud.outputs.cognito_authrization_scopes
+      throttling_rate_limit  = 80
+      throttling_burst_limit = 40
+
+      integration = {
+        connection_type = "VPC_LINK"
+        connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
+        type            = "HTTP_PROXY"
+        method          = "GET"
+        uri             = data.aws_lb_listener.listener.arn
+        tls_config = {
+          server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+        }
+        request_parameters = {
+          "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          "overwrite:path"        = "/api/${local.svc_standard.Feature}/$request.path.id"
+        }
+      }
+    }
+
+    "PUT /${local.svc_standard.Feature}/{id}" = {
+      authorization_type     = "JWT"
+      authorizer_key         = "cognito-authorizer"
+      authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
+      authorization_scopes   = data.terraform_remote_state.cloud.outputs.cognito_authrization_scopes
+      throttling_rate_limit  = 80
+      throttling_burst_limit = 40
+
+      integration = {
+        connection_type = "VPC_LINK"
+        connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
+        type            = "HTTP_PROXY"
+        method          = "PUT"
+        uri             = data.aws_lb_listener.listener.arn
+        tls_config = {
+          server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+        }
+        request_parameters = {
+          "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          "overwrite:path"        = "/api/${local.svc_standard.Feature}/$request.path.id"
+        }
+      }
+    }
+
+    "DELETE /${local.svc_standard.Feature}/{id}" = {
+      authorization_type     = "JWT"
+      authorizer_key         = "cognito-authorizer"
+      authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
+      authorization_scopes   = data.terraform_remote_state.cloud.outputs.cognito_authrization_scopes
+      throttling_rate_limit  = 80
+      throttling_burst_limit = 40
+
+      integration = {
+        connection_type = "VPC_LINK"
+        connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
+        type            = "HTTP_PROXY"
+        method          = "DELETE"
+        uri             = data.aws_lb_listener.listener.arn
+        tls_config = {
+          server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+        }
+        request_parameters = {
+          "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          "overwrite:path"        = "/api/${local.svc_standard.Feature}/$request.path.id"
+        }
+        response_parameters = [
+          {
+            status_code = 200
+            mappings = {
+              "overwrite:statuscode" = "204"
+            }
+          }
+        ]
+      }
+    }
+    "$default" = {
+      integration = {
+        connection_type = "VPC_LINK"
+        connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
+        type            = "HTTP_PROXY"
+        method          = "ANY"
+        uri             = data.aws_lb_listener.listener.arn
+        tls_config = {
+          server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+        }
+      }
+    }
+  }
+  tags = {
+    Environment = "dev"
+    Terraform   = "true"
+  }
+}
+```
+
+Agar service kita terdeteksi oleh atlantis kita harus menambahkankan
+iac/atlantis.yaml
+```yml
+  - dir: iac/deployment/services/phl-products
+    apply_requirements: ["mergeable"]
+    autoplan:
+      when_modified: ["*.tf*"]
+```
+Jika tidak terdaftarkan maka jika ada perubahan code terraform pada path tersebut, atlantis tidak akan melakukan autoplan dan apply.
+
+Setelah itu developer bisa melakukan Pull Request dimana nama branch adalah ticket jira.
+git checkout -b newservice/DEV-001. Lalu melakukan Pull Request ke branch master atau main.
+Atlantis akan melakukan autoplan dan menampilkan plan pada pull request tersebut. Developer bisa melakukan review dan approve plan tersebut. Setelah di approve, atlantis akan melakukan apply pada infrastruktur yang didefine pada pull request tersebut.
+
+Setelah komponen dari service dan CI/CD butuhkan, kita bisa melanjutkan untuk mendeploy service menggunakan pendekatan GitOps menggunakan ArgoCD
+
+### Deploying Service using GitOps
+
