@@ -1,4 +1,5 @@
 # Instructions
+
 Starting from an AWS empty environment, setup a Kubernetes cluster and Aurora MySQL cluster including all the necessary resources
 using Terraform.
 Next deploy a sample application phl-store to the Kubernetes Cluster (preferably with Helm). It is a simple CRUD application and should
@@ -8,13 +9,15 @@ attached below for your reference.
 For the application deployment, use any CI/CD tools of your choice.
 
 # Submission
+
 For your submission, create a private Github repository and include the following
+
 1. Architectural diagram to explain your architecture.
 2. The relevant configuration scripts (eg: Terraform).
 3. In the README, include
-a. Instruction on how to setup/run the infrastructure and deploy the app
-b. Include high level steps on how would you manage the secrets and configuration changes
-c. Also include high level steps to make this infrastructure more secure, automate and reliable
+   a. Instruction on how to setup/run the infrastructure and deploy the app
+   b. Include high level steps on how would you manage the secrets and configuration changes
+   c. Also include high level steps to make this infrastructure more secure, automate and reliable
 
 # AWS Infrastructure Design
 
@@ -27,6 +30,7 @@ c. Also include high level steps to make this infrastructure more secure, automa
 Our Virtual Private Cloud (VPC) is the heart of our AWS setup. It makes sure all our AWS resources can talk to each other securely and work well together. We designed the VPC to be scalable, highly available, high-performing, secure, and cost-effective.
 
 ### Core Design
+
 - Scalable: We use a CIDR block of 10.0.0.0/16 which gives us lots of IP addresses. This helps us add more resources easily as we grow. We also added a second CIDR block 100.64.0.0/16 for Kubernetes pods. This keeps pod IPs separate and avoids conflicts, so we never run out of IPs as our cluster gets bigger.
 - Highly Available: Our VPC spreads resources across multiple Availability Zones (AZs). This means if one AZ has problems, our services stay up and running in other AZs. No single point of failure!
 - High Performance: We use AWS services like NAT Gateways and Application Load Balancers (ALBs) to ensure fast and reliable communication between our resources. This setup helps keep our applications running smoothly.
@@ -36,6 +40,7 @@ Our Virtual Private Cloud (VPC) is the heart of our AWS setup. It makes sure all
 ### Subnet Design
 
 Our VPC has three types of subnets, each with a specific role. These subnets are spread across different AZs to keep things running even if one AZ fails.
+
 - Public Subnets:
 - Purpose: Host internet-facing services like NAT Gateways, ALBs, and bastion hosts for secure admin access.
 - Interaction: ALBs handle incoming internet traffic and send it to our internal services. NAT Gateways let our private resources access the internet securely without being exposed directly.
@@ -52,12 +57,14 @@ Our VPC has three types of subnets, each with a specific role. These subnets are
 ### NAT Gateways
 
 We use NAT Gateways to manage outbound internet traffic from our private subnets.
+
 - Development: One NAT Gateway helps keep costs low.
 - Production: Each AZ has its own NAT Gateway for better reliability. If one AZ or NAT Gateway fails, others keep working.
 
 NAT Gateways are important because they let our private resources access the internet securely without being exposed. They also scale automatically to handle more traffic when needed.
 
 Why This VPC Design Works
+
 - Scalability: With a large IP range and separate blocks for pods, we can keep adding more resources without running out of IPs. Our setup supports growing workloads without issues.
 - High Availability: By spreading subnets across multiple AZs, our services stay available even if one AZ has problems. This makes our system more resilient.
 - High Performance: Using AWS services like NAT Gateways and ALBs ensures that our resources communicate quickly and reliably. This keeps our applications running smoothly.
@@ -67,12 +74,14 @@ Why This VPC Design Works
 ### Security Measures
 
 Security is built into every part of our VPC:
+
 - Network Isolation: Private subnets keep critical resources hidden from the internet. Only necessary services are in public subnets.
 - Access Controls: Security groups and network ACLs control who can access what. Only allowed traffic can move between resources.
 - Data Encryption: We use AWS KMS to encrypt sensitive data at rest. ALBs use SSL certificates from AWS ACM to secure data in transit.
 - Managed Security Services: Tools like AWS WAF protect our APIs from common web attacks, adding an extra layer of security.
-  
+
 ## Elastic Kubernetes Service (EKS)
+
 The EKS setup in this design is built for running containerized workloads efficiently. It takes advantage of AWS-native tools and Kubernetes features to ensure high performance, availability, and robust security. By using modules, we’ve automated many configurations, such as creating all required security groups for the control plane, nodes, and other components.
 
 ### EKS Cluster Configuration
@@ -80,18 +89,21 @@ The EKS setup in this design is built for running containerized workloads effici
 The EKS cluster runs Kubernetes version 1.31 and is designed to operate in a private networking setup. The control plane spans multiple AZs, ensuring high availability. All communication between the control plane and worker nodes is encrypted for security.
 
 The VPC’s subnets are configured to support the cluster’s needs:
+
 - The control plane uses private subnets for communication, ensuring that it is isolated from public exposure.
 - Worker nodes and pods run in private subnets to minimize exposure while allowing managed traffic routing through NAT Gateways and ALBs.
 
 ### Why BottleRocket?
 
 The worker nodes in the managed node group use BottleRocket as the AMI. This is a lightweight, purpose-built OS for containerized workloads, and it comes with several advantages:
--	Performance: Since it’s stripped down to just the essentials for running containers, it boots faster and uses fewer resources compared to general-purpose OSes.
+
+- Performance: Since it’s stripped down to just the essentials for running containers, it boots faster and uses fewer resources compared to general-purpose OSes.
 - Security: BottleRocket minimizes the attack surface by removing unnecessary packages and includes built-in hardening features like kernel lockdown. It integrates seamlessly with AWS services like SSM for secure management.
 
 ### Node Groups and Autoscaling
 
 The cluster has a managed node group for critical workloads that require high reliability. These nodes:
+
 - Run on On-Demand instances to ensure stability during normal traffic conditions.
 - Have a fixed size (2 nodes) to avoid disruption from frequent scaling events.
 
@@ -100,6 +112,7 @@ For handling dynamic workloads, the cluster relies on Karpenter. Karpenter autom
 ### Storage and Volume Management
 
 The setup includes EBS CSI (Container Storage Interface) for Kubernetes, which allows the cluster to provision storage dynamically. We’ve configured gp3 volumes as the default storage class. The benefits of gp3 are:
+
 - Higher performance: With up to 3,000 IOPS and 125 MiB/s throughput, gp3 volumes provide consistent performance.
 - Cost efficiency: gp3 is cheaper than gp2 for equivalent performance.
 - Encryption: All volumes are encrypted using AWS KMS secure data at rest.
@@ -109,12 +122,14 @@ The setup includes EBS CSI (Container Storage Interface) for Kubernetes, which a
 The cluster uses the AWS VPC CNI plugin to manage pod networking. It’s configured to use the secondary CIDR block (RFC6598, 100.64.0.0/16) to ensure there are enough IPs for pods, even in large-scale deployments. This separation also avoids conflicts with the primary CIDR and simplifies integration with on-prem networks.
 
 The VPC CNI plugin is enhanced with:
+
 - Prefix delegation: This increases the number of available IPs per ENI, reducing the risk of IP exhaustion.
 - Custom ENI configuration: Subnets and security groups are explicitly defined, providing fine-grained control over network access.
 
 ### Add-ons for Observability and Scalability
 
 Several add-ons are installed to enhance the functionality and observability of the cluster:
+
 - CloudWatch Observability: Provides centralized monitoring and logging for Kubernetes workloads. This simplifies debugging and ensures better visibility into the system performance.
 - CoreDNS: Handles service discovery within the cluster.
 - Kube-proxy: Manages network proxying for Kubernetes services.
@@ -122,6 +137,7 @@ Several add-ons are installed to enhance the functionality and observability of 
 ### IAM Integration with Pod Identity
 
 For managing permissions, the cluster uses EKS Pod Identity instead of the traditional IAM Roles for Service Accounts (IRSA). Pod Identity provides:
+
 - Granular permissions: Pods can assume roles with minimal required permissions, enhancing security.
 - Simpler configuration: It reduces the need for managing trust relationships manually.
 
@@ -144,6 +160,7 @@ Our EKS cluster uses an internal ALB as an ingress controller to manage traffic 
 ### Enhancing Security and Performance
 
 To keep our application safe and perform well, I’ve added several security and performance features to API Gateway:
+
 - Throttling Rate Limits: We set up throttling to control the number of requests a client can make in a given time period. This helps prevent abuse and ensures that our services remain available even under high load.
 - CORS Configuration: Cross-Origin Resource Sharing (CORS) is configured to allow our frontend applications to interact with the API Gateway securely. This setup specifies which domains can make requests, what methods are allowed, and which headers can be used.
 - Web Application Firewall (WAF): AWS WAF is integrated with API Gateway to protect our APIs from common web exploits like SQL injection and cross-site scripting. WAF rules help filter out malicious traffic before it reaches our backend services.
@@ -167,12 +184,14 @@ All data stored in Aurora is encrypted using AWS KMS. This ensures that sensitiv
 ### IAM Database Authentication
 
 The Aurora cluster is configured with IAM database authentication, which allows us to use IAM roles for database access instead of traditional username/password credentials. This approach is more secure because:
+
 - There’s no need to manage passwords in the application code.
--	Access is tied to IAM roles, making it easier to enforce least-privilege policies and revoke access when needed.
+- Access is tied to IAM roles, making it easier to enforce least-privilege policies and revoke access when needed.
 
 ### Autoscaling and Read Replicas
 
 Autoscaling is enabled for the Aurora cluster, allowing it to dynamically adjust compute capacity based on traffic. This is particularly important for handling:
+
 - High Traffic Spikes: During peak traffic, read replicas can scale up to handle increased read workloads, preventing bottlenecks.
 - Connection Pooling Issues: By adding more read replicas during high traffic, Aurora ensures the application doesn’t hit connection limits, improving response times and user experience.
 
@@ -185,84 +204,92 @@ Aurora read replicas are crucial for scaling read-heavy workloads. Traffic can b
 The Aurora cluster’s master password is managed using AWS Secrets Manager. Secrets Manager automatically rotates the password, ensuring it’s always up-to-date and reducing the risk of credential leaks. By integrating Secrets Manager with Aurora, applications can securely retrieve database credentials without hardcoding them.
 
 Why Automatic Rotation?
+
 - It eliminates manual processes for updating passwords, reducing human error.
 - Credentials are updated seamlessly, ensuring minimal disruption to services.
 
 ### Snapshots for Backup and Recovery
 
 Snapshots are an integral part of this setup for disaster recovery and data retention. While Aurora automatically performs backups, manual snapshots allow us to:
+
 - Preserve Point-in-Time Data: Snapshots capture the state of the database at a specific time, which is helpful for compliance or testing.
 - Disaster Recovery: In case of accidental data loss, snapshots can be used to restore the database quickly.
 
 ### Performance Insights
 
 Aurora is configured with Performance Insights, which provides detailed metrics for database performance. This helps in:
+
 - Identifying slow queries or performance bottlenecks.
 - Optimizing database configurations and query execution.
 
+How to Setup/Run the Infrastructure and Deploy the App
 
-# How to Setup/Run the Infrastructure and Deploy the App
+Prerequisites
 
-## Prerequisites
+To quickly set up and run our infrastructure, we use Terraform. Here’s what you need to do: 1. Install Terraform
+Download and install Terraform from the official website. 2. Develop Terraform Code
+Write Terraform code for the AWS resources we need. 3. Run Terraform Commands
+Initialize, plan, and apply your Terraform configurations:
 
-Cara cepatnya untuk setup/run infrastructure  menggunakan Terraform.
-1. Install Terraform
-2. Develop code terraform untuk resource yang kita buat, 
-3. Jalan kan terraform init, plan, dan apply.
+terraform init
+terraform plan
+terraform apply
 
-Untuk mendeploy kita bisa menggunakan helm
-1. Install helm
-2. helm repo add https://runatlantis.github.io/helm-char
-3. Jalankan hellm install -f values.yaml
+To deploy our app, we use Helm: 1. Install Helm
+Follow the Helm installation guide to get Helm on your machine. 2. Add Helm Repository
+Add the Atlantis Helm chart repository:
 
-Pada tahap awal kita masih perlu untuk membuat resource menggunakan terraform secara manual.
-Cara ini tidak efektif dan tidak efisien. Kita harus mensetup infrastruktur dan mendeploy aplikasi kedepan harus menerapkan membangun self service model 
-agar developer dapat memanaged aplikasinya sendiri.
-Kita membutuhkan EKS telah ready, Atlantis dan ArgoCD  telah terinstall lalu menggunakan argocd.
+helm repo add https://runatlantis.github.io/helm-char
 
+    3.	Install with Helm
 
-Berikut terraform provider
-1. Deploy Atlantis dan ArgoCD pada EKS cluster menggunakan helm provider.
-Untuk mendeploy atlantis dan ArgocD, kita harus makesure aws-alb-ingress-controller dan external-dns telah terinstall pada eks cluster. Agar saat ingress kita terbuat, alb-ingress-controller dapat membuat ALB dan external-dns dapat membuat record di route53 secara otomatis.
-2. Lalu kita membuatkan IAM provider untuk membuat role dan policy yang dibutuhkan oleh atlantis dan argocd kita bisa menggunakan EKS Pod Identity atau IRSA. Tapi disini saya menggunakan EKS Pod Identity. Pastikan nama service account yang dibuat akan sama denagan yang diassociate dengan pod identity.
+Deploy Atlantis using your values.yaml file:
 
-Contoh terraform code:
-```hcl
+helm install -f values.yaml
+
+At the start, setting up resources with Terraform manually can be slow and not very efficient. We need to move towards a self-service model so developers can manage their own applications. To do this, make sure EKS is ready, and Atlantis and ArgoCD are installed. Then, use ArgoCD for deployments.
+
+Terraform Provider Setup 1. Deploy Atlantis and ArgoCD on EKS
+Use the Helm provider to install Atlantis and ArgoCD on your EKS cluster. Make sure aws-alb-ingress-controller and external-dns are installed on the EKS cluster. This allows ALB Ingress Controller to create ALBs and External DNS to automatically create Route53 records. 2. Create IAM Provider
+Set up IAM roles and policies for Atlantis and ArgoCD. You can use EKS Pod Identity or IRSA. Here, we use EKS Pod Identity. Ensure the service account name matches the one associated with the pod identity.
+
+Example Terraform Code
+
 provider "aws" {
-  region = local.region
-  dynamic "assume_role" {
-    # If the current environment is running on EC2 then use instance profile to access AWS resources
-    for_each = local.is_ec2_environment ? [] : [1]
-    content {
-      role_arn = "arn:aws:iam::124456474132:role/iac"
-    }
-  }
+region = local.region
+dynamic "assume_role" {
+for_each = local.is_ec2_environment ? [] : [1]
+content {
+role_arn = "arn:aws:iam::124456474132:role/iac"
+}
+}
 }
 
 # Create Helm provider
+
 provider "helm" {
-  kubernetes {
-    host                   = module.eks_main.cluster_endpoint
-    cluster_ca_certificate = base64decode(module.eks_main.cluster_certificate_authority_data)
-    token                  = data.aws_eks_cluster_auth.cluster.token
-  }
+kubernetes {
+host = module.eks_main.cluster_endpoint
+cluster_ca_certificate = base64decode(module.eks_main.cluster_certificate_authority_data)
+token = data.aws_eks_cluster_auth.cluster.token
+}
 }
 
+# Atlantis Module
 
-# Atlantis
 module "atlantis" {
-  source = "../../modules/helm"
+source = "../../modules/helm"
 
-  region           = var.region
-  standard         = local.atlantis_standard
-  repository       = "https://runatlantis.github.io/helm-charts"
-  chart            = "atlantis"
-  values           = ["${file("manifest/${local.atlantis_standard.Feature}.yaml")}"]
-  namespace        = "atlantis"
-  create_namespace = true
-  dns_name         = local.route53_domain_name
-  extra_vars = {
-    github_user = var.github_owner
+region = var.region
+standard = local.atlantis_standard
+repository = "https://runatlantis.github.io/helm-charts"
+chart = "atlantis"
+values = [file("manifest/${local.atlantis_standard.Feature}.yaml")]
+namespace = "atlantis"
+create_namespace = true
+dns_name = local.route53_domain_name
+extra_vars = {
+github_user = var.github_owner
 
     # ingress
     ingress_enabled    = true
@@ -280,70 +307,68 @@ module "atlantis" {
     alb_ssl_redirect                 = 443
     aws_alb_service_type             = "ClusterIP"
     aws_alb_backend_protocol_version = "GRPC"
-  }
-  helm_sets_sensitive = [
-    {
-      name  = "github.token"
-      value = jsondecode(data.aws_secretsmanager_secret_version.secret_iac_current.secret_string)["github_token"]
-    },
-    {
-      name  = "github.secret"
-      value = random_password.atlantis_github_secret.result
-    },
-  ]
-  depends_on = [
-    module.eks_main,
-  ]
+
+}
+helm_sets_sensitive = [
+{
+name = "github.token"
+value = jsondecode(data.aws_secretsmanager_secret_version.secret_iac_current.secret_string)["github_token"]
+},
+{
+name = "github.secret"
+value = random_password.atlantis_github_secret.result
+},
+]
+depends_on = [
+module.eks_main,
+]
 }
 
 module "atlantis_custom_pod_identity" {
-  source  = "terraform-aws-modules/eks-pod-identity/aws"
-  version = "~> 1.7.0"
+source = "terraform-aws-modules/eks-pod-identity/aws"
+version = "~> 1.7.0"
 
-  name            = "${local.atlantis_standard.Feature}-role"
-  use_name_prefix = false
+name = "${local.atlantis_standard.Feature}-role"
+use_name_prefix = false
 
-  # ArgoCD Vault Plugin (AVP) is installed in the argocd-repo-server 
-  # So we need to attach the policy to the argocd-repo-server service account
-  association_defaults = {
-    namespace       = local.atlantis_standard.Feature
-    service_account = "${local.atlantis_standard.Feature}-sa"
-    tags            = { App = local.atlantis_standard.Feature }
-  }
-
-  associations = {
-    main = {
-      cluster_name = module.eks_main.cluster_name
-    }
-  }
-
-  attach_custom_policy    = true
-  source_policy_documents = [data.aws_iam_policy_document.atlantis_policy.json]
-
-  tags = local.tags
+association_defaults = {
+namespace = local.atlantis_standard.Feature
+service_account = "${local.atlantis_standard.Feature}-sa"
+tags = { App = local.atlantis_standard.Feature }
 }
 
-# ArgoCD
-# ArgoCD is a declarative, GitOps continuous delivery tool for Kubernetes.
+associations = {
+main = {
+cluster_name = module.eks_main.cluster_name
+}
+}
+
+attach_custom_policy = true
+source_policy_documents = [data.aws_iam_policy_document.atlantis_policy.json]
+
+tags = local.tags
+}
+
+# ArgoCD Module
+
 module "argocd" {
-  source = "../../modules/helm"
+source = "../../modules/helm"
 
-  region           = var.region
-  standard         = local.argocd_standard
-  repository       = "https://argoproj.github.io/argo-helm"
-  chart            = "argo-cd"
-  values           = ["${file("manifest/${local.argocd_standard.Feature}.yaml")}"]
-  namespace        = "argocd"
-  create_namespace = true
-  dns_name         = local.route53_domain_name
-  extra_vars = {
-    github_orgs      = var.github_orgs
-    github_client_id = var.github_oauth_client_id
-    ARGOCD_VERSION   = var.argocd_version
-    AVP_VERSION      = var.argocd_vault_plugin_version
-    server_insecure  = true
+region = var.region
+standard = local.argocd_standard
+repository = "https://argoproj.github.io/argo-helm"
+chart = "argo-cd"
+values = [file("manifest/${local.argocd_standard.Feature}.yaml")]
+namespace = "argocd"
+create_namespace = true
+dns_name = local.route53_domain_name
+extra_vars = {
+github_orgs = var.github_orgs
+github_client_id = var.github_oauth_client_id
+ARGOCD_VERSION = var.argocd_version
+AVP_VERSION = var.argocd_vault_plugin_version
+server_insecure = true
 
-    # ref https://github.com/argoproj/argo-helm/tree/main/charts/argo-cd
     # ingress
     ingress_enabled    = true
     ingress_controller = "aws"
@@ -361,257 +386,420 @@ module "argocd" {
     alb_ssl_redirect                 = 443
     aws_alb_service_type             = "ClusterIP"
     aws_alb_backend_protocol_version = "GRPC"
-  }
-  helm_sets_sensitive = [
-    {
-      name  = "configs.secret.githubSecret"
-      value = random_password.argocd_github_secret.result
-    },
-    {
-      name  = "configs.secret.extra.dex\\.github\\.clientSecret"
-      value = jsondecode(data.aws_secretsmanager_secret_version.secret_iac_current.secret_string)["github_oauth_client_secret"]
-    },
-  ]
-  depends_on = [
-    module.eks_main,
-  ]
+
+}
+helm_sets_sensitive = [
+{
+name = "configs.secret.githubSecret"
+value = random_password.argocd_github_secret.result
+},
+{
+name = "configs.secret.extra.dex\\.github\\.clientSecret"
+value = jsondecode(data.aws_secretsmanager_secret_version.secret_iac_current.secret_string)["github_oauth_client_secret"]
+},
+]
+depends_on = [
+module.eks_main,
+]
 }
 
 # ArgoCD Vault Plugin (AVP) Pod Identity
+
 module "avp_custom_pod_identity" {
-  source  = "terraform-aws-modules/eks-pod-identity/aws"
-  version = "~> 1.7.0"
+source = "terraform-aws-modules/eks-pod-identity/aws"
+version = "~> 1.7.0"
 
-  name            = "avp_role"
-  use_name_prefix = false
+name = "avp_role"
+use_name_prefix = false
 
-  # ArgoCD Vault Plugin (AVP) is installed in the argocd-repo-server 
-  # So we need to attach the policy to the argocd-repo-server service account
-  association_defaults = {
-    namespace       = "argocd"
-    service_account = "argocd-repo-server"
-    tags            = { App = "avp" }
-  }
-
-  associations = {
-    main = {
-      cluster_name = module.eks_main.cluster_name
-    }
-  }
-
-  attach_custom_policy    = true
-  source_policy_documents = [data.aws_iam_policy_document.avp_policy.json]
-
-  tags = local.tags
+association_defaults = {
+namespace = "argocd"
+service_account = "argocd-repo-server"
+tags = { App = "avp" }
 }
-```
 
-Lalu kita siapkan manifest untuk atlantis dan argocd. Kita bisa menginject secret dari AWS Secret Manager ke helm chart menggunakan helm provider dan mengeset helm_sets_sensitive untuk menginstall ArgoCD dibawah ini.
+associations = {
+main = {
+cluster_name = module.eks_main.cluster_name
+}
+}
 
-Berikut manifestnya:
-iac/deployment/cloud/manifest/atlantis.yaml
-```yaml
-orgAllowlist: github.com/greyhats13/*
+attach_custom_policy = true
+source_policy_documents = [data.aws_iam_policy_document.avp_policy.json]
 
-# so we can create github resource from atlantis pod
+tags = local.tags
+}
+
+# ArgoCD App
+
+module "argocd_app" {
+source = "../../../modules/helm"
+region = var.region
+standard = local.svc_standard
+repository = "https://argoproj.github.io/argo-helm"
+chart = "argocd-apps"
+values = [file("manifest/${local.svc_standard.Feature}.yaml")]
+namespace = "argocd"
+dns_name = "${local.svc_standard.Feature}.${var.unit}.blast.co.id"
+extra_vars = {
+argocd_namespace = "argocd"
+source_repoURL = "git@github.com:${var.github_owner}/${var.github_repo}.git"
+source_targetRevision = "HEAD"
+source_path = "gitops/charts/app/${local.svc_name}"
+project = "default"
+destination_server = "https://kubernetes.default.svc"
+destination_namespace = var.env
+avp_type = "awssecretsmanager"
+region = var.region
+syncPolicy_automated_prune = true
+syncPolicy_automated_selfHeal = true
+syncPolicy_syncOptions_CreateNamespace = true
+}
+}
+
+# API Integration Routes
+
+module "api_integration_routes" {
+source = "../../../modules/api"
+
+existing_gateway_id = data.terraform_remote_state.cloud.outputs.api_id
+create_domain_name = false
+create_certificate = false
+create_stage = false
+deploy_stage = true
+create_routes_and_integrations = true
+routes = {
+"GET /${local.svc_standard.Feature}" = {
+authorization_type = "JWT"
+authorizer_key = "cognito-authorizer"
+authorizer_id = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
+authorization_scopes = data.terraform_remote_state.cloud.outputs.cognito_authrization_scopes
+throttling_rate_limit = 80
+throttling_burst_limit = 40
+
+      integration = {
+        connection_type = "VPC_LINK"
+        connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
+        type            = "HTTP_PROXY"
+        method          = "GET"
+        uri             = data.aws_lb_listener.listener.arn
+        tls_config = {
+          server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+        }
+        request_parameters = {
+          "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          "overwrite:path"        = "/api/${local.svc_standard.Feature}"
+        }
+      }
+    }
+
+    "POST /${local.svc_standard.Feature}" = {
+      authorization_type     = "JWT"
+      authorizer_key         = "cognito-authorizer"
+      authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
+      authorization_scopes   = data.terraform_remote_state.cloud.outputs.cognito_authrization_scopes
+      throttling_rate_limit  = 80
+      throttling_burst_limit = 40
+
+      integration = {
+        connection_type = "VPC_LINK"
+        connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
+        type            = "HTTP_PROXY"
+        method          = "POST"
+        uri             = data.aws_lb_listener.listener.arn
+        tls_config = {
+          server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+        }
+        request_parameters = {
+          "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          "overwrite:path"        = "/api/${local.svc_standard.Feature}"
+        }
+        response_parameters = [
+          {
+            status_code = 200
+            mappings = {
+              "overwrite:statuscode" = "201"
+            }
+          }
+        ]
+      }
+    }
+
+    "GET /${local.svc_standard.Feature}/{id}" = {
+      authorization_type     = "JWT"
+      authorizer_key         = "cognito-authorizer"
+      authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
+      authorization_scopes   = data.terraform_remote_state.cloud.outputs.cognito_authrization_scopes
+      throttling_rate_limit  = 80
+      throttling_burst_limit = 40
+
+      integration = {
+        connection_type = "VPC_LINK"
+        connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
+        type            = "HTTP_PROXY"
+        method          = "GET"
+        uri             = data.aws_lb_listener.listener.arn
+        tls_config = {
+          server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+        }
+        request_parameters = {
+          "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          "overwrite:path"        = "/api/${local.svc_standard.Feature}/$request.path.id"
+        }
+      }
+    }
+
+    "PUT /${local.svc_standard.Feature}/{id}" = {
+      authorization_type     = "JWT"
+      authorizer_key         = "cognito-authorizer"
+      authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
+      authorization_scopes   = data.terraform_remote_state.cloud.outputs.cognito_authrization_scopes
+      throttling_rate_limit  = 80
+      throttling_burst_limit = 40
+
+      integration = {
+        connection_type = "VPC_LINK"
+        connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
+        type            = "HTTP_PROXY"
+        method          = "PUT"
+        uri             = data.aws_lb_listener.listener.arn
+        tls_config = {
+          server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+        }
+        request_parameters = {
+          "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          "overwrite:path"        = "/api/${local.svc_standard.Feature}/$request.path.id"
+        }
+      }
+    }
+
+    "DELETE /${local.svc_standard.Feature}/{id}" = {
+      authorization_type     = "JWT"
+      authorizer_key         = "cognito-authorizer"
+      authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
+      authorization_scopes   = data.terraform_remote_state.cloud.outputs.cognito_authrization_scopes
+      throttling_rate_limit  = 80
+      throttling_burst_limit = 40
+
+      integration = {
+        connection_type = "VPC_LINK"
+        connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
+        type            = "HTTP_PROXY"
+        method          = "DELETE"
+        uri             = data.aws_lb_listener.listener.arn
+        tls_config = {
+          server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+        }
+        request_parameters = {
+          "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          "overwrite:path"        = "/api/${local.svc_standard.Feature}/$request.path.id"
+        }
+        response_parameters = [
+          {
+            status_code = 200
+            mappings = {
+              "overwrite:statuscode" = "204"
+            }
+          }
+        ]
+      }
+    }
+    "$default" = {
+      integration = {
+        connection_type = "VPC_LINK"
+        connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
+        type            = "HTTP_PROXY"
+        method          = "ANY"
+        uri             = data.aws_lb_listener.listener.arn
+        tls_config = {
+          server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+        }
+      }
+    }
+
+}
+tags = {
+Environment = "dev"
+Terraform = "true"
+}
+}
+
+Prepare Manifests for Atlantis and ArgoCD
+
+We need to set up manifests for Atlantis and ArgoCD. We can inject secrets from AWS Secret Manager into the Helm charts using the Helm provider and set helm_sets_sensitive to install ArgoCD.
+
+Atlantis Manifest (iac/deployment/cloud/manifest/atlantis.yaml):
+
+orgAllowlist: github.com/greyhats13/\*
+
 environment:
-  GITHUB_OWNER: ${extra_vars.github_user}
+GITHUB_OWNER: ${extra_vars.github_user}
 
 environmentSecrets:
-  - name: GITHUB_TOKEN
-    secretKeyRef:
-      name: ${unit}-${env}-${code}-${feature}-webhook
-      key: github_token
+
+- name: GITHUB_TOKEN
+  secretKeyRef:
+  name: ${unit}-${env}-${code}-${feature}-webhook
+  key: github_token
 
 github:
-  user: ${extra_vars.github_user}
+user: ${extra_vars.github_user}
 
 repoConfig: |
- ---
- repos:
- - id: /.*/
-   branch: /.*/
-   repo_config_file: iac/atlantis.yaml
-   plan_requirements: []
-   apply_requirements: []
-   workflow: default
-   allowed_overrides: [apply_requirements, plan_requirements]
-   allow_custom_workflows: false
- workflows:
-   default:
-     plan:
-       steps: [init, plan]
-     apply:
-       steps: [apply]
-serviceAccount:
+
+---
+
+repos:
+
+- id: /._/
+  branch: /._/
+  repo_config_file: iac/atlantis.yaml
+  plan_requirements: []
+  apply_requirements: []
+  workflow: default
+  allowed_overrides: [apply_requirements, plan_requirements]
+  allow_custom_workflows: false
+  workflows:
+  default:
+  plan:
+  steps: [init, plan]
+  apply:
+  steps: [apply]
+  serviceAccount:
   name: ${feature}-sa
 
 service:
-  type: ClusterIP
-  port: 80
-  targetPort: 4141
+type: ClusterIP
+port: 80
+targetPort: 4141
 
 ingress:
-  enabled: ${extra_vars.ingress_enabled}
+enabled: ${extra_vars.ingress_enabled}
   ingressClassName: ${extra_vars.ingress_class_name}
   annotations:
     external-dns.alpha.kubernetes.io/hostname: ${feature}.${dns_name}
-    external-dns.alpha.kubernetes.io/ttl: '300'
-    alb.ingress.kubernetes.io/group.name: ${extra_vars.alb_group_name}
+external-dns.alpha.kubernetes.io/ttl: '300'
+alb.ingress.kubernetes.io/group.name: ${extra_vars.alb_group_name}
     alb.ingress.kubernetes.io/certificate-arn: ${extra_vars.alb_certificate_arn}
     alb.ingress.kubernetes.io/ssl-policy: ${extra_vars.alb_ssl_policy}
     alb.ingress.kubernetes.io/backend-protocol: ${extra_vars.alb_backend_protocol}
     alb.ingress.kubernetes.io/listen-ports: '${extra_vars.alb_listen_ports}'
-    alb.ingress.kubernetes.io/scheme: ${extra_vars.alb_scheme}
+alb.ingress.kubernetes.io/scheme: ${extra_vars.alb_scheme}
     alb.ingress.kubernetes.io/target-type: ${extra_vars.alb_target_type}
     alb.ingress.kubernetes.io/group.order: '${extra_vars.alb_group_order}'
-    alb.ingress.kubernetes.io/healthcheck-path: ${extra_vars.alb_healthcheck_path}
+alb.ingress.kubernetes.io/healthcheck-path: ${extra_vars.alb_healthcheck_path}
     alb.ingress.kubernetes.io/ssl-redirect: '${extra_vars.alb_ssl_redirect}'
-  host: ${feature}.${dns_name}
-  tls:
-    - hosts:
-        - ${feature}.${dns_name}
+host: ${feature}.${dns_name}
+tls: - hosts: - ${feature}.${dns_name}
 
 volumeClaim:
-  storageClassName: gp3
-```
+storageClassName: gp3
 
-Berikut manifestnya:
+ArgoCD Manifest (iac/deployment/cloud/manifest/argocd.yaml):
 
-Pada ArgoCD dibawah saya telah menginstall ArgoCD Vault Plugin yang akan saya gunakan untuk mensecure secret yang akan kita bahasa detail pada bagian selanjutnya. Saya juga telah mensetup Github connector untuk login ke ArgoCD.
-iac/deployment/cloud/manifest/argocd.yaml
-```yaml
-# Ref: https://github.com/argoproj/argo-helm/tree/main/charts/argo-cd
 global:
-  domain: "${feature}.${dns_name}"
+domain: "${feature}.${dns_name}"
 
 configs:
-  cm:
-    url: "https://${feature}.${dns_name}"
-    dex.config: |
-      connectors:
-        - type: github
-          id: github
-          name: GitHub
-          config:
-            clientID: ${extra_vars.github_client_id}
+cm:
+url: "https://${feature}.${dns_name}"
+dex.config: |
+connectors: - type: github
+id: github
+name: GitHub
+config:
+clientID: ${extra_vars.github_client_id}
             clientSecret: $argocd-secret:dex.github.clientSecret
             redirectURI: 'https://${feature}.${dns_name}/api/dex/callback'
-            orgs:
-              - name: ${extra_vars.github_orgs}
-  params:
-    server.insecure: ${extra_vars.server_insecure}
-  rbac:
-    policy.default: role:readonly
-    policy.csv: |
-      # default policy
-      p, role:readonly, applications, get, */*, allow
-      p, role:readonly, certificates, get, *, allow
-      p, role:readonly, clusters, get, *, allow
-      p, role:readonly, repositories, get, *, allow
-      p, role:readonly, projects, get, *, allow
-      p, role:readonly, accounts, get, *, allow
-      p, role:readonly, gpgkeys, get, *, allow
-      p, role:readonly, logs, get, */*, allow
-      # admin policy
-      p, role:devops-role, applications, create, */*, allow
-      p, role:devops-role, applications, update, */*, allow
-      p, role:devops-role, applications, delete, */*, allow
-      p, role:devops-role, applications, sync, */*, allow
-      p, role:devops-role, applications, override, */*, allow
-      p, role:devops-role, applications, action/*, */*, allow
-      p, role:devops-role, applicationsets, get, */*, allow
-      p, role:devops-role, applicationsets, create, */*, allow
-      p, role:devops-role, applicationsets, update, */*, allow
-      p, role:devops-role, applicationsets, delete, */*, allow
-      p, role:devops-role, certificates, create, *, allow
-      p, role:devops-role, certificates, update, *, allow
-      p, role:devops-role, certificates, delete, *, allow
-      p, role:devops-role, clusters, create, *, allow
-      p, role:devops-role, clusters, update, *, allow
-      p, role:devops-role, clusters, delete, *, allow
-      p, role:devops-role, repositories, create, *, allow
-      p, role:devops-role, repositories, update, *, allow
-      p, role:devops-role, repositories, delete, *, allow
-      p, role:devops-role, projects, create, *, allow
-      p, role:devops-role, projects, update, *, allow
-      p, role:devops-role, projects, delete, *, allow
-      p, role:devops-role, accounts, update, *, allow
-      p, role:devops-role, gpgkeys, create, *, allow
-      p, role:devops-role, gpgkeys, delete, *, allow
-      p, role:devops-role, exec, create, */*, allow
-      # set admin policy for devops team in github orgs
-      g, ${extra_vars.github_orgs}:devops, role:devops-role
-      g, devops, role:devops-role
-  # ref: https://github.com/argoproj-labs/argocd-vault-plugin/blob/main/manifests/cmp-sidecar/cmp-plugin.yaml
-  cmp:
-    # -- Create the argocd-cmp-cm configmap
-    create: true
-    plugins:
-      argocd-vault-plugin-helm:
-        allowConcurrency: true
+orgs: - name: ${extra_vars.github_orgs}
+params:
+server.insecure: ${extra_vars.server_insecure}
+rbac:
+policy.default: role:readonly
+policy.csv: | # default policy
+p, role:readonly, applications, get, _/_, allow
+p, role:readonly, certificates, get, _, allow
+p, role:readonly, clusters, get, _, allow
+p, role:readonly, repositories, get, _, allow
+p, role:readonly, projects, get, _, allow
+p, role:readonly, accounts, get, _, allow
+p, role:readonly, gpgkeys, get, _, allow
+p, role:readonly, logs, get, _/_, allow # admin policy
+p, role:devops-role, applications, create, _/_, allow
+p, role:devops-role, applications, update, _/_, allow
+p, role:devops-role, applications, delete, _/_, allow
+p, role:devops-role, applications, sync, _/_, allow
+p, role:devops-role, applications, override, _/_, allow
+p, role:devops-role, applications, action/_, _/_, allow
+p, role:devops-role, applicationsets, get, _/_, allow
+p, role:devops-role, applicationsets, create, _/_, allow
+p, role:devops-role, applicationsets, update, _/_, allow
+p, role:devops-role, applicationsets, delete, _/_, allow
+p, role:devops-role, certificates, create, _, allow
+p, role:devops-role, certificates, update, _, allow
+p, role:devops-role, certificates, delete, _, allow
+p, role:devops-role, clusters, create, _, allow
+p, role:devops-role, clusters, update, _, allow
+p, role:devops-role, clusters, delete, _, allow
+p, role:devops-role, repositories, create, _, allow
+p, role:devops-role, repositories, update, _, allow
+p, role:devops-role, repositories, delete, _, allow
+p, role:devops-role, projects, create, _, allow
+p, role:devops-role, projects, update, _, allow
+p, role:devops-role, projects, delete, _, allow
+p, role:devops-role, accounts, update, _, allow
+p, role:devops-role, gpgkeys, create, _, allow
+p, role:devops-role, gpgkeys, delete, _, allow
+p, role:devops-role, exec, create, _/_, allow # set admin policy for devops team in github orgs
+g, ${extra_vars.github_orgs}:devops, role:devops-role
+g, devops, role:devops-role
+cmp:
+create: true
+plugins:
+argocd-vault-plugin-helm:
+allowConcurrency: true
+discover:
+find:
+command: - sh - "-c" - "find . -name 'Chart.yaml' && find . -name 'values.yaml'"
+generate:
+command: - sh - "-c" - |
+helm template $ARGOCD_APP_NAME -n $ARGOCD_APP_NAMESPACE . --include-crds |
+argocd-vault-plugin generate -
+lockRepo: false
+argocd-vault-plugin:
+allowConcurrency: true
+discover:
+find:
+command: - sh - "-c" - "find . -name '\*.yaml' | xargs -I {} grep \"<path\\|avp\\.kubernetes\\.io\" {} | grep ."
+generate:
+command: - argocd-vault-plugin - generate - "."
+lockRepo: false
 
-        # Note: this command is run _before_ any Helm templating is done, therefore the logic is to check
-        # if this looks like a Helm chart
-        discover:
-          find:
-            command:
-              - sh
-              - "-c"
-              - "find . -name 'Chart.yaml' && find . -name 'values.yaml'"
-        generate:
-          # **IMPORTANT**: passing effectively allows users to run arbitrary code in the Argo CD 
-          # repo-server (or, if using a sidecar, in the plugin sidecar). Only use this when the users are completely trusted. If
-          # possible, determine which Helm arguments are needed by your users and explicitly pass only those arguments.
-          command:
-            - sh
-            - "-c"
-            - |
-              helm template $ARGOCD_APP_NAME -n $ARGOCD_APP_NAMESPACE . --include-crds |
-              argocd-vault-plugin generate -
-        lockRepo: false
-      argocd-vault-plugin:
-        allowConcurrency: true
-        discover:
-          find:
-            command:
-              - sh
-              - "-c"
-              - "find . -name '*.yaml' | xargs -I {} grep \"<path\\|avp\\.kubernetes\\.io\" {} | grep ."
-        generate:
-          command:
-            - argocd-vault-plugin
-            - generate
-            - "."
-        lockRepo: false
-
-# ref: https://argo-cd.readthedocs.io/en/stable/operator-manual/declarative-setup/
 server:
-  ingress:
-    enabled: ${extra_vars.ingress_enabled}
+ingress:
+enabled: ${extra_vars.ingress_enabled}
     controller: ${extra_vars.ingress_controller}
     ingressClassName: ${extra_vars.ingress_class_name}
     annotations:
       external-dns.alpha.kubernetes.io/hostname: ${feature}.${dns_name}
-      external-dns.alpha.kubernetes.io/ttl: '300'
-      alb.ingress.kubernetes.io/group.name: ${extra_vars.alb_group_name}
+external-dns.alpha.kubernetes.io/ttl: '300'
+alb.ingress.kubernetes.io/group.name: ${extra_vars.alb_group_name}
       alb.ingress.kubernetes.io/certificate-arn: ${extra_vars.alb_certificate_arn}
       alb.ingress.kubernetes.io/ssl-policy: ${extra_vars.alb_ssl_policy}
       alb.ingress.kubernetes.io/backend-protocol: ${extra_vars.alb_backend_protocol}
       alb.ingress.kubernetes.io/listen-ports: '${extra_vars.alb_listen_ports}'
-      alb.ingress.kubernetes.io/scheme: ${extra_vars.alb_scheme}
+alb.ingress.kubernetes.io/scheme: ${extra_vars.alb_scheme}
       alb.ingress.kubernetes.io/target-type: ${extra_vars.alb_target_type}
       alb.ingress.kubernetes.io/group.order: '${extra_vars.alb_group_order}'
-      alb.ingress.kubernetes.io/healthcheck-path: ${extra_vars.alb_healthcheck_path}
+alb.ingress.kubernetes.io/healthcheck-path: ${extra_vars.alb_healthcheck_path}
       alb.ingress.kubernetes.io/ssl-redirect: '${extra_vars.alb_ssl_redirect}'
-    aws:
-      serviceType: ${extra_vars.aws_alb_service_type}
-      backendProtocolVersion: ${extra_vars.aws_alb_backend_protocol_version}
-# ref: https://github.com/argoproj-labs/argocd-vault-plugin/blob/main/manifests/cmp-sidecar/argocd-repo-server.yaml
+aws:
+serviceType: ${extra_vars.aws_alb_service_type}
+backendProtocolVersion: ${extra_vars.aws_alb_backend_protocol_version}
+
 repoServer:
-  serviceAccount:
-    name: ${feature}-repo-server
-    # Not strictly necessary, but required for passing AVP configuration from a secret and for using Kubernetes auth to Hashicorp Vault
+serviceAccount:
+name: ${feature}-repo-server
     automountServiceAccountToken: true
   volumes:
     - configMap:
@@ -630,148 +818,122 @@ repoServer:
       command: [sh, -c]
       args:
         - >-
-          curl -L https://github.com/argoproj-labs/argocd-vault-plugin/releases/download/v${extra_vars.AVP_VERSION}/argocd-vault-plugin_${extra_vars.AVP_VERSION}_linux_amd64 -o argocd-vault-plugin &&
+          curl -L https://github.com/argoproj-labs/argocd-vault-plugin/releases/download/v${extra*vars.AVP_VERSION}/argocd-vault-plugin*${extra_vars.AVP_VERSION}_linux_amd64 -o argocd-vault-plugin &&
           chmod +x argocd-vault-plugin &&
           mv argocd-vault-plugin /custom-tools/
-
       volumeMounts:
         - mountPath: /custom-tools
           name: custom-tools
   extraContainers:
-      # argocd-vault-plugin with Helm
     - name: avp-helm
       command: [/var/run/argocd/argocd-cmp-server]
       image: quay.io/argoproj/argocd:${extra_vars.ARGOCD_VERSION}
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 999
-      volumeMounts:
-        - mountPath: /var/run/argocd
-          name: var-files
-        - mountPath: /home/argocd/cmp-server/plugins
-          name: plugins
-        - mountPath: /tmp
-          name: cmp-tmp
+securityContext:
+runAsNonRoot: true
+runAsUser: 999
+volumeMounts: - mountPath: /var/run/argocd
+name: var-files - mountPath: /home/argocd/cmp-server/plugins
+name: plugins - mountPath: /tmp
+name: cmp-tmp - mountPath: /home/argocd/cmp-server/config/plugin.yaml
+subPath: argocd-vault-plugin-helm.yaml
+name: argocd-cmp-cm - name: custom-tools
+subPath: argocd-vault-plugin
+mountPath: /usr/local/bin/argocd-vault-plugin - name: avp
+command: [/var/run/argocd/argocd-cmp-server]
+image: quay.io/argoproj/argocd:${extra_vars.ARGOCD_VERSION}
+securityContext:
+runAsNonRoot: true
+runAsUser: 999
+volumeMounts: - mountPath: /var/run/argocd
+name: var-files - mountPath: /home/argocd/cmp-server/plugins
+name: plugins - mountPath: /tmp
+name: cmp-tmp - mountPath: /home/argocd/cmp-server/config/plugin.yaml
+subPath: argocd-vault-plugin.yaml
+name: argocd-cmp-cm - name: custom-tools
+subPath: argocd-vault-plugin
+mountPath: /usr/local/bin/argocd-vault-plugin
 
-        # Register plugins into sidecar
-        - mountPath: /home/argocd/cmp-server/config/plugin.yaml
-          subPath: argocd-vault-plugin-helm.yaml
-          name: argocd-cmp-cm
+Create Webhooks with Terraform and GitHub Provider
 
-        # Important: Mount tools into $PATH
-        - name: custom-tools
-          subPath: argocd-vault-plugin
-          mountPath: /usr/local/bin/argocd-vault-plugin
-    - name: avp
-      command: [/var/run/argocd/argocd-cmp-server]
-      image: quay.io/argoproj/argocd:${extra_vars.ARGOCD_VERSION}
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 999
-      volumeMounts:
-        - mountPath: /var/run/argocd
-          name: var-files
-        - mountPath: /home/argocd/cmp-server/plugins
-          name: plugins
-        - mountPath: /tmp
-          name: cmp-tmp
+Set up webhooks for ArgoCD and Atlantis to trigger pipelines. Also, create deploy SSH keys for the repo managed by ArgoCD.
 
-        # Register plugins into sidecar
-        - mountPath: /home/argocd/cmp-server/config/plugin.yaml
-          subPath: argocd-vault-plugin.yaml
-          name: argocd-cmp-cm
-
-        # Important: Mount tools into $PATH
-        - name: custom-tools
-          subPath: argocd-vault-plugin
-          mountPath: /usr/local/bin/argocd-vault-plugin
-```
-
-Setelah itu kita bisa membuat webhooknya menggunakan terraform dan github provider.
-Pada bagian ini kita membuat webhook untuk argocd dan atlantis. Webhook ini akan digunakan untuk trigger pipeline pada argocd dan atlantis. Gue juga membuat deploy ssg key untuk repo yang akan di manage oleh argocd.
-```hcl
 module "repo_phl" {
-  source    = "../../modules/github"
-  repo_name = var.github_repo
-  owner     = var.github_owner
-  webhooks = {
-    argocd = {
-      configuration = {
-        url          = "https://argocd.phl.blast.co.id/api/webhook"
-        content_type = "json"
-        insecure_ssl = false
-        secret       = random_password.argocd_github_secret.result
-      }
-      active = true
-      events = ["push"]
-    }
-    atlantis = {
-      configuration = {
-        url          = "https://atlantis.phl.blast.co.id/events"
-        content_type = "json"
-        insecure_ssl = false
-        secret       = random_password.atlantis_github_secret.result
-      }
-      active = true
-      events = ["push", "pull_request", "pull_request_review", "issue_comment"]
-    }
-  }
-  create_deploy_key          = true
-  add_repo_ssh_key_to_argocd = true
-  public_key                 = tls_private_key.argocd_ssh.public_key_openssh
-  ssh_key                    = tls_private_key.argocd_ssh.private_key_pem
-  is_deploy_key_read_only    = false
-  argocd_namespace           = "argocd"
-  depends_on = [
-    module.argocd,
-    module.atlantis,
-  ]
+source = "../../modules/github"
+repo_name = var.github_repo
+owner = var.github_owner
+webhooks = {
+argocd = {
+configuration = {
+url = "https://argocd.phl.blast.co.id/api/webhook"
+content_type = "json"
+insecure_ssl = false
+secret = random_password.argocd_github_secret.result
 }
-```
+active = true
+events = ["push"]
+}
+atlantis = {
+configuration = {
+url = "https://atlantis.phl.blast.co.id/events"
+content_type = "json"
+insecure_ssl = false
+secret = random_password.atlantis_github_secret.result
+}
+active = true
+events = ["push", "pull_request", "pull_request_review", "issue_comment"]
+}
+}
+create_deploy_key = true
+add_repo_ssh_key_to_argocd = true
+public_key = tls_private_key.argocd_ssh.public_key_openssh
+ssh_key = tls_private_key.argocd_ssh.private_key_pem
+is_deploy_key_read_only = false
+argocd_namespace = "argocd"
+depends_on = [
+module.argocd,
+module.atlantis,
+]
+}
 
-
- Gue juga membuat deploy ssg key untuk repo yang akan di manage oleh argocd
-```hcl
 resource "kubernetes_secret_v1" "argocd" {
-  count = var.add_repo_ssh_key_to_argocd ? 1 : 0
-  metadata {
-    name      = var.repo_name
-    namespace = var.argocd_namespace
-    labels = {
-      "argocd.argoproj.io/secret-type" = "repository"
-    }
-  }
-```
+count = var.add_repo_ssh_key_to_argocd ? 1 : 0
+metadata {
+name = var.repo_name
+namespace = var.argocd_namespace
+labels = {
+"argocd.argoproj.io/secret-type" = "repository"
+}
+}
+}
 
-### Self Service Model menggunakan atlantis
-Setelah komponen yang kita butuhkan sudah ada atau terinstall, maka kita bisa mulai membuat self service model menggunakan atlantis melalui pendekatan GitOps dimana git menjadi Single Source of Truth (SSoT) dan semua perubahan pada infrastruktur dan aplikasi harus dilakukan melalui git. Gambar ini akan cukup menjelaskan bagaimana flow kerja atlantis.
+Self Service Model with Atlantis
+
+Once all components are installed, we can create a self-service model using Atlantis and GitOps. Git is the Single Source of Truth (SSoT), and all changes must go through Git. Here’s how it works:
+
 <p align="center">
-  <img src="img/atlantis.png" alt="aws">
+  <img src="img/atlantis.png" alt="atlantis">
 </p>
 
-Ketika kita ingin memprovisioning, setup, atau update infrastruktur, kita hanya perlu membuat pull request pada repository yang telah di setup oleh atlantis. Lalu team infra atau devops akan melakukan review dan approve pull request tersebut. Kita bisa mensyaratkan bahwa terraform apply hanya bisa dilakukan jika direview paling tidak oleh 2 orang dan mergeable Setelah pull request di approve, atlantis akan melakukan apply pada infrastruktur yang di define pada pull request tersebut.
+When you want to provision, set up, or update infrastructure, just make a pull request in the repository set up by Atlantis. The infra or devops team reviews and approves the pull request. We require at least two approvals and that the pull request is mergeable. After approval, Atlantis applies the infrastructure defined in the pull request.
 
-```yml
+````yml
 version: 3
 projects:
   - dir: iac/deployment/services/phl-profile
     apply_requirements: ["mergeable,approved"]
     autoplan:
       when_modified: ["*.tf*"]
-``````
+```
 
-Untuk contohnya bisa dilihat dibawah ini:
-# Create link url
+Check out an example pull request here:
 https://github.com/greyhats13/phl-store/pull/36
 
-### Contoh Service Deployment
-Bagian ini belum merupakan bagian CI/CD, tapi lebih kenapa menyiapkan service baru.
-Sebelum service bisa dideploy di kubernetes, kita tentu harus menyiapkan komponen-komponen yang dibutuhkan sservice tersebut seperti repository, database, users,, Secrets Manager, ArgoCD Application, S3 bucket (jika dibutuhkan), dan membuat integration dan routing API Gatewaynya. Tentu jika dibuat manual hal itu akan menjadi bottleneck, meningkatkan operation burden, dan memperlambat time to market. Oleh karena itu kita perlu membuat self service model untuk membuat service baru.
+### Example Service Deployment
 
-Menggunakan atlantis, developer bisa dengan mandiri menggunakan template yang disediakan devops untuk membuat service baru. Dengan cara ini, developer bisa membuat service baru tanpa harus menunggu devops untuk membuatkan resource yang dibutuhkan. Mereka tinggal mengisi nama database, access user database yang mereka butuh.
-Code terraform ini juga akan otomatis setelah pembuatan database menambahkan secret ke AWS Secret Manager, membuat ECR repository, membuat ArgoCD Application, dan membuat service di API Gateway.
+This part isn’t CI/CD yet, but it’s about preparing a new service. Before deploying a service on Kubernetes, you need to set up components like repository, database, users, Secrets Manager, ArgoCD Application, S3 bucket (if needed), and API Gateway integrations and routing. Doing this manually can slow things down and increase workload. So, we need a self-service model for creating new services.
 
-```hcl
+With Atlantis, developers can use templates provided by devops to create new services on their own. They just fill in details like database name and access user. Terraform code will automatically add secrets to AWS Secret Manager, create ECR repository, set up ArgoCD Application, and configure API Gateway.
+
 # Databases Config
 ## Create a Database
 resource "mysql_database" "db" {
@@ -799,11 +961,9 @@ module "secrets_iac" {
   source  = "terraform-aws-modules/secrets-manager/aws"
   version = "~> 1.3.1"
 
-  # Secret
   name                    = local.svc_secret_standard
   description             = "Secrets for ${local.svc_secret_standard}"
   recovery_window_in_days = 0
-  # Policy
   create_policy       = true
   block_public_policy = true
   policy_statements = {
@@ -832,7 +992,6 @@ module "secrets_iac" {
     }
   }
 
-  # Version
   ignore_secret_changes = false
   secret_string = jsonencode({
     connection_string = "${mysql_user.db.user}:${random_password.password.result}@tcp(${data.terraform_remote_state.cloud.outputs.aurora_cluster_endpoint}:${data.terraform_remote_state.cloud.outputs.aurora_cluster_port})/${mysql_database.db.name}"
@@ -893,7 +1052,7 @@ module "ecr" {
   }
 }
 
-# Prepare GIthub
+# Prepare GitHub
 module "github_action_env" {
   source                  = "../../../modules/github"
   repo_name               = var.github_repo
@@ -936,7 +1095,7 @@ module "argocd_app" {
   standard   = local.svc_standard
   repository = "https://argoproj.github.io/argo-helm"
   chart      = "argocd-apps"
-  values     = ["${file("manifest/${local.svc_standard.Feature}.yaml")}"]
+  values     = [file("manifest/${local.svc_standard.Feature}.yaml")]
   namespace  = "argocd"
   dns_name   = "${local.svc_standard.Feature}.${var.unit}.blast.co.id"
   extra_vars = {
@@ -959,7 +1118,6 @@ module "api_integration_routes" {
   source = "../../../modules/api"
 
   existing_gateway_id = data.terraform_remote_state.cloud.outputs.api_id
-  # Custom domain
   create_domain_name             = false
   create_certificate             = false
   create_stage                   = false
@@ -1119,23 +1277,279 @@ module "api_integration_routes" {
     Terraform   = "true"
   }
 }
-```
 
-Agar service kita terdeteksi oleh atlantis kita harus menambahkankan
-iac/atlantis.yaml
-```yml
+Register Service with Atlantis
+
+To make sure Atlantis detects your service, add it to iac/atlantis.yaml:
+
   - dir: iac/deployment/services/phl-products
     apply_requirements: ["mergeable"]
     autoplan:
       when_modified: ["*.tf*"]
-```
-Jika tidak terdaftarkan maka jika ada perubahan code terraform pada path tersebut, atlantis tidak akan melakukan autoplan dan apply.
 
-Setelah itu developer bisa melakukan Pull Request dimana nama branch adalah ticket jira.
-git checkout -b newservice/DEV-001. Lalu melakukan Pull Request ke branch master atau main.
-Atlantis akan melakukan autoplan dan menampilkan plan pada pull request tersebut. Developer bisa melakukan review dan approve plan tersebut. Setelah di approve, atlantis akan melakukan apply pada infrastruktur yang didefine pada pull request tersebut.
+If not listed, Atlantis won’t run autoplan and apply on changes in that path.
 
-Setelah komponen dari service dan CI/CD butuhkan, kita bisa melanjutkan untuk mendeploy service menggunakan pendekatan GitOps menggunakan ArgoCD
+Developer Workflow
+
+Developers can now create a pull request with the branch name as a Jira ticket, like newservice/DEV-001. Then, make a pull request to master or main. Atlantis will run autoplan and show the plan in the pull request. After reviewing and approving, Atlantis will apply the infrastructure changes defined in the pull request.
+
+Deploying Services with GitOps Using ArgoCD
+
+Once all service and CI/CD components are ready, you can deploy services using GitOps with ArgoCD. This approach makes deployments easier and more reliable by managing everything through Git.
+
+Feel free to reach out if you have any questions or need further assistance!
 
 ### Deploying Service using GitOps
+Untuk mendeploy service kita ke EKS tentu kita membutuhkan CI/CD untuk mempercepat time to market.
+Oleh karena itu, kita akan menggunakan ArgoCD sebagai GitOps untuk mendeploy service kita ke EKS.
+Kita akan mendesign CI/CD sesuai pada gambar dibawah. 
+```yml
+<p align="center">
+  <img src="img/atlantis.png" alt="aws">
+</p>
+````
+Pada case ini kita menggunakan mono repo dimana kode terraform, gitops repo (helm), dan services di simpan dalam satu repository.
+Trigger CI/CD bisa beragama untuk setiap community atau perusahaan. Dalam kasus ini, kita akan menggunakan branching strategy gitflow. Okay lanjut.
+Pa
+Dari diagram tersebut. terdapat 5 stages yaitu:
+1. Check out code
+2. Biasanya untuk step kedua kita menerapkan Unit Test and Coverages, dimana github action melakukan unit test, report dari unit test dan coverage akan diupload ke artifact untuk di analisa sonar. Kita akan menggunakan sonarqube sebagai code quality dan SA. Namun karena hanya disediakan docker images, kita akan menggunakan sonarcloud.io sebagai alternatif. Namun saya telah mengeluarkan binary
+`./app` dari images `image: zylwin/phl-store:latest`
+3. Build & Tagging
+Pada proses ini, github action akan melakukan build docker images dan tagging images dengan images sha berdasarkan event push  ke branch master atau dev. Setelah di tag maka akan di push di registry ECR.
+Authentication dilakukan menggunakan Github OIDC.
+4. Deployment with ArgoCD
+- Pada step ni roses deployment dilakukan ketika github action telah menyimpan tag images.
+- Lalu argocd akan menclone repository, melakukan sed untuk mereplace image tag dengan image sha yang telah di push ke registry ECR. 
+- Dalam hal ini kita akan merepace chart.yml appVersion yang secara default akan menjadi image tag. ArgoCD kemudian membaca perubahan image tag pada helm chart kita dan akan melakukan deployment ke EKS dengan cara mensync desired state dengan live state. Idealnya kita menerapkan canary deployment, namun karena keterbatasan waktu, kita hanya melakukan rolling update.
+5. End to End Testing
+End to end testing dilakukan setelah deployment selesai.
+a. API testing menggunakan NewMan.
+- Pada step ini kita menyediakan postman collection yang telah dibautkan pre-request script dan post-response script. 
+- Karena endpoint kita membutuhkan Authorization, maka kita akan menggunakan Bearer Token digenerate dengan menghit endpoint oauth.phl.blast.co.id.
+Endpoint ini merupakan custom domain dari Cognito yang berperan menjadi authorizer dari AWS API Gateway telah kita buat sebelumnya.
+- Setelah mendapatkan token, kita akan menyimpan token ke environment variable postman.
+- Setelah it maka kita menjalankan collection postman dengan newman dengan 5 iteration dan delay 200ms per iteration.
+b. Peformance testing menggunakan k6.io
+- Pada step ini kita akan melakukan performance testing dengan k6.io.Pertama kita akan menyiapkan skenario testing dan mendevelop k6.js scriptnya
+- Setelah itu kita akan menjalankan k6.io dengan 5 iteration dan delay 200ms per iteration.
+c. Security testing menggunakan OWASP ZAP
+- Pada step ini kita akan melakukan security testing dengan OWASP ZAP. Pertama kita akan hanya menyiapkan openapi spec dari service kita.
+- Menggunakan Bearer Token yang kita telah simpan di $GITHUB_ENV dan menyuplainya pada saat merunning OWASP ZAP.
+- Setelah semua test maka kita akan mengupload semua report test ke s3 bucket.
 
+Berikut adalah kode lengkap dari github action yang telah saya buat.
+.gitub/workflows/products-ci/yml
+```yml
+ame: CI/CD Pipeline for phl-products
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+    paths:
+      - "services/phl-products/**"
+    tags:
+      - "v*"
+
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read # This is required for actions/checkout
+jobs:
+  build_push_tag:
+    name: Build, Push, Tag
+    runs-on: ubuntu-latest
+    # needs: test_and_coverages
+    # if: ${{ needs.test_and_coverages.outputs.quality_gate_status != 'FAILED' && (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
+    if: ${{ github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main' }}
+    outputs:
+      image_tag_sha: ${{ steps.set_image_tag.outputs.image_tag_sha }}
+      chart_path: ${{ steps.set_image_tag.outputs.chart_path }}
+      registry: ${{ steps.login-ecr.outputs.registry }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          # audience: sts.amazonaws.com
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ vars.GH_OIDC_ROLE_ARN }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Retrieve ECR repo and Set Image Tag vased on environment
+        id: set_image_tag
+        run: |
+          echo "GITHUB_REF: $GITHUB_REF"
+          # if the branch is dev, tag the image as alpha
+          if [[ $GITHUB_REF == refs/heads/dev ]]; then
+            echo "image_tag_sha=alpha-${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
+            echo "chart_path=gitops/charts/app/${{ vars.PRODUCTS_SVC_NAME }}" >> $GITHUB_OUTPUT
+            echo "IMAGE_TAG_SHA=alpha-${GITHUB_SHA:0:7}" >> $GITHUB_ENV
+            echo "IMAGE_TAG_LATEST=alpha-latest" >> $GITHUB_ENV
+            echo "CHART_PATH=gitops/charts/app/${{ vars.PRODUCTS_SVC_NAME }}" >> $GITHUB_ENV
+          # if the branch is main, tag the image as beta
+          elif [[ $GITHUB_REF == refs/heads/main ]]; then
+            echo "image_tag_sha=beta-${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
+            echo "chart_path=gitops/charts/app/${{ vars.PRODUCTS_SVC_NAME }}" >> $GITHUB_OUTPUT
+            echo "IMAGE_TAG_LATEST=beta-latest" >> $GITHUB_ENV
+            echo "IMAGE_TAG_SHA=beta-${GITHUB_SHA:0:7}" >> $GITHUB_ENV
+            echo "CHART_PATH=gitops/charts/app/${{ vars.PRODUCTS_SVC_NAME }}" >> $GITHUB_ENV
+          fi
+
+      - name: Build, Tag, and Push
+        uses: docker/build-push-action@v6.9.0
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        with:
+          context: ./services/phl-products/
+          # Distroless
+          # file: ./Dockerfile-distroless
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ vars.PRODUCTS_SVC_NAMING_STANDARD }}:${{ env.IMAGE_TAG_SHA }}
+            ${{ env.REGISTRY }}/${{ vars.PRODUCTS_SVC_NAMING_STANDARD }}:${{ env.IMAGE_TAG_LATEST }}
+          platforms: linux/amd64
+          # # multi-platform
+          # platforms: linux/amd64,linux/arm64
+
+  deployment:
+    environment: phl-products
+    name: Deployment
+    runs-on: ubuntu-latest
+    needs: [build_push_tag]
+    if: ${{ needs.build_push_tag.result == 'success'}}
+    steps:
+      - name: Trigger ArgoCD Sync by updating the helm chart
+        run: |
+          echo "IMAGE_TAG_SHA: ${{ needs.build_push_tag.outputs.image_tag_sha }}"
+          echo "CHART_PATH: ${{ needs.build_push_tag.outputs.chart_path }}"
+          eval "$(ssh-agent -s)"
+          echo "${{ secrets.ARGOCD_SSH }}" > id_rsa
+          chmod 400 id_rsa
+          ssh-add id_rsa
+          git clone git@github.com:${{ vars.GH_OWNER }}/${{ vars.GH_REPO_NAME }}.git
+          echo ${{ vars.GH_REPO_NAME }}/${{ needs.build_push_tag.outputs.chart_path }}
+          cd ${{ vars.GH_REPO_NAME }}/${{ needs.build_push_tag.outputs.chart_path }}
+          sed -i "s|repository: .*|repository: ${{ needs.build_push_tag.outputs.registry }}/${{ vars.PRODUCTS_SVC_NAMING_STANDARD }}|" values.yaml
+          sed -i "s/appVersion: \".*\"/appVersion: \"${{ needs.build_push_tag.outputs.image_tag_sha }}\"/" Chart.yaml
+          git add values.yaml Chart.yaml
+          git config --global user.email "imam.arief.rhmn@gmail.com"
+          git config --global user.name "greyhats13"
+          git commit -m "Update image tag to ${{ needs.build_push_tag.outputs.image_tag_sha }}"
+          git push origin main
+
+  end_to_end_test:
+    name: End to End Testing
+    runs-on: ubuntu-latest
+    # needs: [deployment] # run after deployment is successful
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Install Newman and htmlextra reporter
+      - name: Install Newman & Reporter
+        run: |
+          npm install -g newman newman-reporter-htmlextra
+
+      - name: Generate JWT Token
+        id: generate_token
+        run: |
+          # Make POST request to obtain token
+          BEARER_TOKEN_RESPONSE=$(curl -s -X POST "${{ vars.BASE_URL_OAUTH }}/oauth2/token" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            -d "grant_type=${{ secrets.GRANT_TYPE }}&client_id=${{ secrets.CLIENT_ID }}&client_secret=${{ secrets.CLIENT_SECRET }}")
+
+          # Extract access_token using jq
+          BEARER_TOKEN=$(echo $BEARER_TOKEN_RESPONSE | jq -r '.access_token')
+
+          # Check if token was retrieved successfully
+          if [ "$BEARER_TOKEN" == "null" ] || [ -z "$BEARER_TOKEN" ]; then
+            echo "Failed to retrieve access token."
+            echo "Response: $BEARER_TOKEN_RESPONSE"
+            exit 1
+          fi
+
+          # Set BASE_URL and BEARER_TOKEN as an environment variable
+          echo "BASE_URL=${{ vars.BASE_URL }}" >> $GITHUB_ENV
+          echo "BEARER_TOKEN=$BEARER_TOKEN" >> $GITHUB_ENV
+
+      # Prepare environment.json
+      # Inject BASE_URL and BEARER TOKEN into environment.json (you need a template environment.json with placeholders)
+      - name: Prepare environment for tests
+        run: |
+          # The template is at services/phl-products/tests/postman/environment-template.tpl
+          # and contains placeholders like {{ BEARER_TOKEN }} and {{ BASE_URL }}
+          sed "s|{{ BEARER_TOKEN }}|${{ env.BEARER_TOKEN }}|g; s|{{ BASE_URL }}|${{ vars.BASE_URL }}|g" services/${{ vars.PRODUCTS_SVC_NAME }}/tests/env/environment.tpl > services/${{ vars.PRODUCTS_SVC_NAME }}/tests/env/environment.json
+
+      - name: Run Newman Tests
+        run: |
+          # Make sure collection.json and environment.json are present in tests/postman/
+          mkdir -p newman
+          newman run services/${{ vars.PRODUCTS_SVC_NAME }}/tests/postman/collection.json \
+            -e services/${{ vars.PRODUCTS_SVC_NAME }}/tests/env/environment.json \
+            --iteration-count 5 \
+            --delay-request 200 \
+            --reporters cli,htmlextra \
+            --reporter-htmlextra-export newman/report.html
+
+      - name: Install k6
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gnupg software-properties-common
+          curl -s https://dl.k6.io/key.gpg | sudo apt-key add -
+          echo "deb https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install -y k6
+
+      - name: Run k6 Performance Test
+        run: |
+          mkdir -p performance
+          k6 run --out json=performance/k6-results.json services/phl-products/tests/k6/k6.js
+
+      # # Security Scan with ZAP
+      # - name: Security Scan with ZAP
+      #   uses: zaproxy/action-api-scan@v0.9.0
+      #   with:
+      #     target: ${{ env.BASE_URL }} # Use the BASE_URL environment variable as the target
+      #     # format: "openapi"
+      #     docker_name: "ghcr.io/zaproxy/zaproxy:stable"
+      #     rules_file_name: '.zap/rules.tsv'
+      #     cmd_options: "-a"
+      #     allow_issue_writing: false
+      #     artifact_name: "zap_scan_report"
+
+      # Download ZAP Scan Report
+      - name: Download ZAP Scan Report
+        uses: actions/download-artifact@v3
+        with:
+          name: zap_scan_report
+          path: ./zap_report
+      - name: Run OWASP ZAP Security Scan
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/services/phl-products:/zap/wrk/:rw \
+            -t ictu/zap2docker-weekly zap-api-scan.py -I \
+              -t /zap/wrk/tests/zap/openapidocs.json \
+              -f openapi \
+              -r /zap/wrk/report.html \
+              -z "auth.bearer_token=${{ env.BEARER_TOKEN }}"
+
+      # Configure AWS credentials using GitHub OIDC
+      - name: Configure AWS Credentials for S3 Upload
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ vars.GH_OIDC_ROLE_ARN }}
+
+      - name: Upload Test Report to S3
+        run: |
+          aws s3 cp newman/report.html s3://phl-dev-s3-tfstate/reports/phl-products/end-to-end/report-$(date +%s).html
+          # aws s3 cp performance/k6-results.json s3://phl-dev-s3-tfstate/reports/phl-products/performance/k6-results-$(date +%s).json
+          aws s3 cp services/phl-products/report.html s3://phl-dev-s3-tfstate/reports/phl-products/security/zap-report-$(date +%s).html
+```
