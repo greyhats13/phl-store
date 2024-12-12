@@ -23,50 +23,56 @@ For our submission, create a private Github repository & include the following
 - [Instructions](#instructions)
 - [Submission](#submission)
 - [AWS Infrastructure Design](#aws-infrastructure-design)
-- [VPC](#vpc)
-  - [Subnets](#subnets)
-  - [NAT Gateways](#nat-gateways)
-  - [Scalability and Availability](#scalability-and-availability)
-  - [Security](#security)
-- [Elastic Kubernetes Service (EKS)](#elastic-kubernetes-service-eks)
-  - [EKS Cluster Configuration](#eks-cluster-configuration)
-  - [Why BottleRocket?](#why-bottlerocket)
-  - [Node Groups & Autoscaling](#node-groups--autoscaling)
-  - [Storage & Volume Management](#storage--volume-management)
-  - [Networking with VPC CNI](#networking-with-vpc-cni)
-  - [Add-ons for Observability & Scalability](#add-ons-for-observability--scalability)
-  - [IAM Integration with Pod Identity](#iam-integration-with-pod-identity)
-- [ALB as Ingress Controller & API Gateway](#alb-as-ingress-controller--api-gateway)
-  - [Exposing APIs with API Gateway](#exposing-apis-with-api-gateway)
-  - [Secure Authentication with AWS Cognito](#secure-authentication-with-aws-cognito)
-  - [Integration with EKS ALB via VPC Link](#integration-with-eks-alb-via-vpc-link)
-  - [Enhancing Security & Performance](#enhancing-security--performance)
-  - [Putting It All Together](#putting-it-all-together)
-- [Aurora MySQL](#aurora-mysql)
-  - [Private Database Setup](#private-database-setup)
-  - [Storage Encryption with KMS](#storage-encryption-with-kms)
-  - [IAM Database Authentication](#iam-database-authentication)
-  - [Autoscaling & Read Replicas](#autoscaling--read-replicas)
-  - [Read Replicas](#read-replicas)
-  - [Secrets Management & Rotation](#secrets-management--rotation)
-  - [Snapshots for Backup & Recovery](#snapshots-for-backup--recovery)
-  - [Performance Insights](#performance-insights)
+  - [VPC](#vpc)
+    - [Subnets](#subnets)
+    - [NAT Gateways](#nat-gateways)
+    - [Scalability and Availability](#scalability-and-availability)
+    - [Security](#security)
+  - [Elastic Kubernetes Service (EKS)](#elastic-kubernetes-service-eks)
+    - [EKS Cluster Configuration](#eks-cluster-configuration)
+    - [Why BottleRocket?](#why-bottlerocket)
+    - [Node Groups & Autoscaling](#node-groups--autoscaling)
+    - [Storage & Volume Management](#storage--volume-management)
+    - [Networking with VPC CNI](#networking-with-vpc-cni)
+    - [Add-ons for Observability & Scalability](#add-ons-for-observability--scalability)
+    - [IAM Integration with Pod Identity](#iam-integration-with-pod-identity)
+  - [ALB as Ingress Controller & API Gateway](#alb-as-ingress-controller--api-gateway)
+    - [Exposing APIs with API Gateway](#exposing-apis-with-api-gateway)
+    - [Secure Authentication with AWS Cognito](#secure-authentication-with-aws-cognito)
+    - [Integration with EKS ALB via VPC Link](#integration-with-eks-alb-via-vpc-link)
+    - [Enhancing Security & Performance](#enhancing-security--performance)
+    - [Putting It All Together](#putting-it-all-together)
+  - [Aurora MySQL](#aurora-mysql)
+    - [Private Database Setup](#private-database-setup)
+    - [Storage Encryption with KMS](#storage-encryption-with-kms)
+    - [IAM Database Authentication](#iam-database-authentication)
+    - [Autoscaling & Read Replicas](#autoscaling--read-replicas)
+    - [Read Replicas](#read-replicas)
+    - [Secrets Management & Rotation](#secrets-management--rotation)
+    - [Snapshots for Backup & Recovery](#snapshots-for-backup--recovery)
+    - [Performance Insights](#performance-insights)
 - [How to Setup/Run the Infrastructure & Deploy the App](#how-to-setuprun-the-infrastructure--deploy-the-app)
   - [Prerequisites](#prerequisites)
   - [ArgoCD](#argocd)
   - [Atlantis](#atlantis)
-- [Prepare Manifests for Atlantis & ArgoCD](#prepare-manifests-for-atlantis--argocd)
-- [Self Service Model with Atlantis](#self-service-model-with-atlantis)
-- [Deploying Service using GitOps](#deploying-service-using-gitops)
-- [Securing the Application Secret](#securing-the-application-secret)
-  - [Preparation](#preparation)
-  - [Install ArgoCD & AVP on EKS](#install-argocd--avp-on-eks)
-  - [Set Up IAM Policy for AVP](#set-up-iam-policy-for-avp)
-  - [Attach IAM Policy to ArgoCD Repo Server](#attach-iam-policy-to-argocd-repo-server)
-  - [Create Secret Template for Helm Chart](#create-secret-template-for-helm-chart)
-  - [Prepare Secret Annotations in values.yaml](#prepare-secret-annotations-in-valuesyaml)
-  - [Mount Secrets in Deployment](#mount-secrets-in-deployment)
-  - [Replace Placeholders with Secrets](#replace-placeholders-with-secrets)
+  - [Prepare Manifests for Atlantis & ArgoCD](#prepare-manifests-for-atlantis--argocd)
+  - [Self Service Model with Atlantis](#self-service-model-with-atlantis)
+  - [Deploying Service using GitOps](#deploying-service-using-gitops)
+  - [Securing the Application Secret](#securing-the-application-secret)
+    - [Preparation](#preparation)
+    - [Install ArgoCD & AVP on EKS](#install-argocd--avp-on-eks)
+    - [Set Up IAM Policy for AVP](#set-up-iam-policy-for-avp)
+    - [Attach IAM Policy to ArgoCD Repo Server](#attach-iam-policy-to-argocd-repo-server)
+    - [Create Secret Template for Helm Chart](#create-secret-template-for-helm-chart)
+    - [Prepare Secret Annotations in values.yaml](#prepare-secret-annotations-in-valuesyaml)
+    - [Mount Secrets in Deployment](#mount-secrets-in-deployment)
+    - [Replace Placeholders with Secrets](#replace-placeholders-with-secrets)
+- [Designing scalable, secure & reliable application](#designing-scalable-secure--reliable-application)
+  - [Use Distroless Image for Security](#use-distroless-image-for-security)
+  - [Implement HPA for Pod Autoscaling and Karpenter for Node Autoscaling](#implement-hpa-for-pod-autoscaling-and-karpenter-for-node-autoscaling-1)
+  - [Increase Pod Security](#increase-pod-security-1)
+  - [Use API Gateway for Security & Rate Limiting](#use-api-gateway-for-security--rate-limiting-1)
+  - [Use Redis for Caching](#use-redis-for-caching-1)
   - [Use Distroless Image for Security](#use-distroless-image-for-security)
 
 # AWS Infrastructure Design
@@ -674,7 +680,37 @@ autoscaling:
 ```
 We also have implement Karpenter for Node autoscalin to scale out the nodes as the pod increase so does the node. This way, we can handle traffic spikes & ensure our application is always available. It can scale in as well when the traffic is low.
 
+### Increase Pod Security
+- [values.yaml](https://github.com/greyhats13/phl-store/blob/main/gitops/charts/app/phl-products/values.yaml#135)
+We can remove all the linux capabilities from the pod, run the pod as a non-root user, & set the user ID to 1000. We can also set the pod to read-only root filesystem & disallow privilege escalation. Prevents attackers from modifying the filesystem if they gain access, enhancing the container integrity. Here’s how we configure the pod security context:
+```yaml
+podSecurityContext:
+  fsGroup: 2000
+  runAsNonRoot: true
+  # Optional: If your application requires specific supplemental groups
+  supplementalGroups:
+    - 1001
+    - 1002
+
+securityContext:
+  capabilities:
+    drop:
+      - ALL
+    add:
+      - NET_BIND_SERVICE  # Example: Allow binding to ports below 1024 if necessary
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+  allowPrivilegeEscalation: false
+  # Optional: SELinux options
+  seLinuxOptions:
+    level: "s0:c123,c456"
+  ```
+
+### Use API Gateway for Security & Rate Limiting
+To secure our APIs, we can use AWS API Gateway that we've created. It acts as a front door for our services, providing authentication, authorization, & rate limiting. We can set up API Gateway to require API keys, use AWS Cognito for user authentication, & integrate with AWS WAF for web application firewall protection. Here’s how we can configure API Gateway for our service:
+- [API Gateway Configuration](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/services/phl-products/main.yaml#184)
+We can also implement WAF rules to protect our APIs from common web exploits like SQL injection & cross-site scripting. This way, we can ensure our APIs are secure & reliable. As AWS API Gateway HTTP API doesnt support WAF, we can use AWS WAF with ALB to protect our APIs.
+
 ### Use  Redis for Caching
 To improve the performance of our application, we can use Redis for caching such as Amazon Elasticache. Redis is an in-memory data store that can help reduce latency & speed up response times. We can cache frequently accessed data in Redis, so our application doesn’t have to fetch it from the database every time. This way, we can improve the performance of our application &  a better user experience.provide. Current binary app has no implementation for Redis caching yet.
-
-We set up a GitOps pipeline using ArgoCD to deploy services to EKS. Our CI/CD pipeline includes building & tagging Docker images, deploying with ArgoCD, & running end-to-end tests. We also secured our application secrets using ArgoCD Vault Plugin with AWS Secrets Manager. This setup helps us deploy quickly, keep our services secure, & maintain a smooth workflow for our developers.
