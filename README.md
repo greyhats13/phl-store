@@ -319,17 +319,22 @@ we can access ArgoCD by creating a port-forward to the ArgoCD Server pod.
 kubectl port-forward svc/argocd-server -n argocd 8080:80
 ```
 We can start creating the ArgoCD Application for 
-- [AWS ALB Controller](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/addons/aws-load-balancer-controller/main.tf#18)
-1. [Create the AWS ALB Controller Application in ArgoCD](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/addons/aws-load-balancer-controller/main.tf#18)
-2.  [Prepared the manifest for the AWS ALB Controller](https://github.com/greyhats13/phl-store/blob/main/gitops/charts/addons/aws-load-balancer-controller/values.yaml#18)
-3. Install the AWS ALB Controller
-- External DNS.
-- Leter, Karpenter
+#### [AWS ALB Controller](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/addons/aws-load-balancer-controller/main.tf#18)
+- [Create the AWS ALB Controller Application in ArgoCD](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/addons/aws-load-balancer-controller/main.tf#18)
+2. [Prepared the manifest for the AWS ALB Controller](https://github.com/greyhats13/phl-store/blob/main/gitops/charts/addons/aws-load-balancer-controller/values.yaml#18)
+3. ArgoCD will sync the changes & deploy the AWS ALB Controller to the EKS cluster.
+#### [External-dns](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/addons/aws-load-balancer-controller/main.tf#18)
+- [Create the AWS ALB Controller Application in ArgoCD](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/addons/external-dns/main.tf#19)
+2. [Prepared the manifest for the AWS ALB Controller](https://github.com/greyhats13/phl-store/blob/main/gitops/charts/addons/external-dns/values.yaml#1)
+3. ArgoCD will sync the changes & deploy the External-DNS to the EKS cluster.
+#### Later, Karpenter
 
+#### Expose ArgoCD and Atlantis with ALB Ingress Controller
+After we install AWS ALB controller and External-DNS, our ingress will be automatically created also the record set in Route53. We can access the ArgoCD and Atlantis UI using the domain name we set in the Route53.
+- We can check the annotaton setup of [argoCD Ingress here](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/manifest/argocd.yaml#107)
+- We can check the annotaton setup of [Atlantis Ingress here](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/manifest/atlantis.yaml#40)
+- Terraform will replace the placeholder with the actual values.
 
-We can managed those using ArgoCD.
-Then, open the browser & go to `https://localhost:8080` & login with the default username & password (admin & the password is the name of the server pod).
-We can start deploy/install the EKS addons with their EKS Pods Identity (IRSA replacement) such as Atlantis and ArgoCD. However, we need to install aws-alb-controller and external-dns first so our work will be much easier.
 
 ### Self Service Model with Atlantis
 
