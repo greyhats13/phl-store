@@ -59,7 +59,7 @@ module "secrets_iac" {
   }
 
   # Version
-  ignore_secret_changes = true
+  ignore_secret_changes = false
   secret_string = jsonencode({
     db_host           = data.terraform_remote_state.cloud.outputs.aurora_cluster_endpoint
     db_port           = tostring(data.terraform_remote_state.cloud.outputs.aurora_cluster_port)
