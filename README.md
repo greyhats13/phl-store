@@ -19,11 +19,64 @@ For our submission, create a private Github repository & include the following
    b. Include high level steps on how would you manage the secrets & configuration change
    c. Also include high level steps to make this infrastructure more secure, automate & reliable
 
-# AWS Infrastructure Design
+# Table of Contents
 
+- [Instructions](#instructions)
+- [Submission](#submission)
+- [AWS Infrastructure Design](#aws-infrastructure-design)
+  - [VPC](#vpc)
+    - [Subnets](#subnets)
+    - [NAT Gateways](#nat-gateways)
+    - [Scalability and Availability](#scalability-and-availability)
+    - [Security](#security)
+- [Elastic Kubernetes Service (EKS)](#elastic-kubernetes-service-eks)
+  - [EKS Cluster Configuration](#eks-cluster-configuration)
+  - [Why BottleRocket?](#why-bottlerocket)
+  - [Node Groups & Autoscaling](#node-groups--autoscaling)
+  - [Storage & Volume Management](#storage--volume-management)
+  - [Networking with VPC CNI](#networking-with-vpc-cni)
+  - [Add-ons for Observability & Scalability](#add-ons-for-observability--scalability)
+  - [IAM Integration with Pod Identity](#iam-integration-with-pod-identity)
+- [ALB as Ingress Controller & API Gateway](#alb-as-ingress-controller--api-gateway)
+  - [Exposing APIs with API Gateway](#exposing-apis-with-api-gateway)
+  - [Secure Authentication with AWS Cognito](#secure-authentication-with-aws-cognito)
+  - [Integration with EKS ALB via VPC Link](#integration-with-eks-alb-via-vpc-link)
+  - [Enhancing Security & Performance](#enhancing-security--performance)
+  - [Putting It All Together](#putting-it-all-together)
+- [Aurora MySQL](#aurora-mysql)
+  - [Private Database Setup](#private-database-setup)
+  - [Storage Encryption with KMS](#storage-encryption-with-kms)
+  - [IAM Database Authentication](#iam-database-authentication)
+  - [Autoscaling & Read Replicas](#autoscaling--read-replicas)
+  - [Read Replicas](#read-replicas)
+  - [Secrets Management & Rotation](#secrets-management--rotation)
+  - [Snapshots for Backup & Recovery](#snapshots-for-backup--recovery)
+  - [Performance Insights](#performance-insights)
+- [How to Setup/Run the Infrastructure & Deploy the App](#how-to-setuprun-the-infrastructure--deploy-the-app)
+  - [Prerequisites](#prerequisites)
+  - [ArgoCD](#argocd)
+  - [Atlantis](#atlantis)
+- [Prepare Manifests for Atlantis & ArgoCD](#prepare-manifests-for-atlantis--argocd)
+- [Self Service Model with Atlantis](#self-service-model-with-atlantis)
+- [Deploying Service using GitOps](#deploying-service-using-gitops)
+- [Securing the Application Secret](#securing-the-application-secret)
+  - [Preparation](#preparation)
+  - [Install ArgoCD & AVP on EKS](#install-argocd--avp-on-eks)
+  - [Set Up IAM Policy for AVP](#set-up-iam-policy-for-avp)
+  - [Attach IAM Policy to ArgoCD Repo Server](#attach-iam-policy-to-argocd-repo-server)
+  - [Create Secret Template for Helm Chart](#create-secret-template-for-helm-chart)
+  - [Prepare Secret Annotations in values.yaml](#prepare-secret-annotations-in-valuesyaml)
+  - [Mount Secrets in Deployment](#mount-secrets-in-deployment)
+  - [Replace Placeholders with Secrets](#replace-placeholders-with-secrets)
+  - [Use Distroless Image for Security](#use-distroless-image-for-security)
+
+# AWS Infrastructure Design
+Here the architectural diagram, how we design the AWS infrastructure for the phl-store application to make it more secure, automated, & reliable.
 <p align="center">
   <img src="img/aws.png" alt="aws">
 </p>
+
+All the design diagram is implemented in the Terraform code. Here's the detail of the design:
 
 ## VPC
 
@@ -542,10 +595,11 @@ appSecret:
     avp.kubernetes.io/path: This is the name of our secret in AWS.
     avp.kubernetes.io/secret-version: This is the latest version of our secret.
 ```
+
 6. Mount Secrets in Deployment
 Now, we need to mount the secrets in our deployment manifest as /config/config.json
 We use the secret created by AVP in the Helm chart.
-[Volume Mount](https://github.com/greyhats13/phl-store/blob/main/gitops/charts/app/phl-products/values.yaml#135)
+- [Volume Mount](https://github.com/greyhats13/phl-store/blob/main/gitops/charts/app/phl-products/values.yaml#135)
 ```yaml
  Additional volumes on the output Deployment definition.
 volumes:
@@ -565,6 +619,8 @@ volumeMounts:
 
 7. Replace Placeholders with Secrets
 When ArgoCD syncs, it replaces the placeholders with values from Secrets Manager.
+- [secret.yaml](https://github.com/greyhats13/phl-store/blob/main/gitops/charts/app/phl-products/templates/secret.yaml#L27)
+```yaml
 ```yaml
 appSecret:
   annotations:
@@ -574,8 +630,10 @@ appSecret:
     connection_string: <connection_string>
     port: <port>
 ```
+
 8. Use Distroless Image for Security
 To make secrets more secure, use a distroless image for our service. This way, no one can access secrets from the container.
+- [Dockerfile](https://github.com/greyhats13/phl-store/blob/main/services/phl-products/templates/Dockerfile-distrolessl#L27)
 ```Dockerfile
 # Use a minimal base image for distroless
 FROM gcr.io/distroless/static:nonroot

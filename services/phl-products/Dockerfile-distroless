@@ -1,0 +1,12 @@
+# Use a minimal base image for distroless
+FROM gcr.io/distroless/static:nonroot
+
+COPY /usr/share/zoneinfo /usr/share/zoneinfo
+
+# Copy the binary into the image
+COPY ./app /build/app
+
+EXPOSE 8080
+
+# Run the binary
+CMD ["/build/app"]
