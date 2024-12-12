@@ -1553,3 +1553,139 @@ jobs:
           # aws s3 cp performance/k6-results.json s3://phl-dev-s3-tfstate/reports/phl-products/performance/k6-results-$(date +%s).json
           aws s3 cp services/phl-products/report.html s3://phl-dev-s3-tfstate/reports/phl-products/security/zap-report-$(date +%s).html
 ```
+
+## Securing the Application Secret
+Ada banyak cara untuk mensecure secret, kita bisa menggunakan AWS Secret Store CSI Driver, External Secret, atau ARgoCD Vault Plugin.
+Berikut adalah high level designnya:
+<p align="center">
+  <img src="img/cicd.png" alt="aws">
+</p>
+Kita akan mensecure secret menggunakan ArgoCD Vault Plugin (AVP) dengan AWS Secrets Manager.
+Berikut tahapannya:
+
+- Kita telah membuat tahap untuk instalasi ArgoCD kedalam EKS cluster dan telah menginstall ArgoCD Vault Plugin (AVP) kedalam ArgoCD.
+- Untuk menggunakan AVP, kita perlu memberi permission pada Argocd repo server untuk membaca secret dari secret manager. Disini kita membuat IAM policy terlebih dahulu:
+```hcl
+Disini kita akan mengattach permission dari IAM Role dan menggunakan EKS Pod Identity untuk memberikan
+```
+# ArgoCD Vault Plugin IAM Policy
+data "aws_iam_policy_document" "avp_policy" {
+  # allow get secret value
+  statement {
+    actions = [
+      "secretsmanager:GetSecretValue",
+    ]
+
+    resources = [
+      "*",
+    ]
+  }
+}
+```
+
+- Lalu kita attach Policy tersebut dengan IAM Role yang digunakan oleh argocd-repo-server. Dan kita akan associate IAM ROle tersebut dengan kubernetes service account dari argocd-repo-server
+```hcl
+
+module "avp_custom_pod_identity" {
+  source  = "terraform-aws-modules/eks-pod-identity/aws"
+  version = "~> 1.7.0"
+
+  name            = "avp_role"
+  use_name_prefix = false
+
+  # ArgoCD Vault Plugin (AVP) is installed in the argocd-repo-server 
+  # So we need to attach the policy to the argocd-repo-server service account
+  association_defaults = {
+    namespace       = "argocd"
+    service_account = "argocd-repo-server"
+    tags            = { App = "avp" }
+  }
+
+  associations = {
+    main = {
+      cluster_name = module.eks_main.cluster_name
+    }
+  }
+}
+  ```
+
+-  Sekarang ArgoCD Vault Plugin (AVP) sudah bisa membaca secret dari AWS Secret Manager. Kita perlu membuat template secret.yaml untuk helm chart aplikasi phl-products kita.
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  {{- if .Values.appSecret.annotations }}
+  annotations:
+    {{- toYaml .Values.appSecret.annotations | nindent 4 }}
+  {{- end }}
+type: Opaque
+stringData:
+  config.json: |-
+    {
+    {{- $secretMap := .Values.appSecret.secrets }}
+    {{- $count := len $secretMap }}
+    {{- $i := 0 }}
+    {{- range $key, $val := $secretMap }}
+      "{{ $key }}": "{{ $val }}"{{- if lt (add1 $i) $count }},{{ end }}
+      {{- $i = add1 $i }}
+    {{- end }}
+    }
+```
+Pada manifest diatas, kita membuat agar values.yaml bisa menerima appSecret.
+Service phl-products membaca secret dari file, jadikita perlu membuat stringData dan mengubah key value secret dari Secret manger kedalam bentuk json
+```yaml
+stringData:
+  config.json: |-
+    {
+    {{- $secretMap := .Values.appSecret.secrets }}
+    {{- $count := len $secretMap }}
+    {{- $i := 0 }}
+    {{- range $key, $val := $secretMap }}
+      "{{ $key }}": "{{ $val }}"{{- if lt (add1 $i) $count }},{{ end }}
+      {{- $i = add1 $i }}
+    {{- end }}
+    }
+```
+K
+
+Kita juga harus menyiapkan template secret untuk agar bisa menerima annotation dari values.yaml
+Tahappannya adalah:
+- Persiapkan values.yaml dan tambahkan annotation pada values.yaml pada bagian appSecret
+```yaml
+appSecret:
+  annotations:
+    avp.kubernetes.io/path: "phl/svc/phl-products"
+    avp.kubernetes.io/secret-version: "AWSCURRENT"
+  secrets:
+    connection_string: <connection_string>
+    port: <port>
+```
+Annotation ` avp.kubernetes.io/path: "phl/svc/phl-products"` adalah nama dari secret kita di AWS dan annotaiton `avp.kubernetes.io/secret-version: "AWSCURRENT"` adalah versi terbaru dari secret kita.
+- Lalu kita akan membuat place holder
+```yaml
+  secrets:
+    connection_string: <connection_string>
+    port: <port>
+```
+dimana `<connection_string>` adalah salah satu key dari Secret Manager kita.
+<port> adalah value dari port application kita.
+
+- Saat proses sync argo terjadi saat ArgoCD mengerate helm template, maka ArgoCD akan mereplace placeholder tersebut dengan value dari Secret Manager
+- Untuk meningkatkan security dari secret, kita bisa menggunakan distoless image untuk service kita, agar tidak ada yang bisa mengakses secret dari container.
+
+```yml
+# Use a minimal base image for distroless
+FROM gcr.io/distroless/static:nonroot
+
+COPY /usr/share/zoneinfo /usr/share/zoneinfo
+
+# Copy the binary into the image
+COPY ./app /build/app
+
+EXPOSE 8080
+
+# Run the binary
+CMD ["/build/app"]
+```
