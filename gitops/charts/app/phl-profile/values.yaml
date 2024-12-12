@@ -1,4 +1,4 @@
-# Default values for phl-profile.
+# Default values for phl-dev-svc-profile.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
@@ -20,11 +20,11 @@ nameOverride: ""
 fullnameOverride: ""
 
 appConfig:
-  app_name: "phl-profile"
+  app_name: "phl-dev-svc-profile"
 
 appSecret:
   annotations:
-    avp.kubernetes.io/path: "phl/svc/phl-profile"
+    avp.kubernetes.io/path: "phl/svc/phl-dev-svc-profile"
     avp.kubernetes.io/secret-version: "AWSCURRENT"
   # ArgoCD Vault Plugin will replace the placeholders with the actual values from the AWS Secret Manager
   # Reading from os env not file

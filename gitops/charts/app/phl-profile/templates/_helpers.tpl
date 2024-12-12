@@ -1,7 +1,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "phl-profile.name" -}}
+{{- define "phl-dev-svc-profile.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -10,7 +10,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "phl-profile.fullname" -}}
+{{- define "phl-dev-svc-profile.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -26,16 +26,16 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "phl-profile.chart" -}}
+{{- define "phl-dev-svc-profile.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels
 */}}
-{{- define "phl-profile.labels" -}}
-helm.sh/chart: {{ include "phl-profile.chart" . }}
-{{ include "phl-profile.selectorLabels" . }}
+{{- define "phl-dev-svc-profile.labels" -}}
+helm.sh/chart: {{ include "phl-dev-svc-profile.chart" . }}
+{{ include "phl-dev-svc-profile.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -45,17 +45,17 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Selector labels
 */}}
-{{- define "phl-profile.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "phl-profile.name" . }}
+{{- define "phl-dev-svc-profile.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "phl-dev-svc-profile.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
 Create the name of the service account to use
 */}}
-{{- define "phl-profile.serviceAccountName" -}}
+{{- define "phl-dev-svc-profile.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}
-{{- default (include "phl-profile.fullname" .) .Values.serviceAccount.name }}
+{{- default (include "phl-dev-svc-profile.fullname" .) .Values.serviceAccount.name }}
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
@@ -64,20 +64,20 @@ Create the name of the service account to use
 {{/*
 Generate a checksum for ConfigMap
 */}}
-{{- define "phl-profile.configmapHash" -}}
+{{- define "phl-dev-svc-profile.configmapHash" -}}
 {{- toYaml .Values.appConfig | sha256sum }}
 {{- end }}
 
 {{/*
 Generate a checksum for Secret
 */}}
-{{- define "phl-profile.secretHash" -}}
+{{- define "phl-dev-svc-profile.secretHash" -}}
 {{- toYaml .Values.appSecret.secrets | sha256sum }}
 {{- end }}
 
 {{/*
 Combine both checksums
 */}}
-{{- define "phl-profile.configSecretChecksum" -}}
-{{ include "phl-profile.configmapHash" . }}-{{ include "phl-profile.secretHash" . }}
+{{- define "phl-dev-svc-profile.configSecretChecksum" -}}
+{{ include "phl-dev-svc-profile.configmapHash" . }}-{{ include "phl-dev-svc-profile.secretHash" . }}
 {{- end }}
