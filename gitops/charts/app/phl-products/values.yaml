@@ -53,7 +53,7 @@ podLabels: {}
 
 podSecurityContext:
   fsGroup: 2000
-  runAsGroup: 3000
+  # runAsGroup: 3000
   runAsNonRoot: true
   # Optional: If your application requires specific supplemental groups
   supplementalGroups:
