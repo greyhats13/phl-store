@@ -511,7 +511,7 @@ stringData:
     {{- end }}
     }
 ```
-In this manifest, we allow values.yaml to accept appSecret. Our service phl-products reads secrets from this file, so we need to create stringData & convert key-value secrets from Secrets Manager into JSON.
+In this manifest, we allow values.yaml to accept appSecret annotation. Our service phl-products reads secrets from file, so we need to create stringData & convert key-value secrets from Secrets Manager into JSON.
 
 ```yaml
 stringData:
@@ -542,9 +542,39 @@ appSecret:
     avp.kubernetes.io/path: This is the name of our secret in AWS.
     avp.kubernetes.io/secret-version: This is the latest version of our secret.
 ```
-**6.** Replace Placeholders with Secrets
+6. Mount Secrets in Deployment
+Now, we need to mount the secrets in our deployment manifest as /config/config.json
+We use the secret created by AVP in the Helm chart.
+[Volume Mount](https://github.com/greyhats13/phl-store/blob/main/gitops/charts/app/phl-products/values.yaml#135)
+```yaml
+ Additional volumes on the output Deployment definition.
+volumes:
+  - name: config-volume
+    secret:
+      secretName: phl-dev-svc-products
+      items:
+        - key: config.json
+          path: config.json
+
+# Additional volumeMounts on the output Deployment definition.
+volumeMounts:
+  - name: config-volume
+    mountPath: "/config/config.json"
+    subPath: config.json
+```
+
+7. Replace Placeholders with Secrets
 When ArgoCD syncs, it replaces the placeholders with values from Secrets Manager.
-**7.**	Use Distroless Image for Security
+```yaml
+appSecret:
+  annotations:
+    avp.kubernetes.io/path: "phl/svc/phl-products"
+    avp.kubernetes.io/secret-version: "AWSCURRENT"
+  secrets:
+    connection_string: <connection_string>
+    port: <port>
+```
+8. Use Distroless Image for Security
 To make secrets more secure, use a distroless image for our service. This way, no one can access secrets from the container.
 ```Dockerfile
 # Use a minimal base image for distroless
