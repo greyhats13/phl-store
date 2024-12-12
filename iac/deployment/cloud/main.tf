@@ -78,7 +78,7 @@ module "acm_main" {
   tags = merge(local.tags, local.acm_standard, { Name = local.acm_naming_standard })
 }
 
-# Modul ACM di us-east-1 menggunakan provider alias 'virginia'
+# ACM Module di us-east-1 used for Cognito custom domain 
 module "acm_main_virginia" {
   source  = "terraform-aws-modules/acm/aws"
   version = "~> 4.3.2"

@@ -1,6 +1,6 @@
 # Instructions
 
-Starting from an AWS empty environment, setup  Kubernetes cluster and Aurora MySQL cluster including all the necessary resources
+Starting from an AWS empty environment, setup Kubernetes cluster and Aurora MySQL cluster including all the necessary resources
 using Terraform.
 Next deploy a sample application phl-store to the Kubernetes Cluster (preferably with Helm). It's a simple CRUD application and should
 be accessible from the outside world. The docker image URL can be found at https://hub.docker.com/r/zylwin/phl-store . The app uses
@@ -226,13 +226,15 @@ How to Setup/Run the Infrastructure & Deploy the App
 
 ### Prerequisites
 
-FOr initial setup up tu run our infrastructure, we use Terraform. Here’s what we need to do: 
+FOr initial setup up tu run our infrastructure, we use Terraform. Here’s what we need to do:
+
 1. Install Terraform
-Download & install Terraform from the official website. 
+   Download & install Terraform from the official website.
 2. Develop Terraform Code
-Write Terraform code for the AWS resources we need. 
+   Write Terraform code for the AWS resources we need.
 3. Run Terraform Commands
-Initialize, plan, & apply our Terraform configurations:
+   Initialize, plan, & apply our Terraform configurations:
+
 ```sh
 terraform init
 terraform plan
@@ -242,18 +244,49 @@ terraform apply
 To speed up development, I use existing AWS Terraform modules.
 To check cloud resource deployment, you can see the path in this repo: `iac/deployment/cloud/`
 
-Setelah semua resource yang dibutuhkan terbuat seperti s3 (tfstate), KMS, ACM, Route53, EKS. 
-I started installing the EKS addons with their EKS Pods Identity (IRSA replacement) such as Atlantis and ArgoCD.
-[Module ArgoCD](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/main.tf#L556) & [Module atlantis](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/main.tf#L637)
-Terraform Provider Setup 
+After all main resources we need is provisioned
+- [KMS](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/main.tf#L2)
+- [S3 tfstate](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/main.tf#L23)
+- [Route53](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/main.tf#L23)
+- [Route53](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/main.tf#L65)
+- [Secret Manager](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/main.tf#L99)
+- [VPC](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/main.tf#154)
+
+I started installing the EKS addons with their EKS Pods Identity (IRSA replacement) such as
+[ArgoCD](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/main.tf#L556)
+
+```hcl
+module "argocd" {
+  source = "../../modules/helm"
+  chart            = "argo-cd"
+  values           = ["${file("manifest/${local.argocd_standard.Feature}.yaml")}"]
+}
+```
+
+and
+
+[Atlantis](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/main.tf#L637)
+
+```hcl
+# Atlantis
+module "atlantis" {
+  repository       = "https://runatlantis.github.io/helm-charts"
+  chart            = "atlantis"
+}
+```
+
+Terraform Provider Setup
+
 - Deploy Atlantis & ArgoCD on EKS
-Use the Helm provider to install Atlantis & ArgoCD on our EKS cluster. Make sure aws-alb-ingress-controller & external-dns are installed on the EKS cluster. This allows ALB Ingress Controller to create ALBs & External DNS to automatically create Route53 records.
-[Module ArgoCD](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/main.tf#L556) & [Module atlantis](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/main.tf#L637)
+  Use the Helm provider to install Atlantis & ArgoCD on our EKS cluster. Make sure aws-alb-ingress-controller & external-dns are installed on the EKS cluster. This allows ALB Ingress Controller to create ALBs & External DNS to automatically create Route53 records.
+  [Module ArgoCD](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/main.tf#L556) & [Module atlantis](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/main.tf#L637)
 - Create IAM Provider
-- Set up IAM roles & policies for Atlantis & ArgoCD. we can use EKS Pod Identity or IRSA. Here, we use EKS Pod Identity. Ensure the ArgoCD and  service account name match the one associated with the pod identity.
+- Set up IAM roles & policies for Atlantis & ArgoCD. we can use EKS Pod Identity or IRSA. Here, we use EKS Pod Identity. Ensure the ArgoCD and service account name match the one associated with the pod identity.
 
 ## Prepare Manifests for Atlantis & ArgoCD
+
 First, we need to set up manifests for Atlantis & ArgoCD. We can inject secrets from AWS Secret Manager into the Helm charts using the Helm provider & set `helm_sets_sensitive` to install ArgoCD.
+
 - Prepare Atlantis Manifest (iac/deployment/cloud/manifest/atlantis.yaml):
 - Create Webhooks with Terraform & GitHub Provider
 
@@ -911,7 +944,7 @@ module "avp_custom_pod_identity" {
   name            = "avp_role"
   use_name_prefix = false
 
-  # ArgoCD Vault Plugin (AVP) is installed in the argocd-repo-server 
+  # ArgoCD Vault Plugin (AVP) is installed in the argocd-repo-server
   # So we need to attach the policy to the argocd-repo-server service account
   association_defaults = {
     namespace       = "argocd"
@@ -1009,3 +1042,4 @@ CMD ["/build/app"]
 ```
 
 We set up a GitOps pipeline using ArgoCD to deploy services to EKS. Our CI/CD pipeline includes building & tagging Docker images, deploying with ArgoCD, & running end-to-end tests. We also secured our application secrets using ArgoCD Vault Plugin with AWS Secrets Manager. This setup helps us deploy quickly, keep our services secure, & maintain a smooth workflow for our developers.
+````
