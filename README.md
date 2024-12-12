@@ -313,12 +313,22 @@ Here's the detail of ArgoCD manifest
 - Create Webhooks with Terraform & GitHub Provider
 
 After installing ArgoCD Server (UI) the internet yet. We need to expose it using ALB Ingress Controller.
-But before that we need to install the ALB Ingress Controller first.
-We can managed those using ArgoCD.
+But before that we need to install the AWS ALB Controller first. Even we can't reach argocd server UI yet
 we can access ArgoCD by creating a port-forward to the ArgoCD Server pod.
 ```sh
 kubectl port-forward svc/argocd-server -n argocd 8080:80
 ```
+We can start creating the ArgoCD Application for 
+- [AWS ALB Controller](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/addons/aws-load-balancer-controller/main.tf#18)
+**1.** [Create the AWS ALB Controller Application in ArgoCD](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/addons/aws-load-balancer-controller/main.tf#18)
+**2.** [Prepared the manifest for the AWS ALB Controller](https://github.com/greyhats13/phl-store/blob/main/gitops/charts/addons/aws-load-balancer-controller/values.yaml#18)
+**3.** Install the AWS ALB Controller
+- External DNS.
+- Leter, Karpenter
+
+
+We can managed those using ArgoCD.
+
 Then, open the browser & go to `https://localhost:8080` & login with the default username & password (admin & the password is the name of the server pod).
 We can start deploy/install the EKS addons with their EKS Pods Identity (IRSA replacement) such as Atlantis and ArgoCD. However, we need to install aws-alb-controller and external-dns first so our work will be much easier.
 
@@ -402,194 +412,8 @@ c. Security Testing with OWASP ZAP
   •	Using the Bearer Token saved in $GITHUB_ENV, we run OWASP ZAP.
   •	After all tests, we upload the test reports to an S3 bucket.
 
-Here is the complete GitHub Action code I made:
-```yml
-.github/workflows/products-ci.yml
+Reference: [profile-ci.yml](https://github.com/greyhats13/phl-store/blob/main/.github/workflows/products-ci.yml)
 
-name: CI/CD Pipeline for phl-products
-
-on:
-  push:
-    branches:
-      - main
-      - dev
-    paths:
-      - "services/phl-products/**"
-    tags:
-      - "v*"
-
-permissions:
-  id-token: write # Needed for JWT
-  contents: read # Needed for actions/checkout
-
-jobs:
-  build_push_tag:
-    name: Build, Push, Tag
-    runs-on: ubuntu-latest
-    if: ${{ github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main' }}
-    outputs:
-      image_tag_sha: ${{ steps.set_image_tag.outputs.image_tag_sha }}
-      chart_path: ${{ steps.set_image_tag.outputs.chart_path }}
-      registry: ${{ steps.login-ecr.outputs.registry }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: ${{ vars.GH_OIDC_ROLE_ARN }}
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Retrieve ECR repo & Set Image Tag based on environment
-        id: set_image_tag
-        run: |
-          echo "GITHUB_REF: $GITHUB_REF"
-          # If branch is dev, tag as alpha
-          if [[ $GITHUB_REF == refs/heads/dev ]]; then
-            echo "image_tag_sha=alpha-${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
-            echo "chart_path=gitops/charts/app/${{ vars.PRODUCTS_SVC_NAME }}" >> $GITHUB_OUTPUT
-            echo "IMAGE_TAG_SHA=alpha-${GITHUB_SHA:0:7}" >> $GITHUB_ENV
-            echo "IMAGE_TAG_LATEST=alpha-latest" >> $GITHUB_ENV
-            echo "CHART_PATH=gitops/charts/app/${{ vars.PRODUCTS_SVC_NAME }}" >> $GITHUB_ENV
-          # If branch is main, tag as beta
-          elif [[ $GITHUB_REF == refs/heads/main ]]; then
-            echo "image_tag_sha=beta-${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
-            echo "chart_path=gitops/charts/app/${{ vars.PRODUCTS_SVC_NAME }}" >> $GITHUB_OUTPUT
-            echo "IMAGE_TAG_LATEST=beta-latest" >> $GITHUB_ENV
-            echo "IMAGE_TAG_SHA=beta-${GITHUB_SHA:0:7}" >> $GITHUB_ENV
-            echo "CHART_PATH=gitops/charts/app/${{ vars.PRODUCTS_SVC_NAME }}" >> $GITHUB_ENV
-          fi
-
-      - name: Build, Tag, & Push
-        uses: docker/build-push-action@v6.9.0
-        env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        with:
-          context: ./services/phl-products/
-          push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ vars.PRODUCTS_SVC_NAMING_ST&ARD }}:${{ env.IMAGE_TAG_SHA }}
-            ${{ env.REGISTRY }}/${{ vars.PRODUCTS_SVC_NAMING_ST&ARD }}:${{ env.IMAGE_TAG_LATEST }}
-          platforms: linux/amd64
-
-  deployment:
-    environment: phl-products
-    name: Deployment
-    runs-on: ubuntu-latest
-    needs: [build_push_tag]
-    if: ${{ needs.build_push_tag.result == 'success'}}
-    steps:
-      - name: Trigger ArgoCD Sync by updating the helm chart
-        run: |
-          echo "IMAGE_TAG_SHA: ${{ needs.build_push_tag.outputs.image_tag_sha }}"
-          echo "CHART_PATH: ${{ needs.build_push_tag.outputs.chart_path }}"
-          eval "$(ssh-agent -s)"
-          echo "${{ secrets.ARGOCD_SSH }}" > id_rsa
-          chmod 400 id_rsa
-          ssh-add id_rsa
-          git clone git@github.com:${{ vars.GH_OWNER }}/${{ vars.GH_REPO_NAME }}.git
-          cd ${{ vars.GH_REPO_NAME }}/${{ needs.build_push_tag.outputs.chart_path }}
-          sed -i "s|repository: .*|repository: ${{ needs.build_push_tag.outputs.registry }}/${{ vars.PRODUCTS_SVC_NAMING_ST&ARD }}|" values.yaml
-          sed -i "s/appVersion: \".*\"/appVersion: \"${{ needs.build_push_tag.outputs.image_tag_sha }}\"/" Chart.yaml
-          git add values.yaml Chart.yaml
-          git config --global user.email "imam.arief.rhmn@gmail.com"
-          git config --global user.name "greyhats13"
-          git commit -m "Update image tag to ${{ needs.build_push_tag.outputs.image_tag_sha }}"
-          git push origin main
-
-  end_to_end_test:
-    name: End to End Testing
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      # Install Newman & htmlextra reporter
-      - name: Install Newman & Reporter
-        run: |
-          npm install -g newman newman-reporter-htmlextra
-
-      - name: Generate JWT Token
-        id: generate_token
-        run: |
-          # Make POST request to get token
-          BEARER_TOKEN_RESPONSE=$(curl -s -X POST "${{ vars.BASE_URL_OAUTH }}/oauth2/token" \
-            -H "Content-Type: application/x-www-form-urlencoded" \
-            -d "grant_type=${{ secrets.GRANT_TYPE }}&client_id=${{ secrets.CLIENT_ID }}&client_secret=${{ secrets.CLIENT_SECRET }}")
-
-          # Get access_token using jq
-          BEARER_TOKEN=$(echo $BEARER_TOKEN_RESPONSE | jq -r '.access_token')
-
-          # Check if token was gotten
-          if [ "$BEARER_TOKEN" == "null" ] || [ -z "$BEARER_TOKEN" ]; then
-            echo "Failed to get access token."
-            echo "Response: $BEARER_TOKEN_RESPONSE"
-            exit 1
-          fi
-
-          # Set BASE_URL & BEARER_TOKEN
-          echo "BASE_URL=${{ vars.BASE_URL }}" >> $GITHUB_ENV
-          echo "BEARER_TOKEN=$BEARER_TOKEN" >> $GITHUB_ENV
-
-      # Prepare environment.json
-      - name: Prepare environment for tests
-        run: |
-          # Template is at services/phl-products/tests/postman/environment-template.tpl
-          # with placeholders like {{ BEARER_TOKEN }} & {{ BASE_URL }}
-          sed "s|{{ BEARER_TOKEN }}|${{ env.BEARER_TOKEN }}|g; s|{{ BASE_URL }}|${{ vars.BASE_URL }}|g" services/${{ vars.PRODUCTS_SVC_NAME }}/tests/env/environment.tpl > services/${{ vars.PRODUCTS_SVC_NAME }}/tests/env/environment.json
-
-      - name: Run Newman Tests
-        run: |
-          mkdir -p newman
-          newman run services/${{ vars.PRODUCTS_SVC_NAME }}/tests/postman/collection.json \
-            -e services/${{ vars.PRODUCTS_SVC_NAME }}/tests/env/environment.json \
-            --iteration-count 5 \
-            --delay-request 200 \
-            --reporters cli,htmlextra \
-            --reporter-htmlextra-export newman/report.html
-
-      - name: Install k6
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gnupg software-properties-common
-          curl -s https://dl.k6.io/key.gpg | sudo apt-key add -
-          echo "deb https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
-          sudo apt-get update
-          sudo apt-get install -y k6
-
-      - name: Run k6 Performance Test
-        run: |
-          mkdir -p performance
-          k6 run --out json=performance/k6-results.json services/phl-products/tests/k6/k6.js
-
-      # Security Scan with ZAP
-      - name: Run OWASP ZAP Security Scan
-        run: |
-          docker run --rm \
-            -v ${{ github.workspace }}/services/phl-products:/zap/wrk/:rw \
-            -t ictu/zap2docker-weekly zap-api-scan.py -I \
-              -t /zap/wrk/tests/zap/openapidocs.json \
-              -f openapi \
-              -r /zap/wrk/report.html \
-              -z "auth.bearer_token=${{ env.BEARER_TOKEN }}"
-
-      # Configure AWS credentials for S3 Upload
-      - name: Configure AWS Credentials for S3 Upload
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: ${{ vars.GH_OIDC_ROLE_ARN }}
-
-      - name: Upload Test Report to S3
-        run: |
-          aws s3 cp newman/report.html s3://phl-dev-s3-tfstate/reports/phl-products/end-to-end/report-$(date +%s).html
-          aws s3 cp services/phl-products/report.html s3://phl-dev-s3-tfstate/reports/phl-products/security/zap-report-$(date +%s).html
-```
 # Securing the Application Secret
 
 There are many ways to secure secrets. We can use AWS Secret Store CSI Driver, External Secret, or ArgoCD Vault Plugin (AVP). Here’s the high-level design:
@@ -621,8 +445,8 @@ data "aws_iam_policy_document" "avp_policy" {
 ```
 
 
-  3.	Attach IAM Policy to ArgoCD Repo Server
-  •	Next, we attach this policy to the IAM Role used by argocd-repo-server & associate the IAM Role with the Kubernetes service account.
+**3**	Attach IAM Policy to ArgoCD Repo Server
+- Next, we attach this policy to the IAM Role used by argocd-repo-server & associate the IAM Role with the Kubernetes service account.
 ```hcl
 module "avp_custom_pod_identity" {
   source  = "terraform-aws-modules/eks-pod-identity/aws"
@@ -652,7 +476,7 @@ module "avp_custom_pod_identity" {
 }
 ```
 
-4.	Create Secret Template for Helm Chart
+**4.**	Create Secret Template for Helm Chart
 Now, AVP can read secrets from AWS Secrets Manager. We need to create a secret.yaml template for our Helm chart.
 
 ```yaml
@@ -709,9 +533,9 @@ appSecret:
     avp.kubernetes.io/path: This is the name of our secret in AWS.
     avp.kubernetes.io/secret-version: This is the latest version of our secret.
 ```
-6. Replace Placeholders with Secrets
+**6.** Replace Placeholders with Secrets
 When ArgoCD syncs, it replaces the placeholders with values from Secrets Manager.
-7.	Use Distroless Image for Security
+**7.**	Use Distroless Image for Security
 To make secrets more secure, use a distroless image for our service. This way, no one can access secrets from the container.
 ```Dockerfile
 # Use a minimal base image for distroless
@@ -729,4 +553,3 @@ CMD ["/build/app"]
 ```
 
 We set up a GitOps pipeline using ArgoCD to deploy services to EKS. Our CI/CD pipeline includes building & tagging Docker images, deploying with ArgoCD, & running end-to-end tests. We also secured our application secrets using ArgoCD Vault Plugin with AWS Secrets Manager. This setup helps us deploy quickly, keep our services secure, & maintain a smooth workflow for our developers.
-````
