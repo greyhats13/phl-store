@@ -27,58 +27,37 @@ For our submission, create a private Github repository & include the following
 
 ## VPC
 
-Our VPC is the heart of our AWS setup. It makes sure all our AWS resources can talk to each other securely & work well together. We designed the VPC to be scalable, highly available, high-performing, secure, & cost-effective.
+Our VPC is like the main highway for all our AWS stuff. It keeps everything nicely separated and secure, making sure our resources talk to each other smoothly without any unwanted visitors. We chose the CIDR block 10.0.0.0/16, which gives us plenty of IP addresses to spread out across different subnets for various needs.
 
-### Core Design
+To keep things running smoothly with Kubernetes in EKS, we added another CIDR block, 100.64.0.0/16, following the RFC6598 standard. This extra block is just for our Kubernetes pods, so their IPs don’t clash with the main VPC or any of our on-site networks. By having a separate range for pods, we ensure that as our cluster grows, we won’t run out of IP addresses in the main VPC.
 
-- Scalable: We use a CIDR block of 10.0.0.0/16 which gives us lots of IP addresses. This helps us add more resources easily as we grow. We also added second CIDR block 100.64.0.0/16 for Kubernetes pods. This keeps pod IPs separate & avoids conflicts, so we never run out of IPs as our cluster gets bigger.
-- Highly Available: Our VPC spreads resources across multiple Availability Zones (AZs). This means if one AZ has problems, our services stay up & running in other AZs. No single point of failure!
-- High Performance: We use AWS services like NAT Gateways & Application Load Balancers (ALBs) to ensure fast & reliable communication between our resources. This setup helps keep our applications running smoothly.
-- Secure: Security is a top priority. We isolate critical resources in private subnets & use security groups & network ACLs to control who can access what. Data is encrypted both in transit & at rest using AWS KMS & SSL certificates.
-- Cost Optimized: We balance performance & cost by using resources wisely. For example, we use one NAT Gateway in development to save money & multiple NAT Gateways in production for reliability.
+### Subnets
 
-### Subnet Design
+We set up three kinds of subnets: public, private, and database. These are spread out over multiple Availability Zones (AZs) to make sure everything keeps running even if one zone has issues.
 
-Our VPC has three types of subnets, each with a specific role. These subnets are spread across different AZs to keep things running even if one AZ fails.
+- **Public Subnets** are where things like NAT Gateways and Application Load Balancers (ALBs) live. These subnets have public IPs and handle internet traffic. We also use them for bastion hosts when we need secure admin access to our private resources. The ALBs help distribute traffic to our internal services, and the NAT Gateways let our private subnets reach the internet safely without being directly exposed.
 
-- Public Subnets:
-- Purpose: Host internet-facing services like NAT Gateways, ALBs, & bastion hosts for secure admin access.
-- Interaction: ALBs h&le incoming internet traffic & send it to our internal services. NAT Gateways let our private resources access the internet securely without being exposed directly.
-- Setup: These subnets have public IPs & proper routing to manage both incoming & outgoing internet traffic.
-- Private Subnets:
-- Purpose: Hold important internal resources like EKS worker nodes & application pods.
-- Interaction: These resources don’t have direct internet access. They use NAT Gateways to go out when needed. Tags like kubernetes.io/role/internal-elb help Kubernetes manage internal load balancers, & karpenter.sh/discovery helps with autoscaling.
-- Setup: Private subnets keep our critical resources secure & allow them to scale easily as dem& grows.
-- Database Subnets:
-- Purpose: Only for our Aurora database instances.
-- Interaction: These subnets are extra secure & separate from other traffic. Only authorized application workloads can talk to the databases.
-- Setup: Strict access controls keep our databases safe from unauthorized access.
+- **Private Subnets** are for our important internal stuff like Kubernetes worker nodes and application pods. These don’t have direct internet access. Instead, any outgoing traffic goes through the NAT Gateways. This setup helps us scale our Kubernetes workloads easily without worrying about IP address limits, thanks to tags that help with auto-discovery and autoscaling.
+
+- **Database Subnets** are even more locked down, used only for our Aurora databases. They’re kept separate from the rest of the traffic to keep our data safe and secure, with strict access rules in place.
 
 ### NAT Gateways
 
-We use NAT Gateways to manage outbound internet traffic from our private subnets.
+We placed NAT Gateways in the public subnets to manage internet traffic from our private resources. For our development environment, we use just one NAT Gateway to keep costs down. In production, each AZ has its own NAT Gateway to ensure high availability. This way, if one AZ or NAT Gateway has issues, the others can keep things running smoothly.
 
-- Development: One NAT Gateway helps keep costs low.
-- Production: Each AZ has its own NAT Gateway for better reliability. If one AZ or NAT Gateway fails, others keep working.
+NAT Gateways are great for security because they let our private resources reach out to the internet without being directly exposed. They also automatically scale to handle more traffic as needed, which is perfect for our growing and changing architecture.
 
-NAT Gateways are important because they let our private resources access the internet securely without being exposed. They also scale automatically to h&le more traffic when needed.
+### Scalability and Availability
 
-Why This VPC Design Works
+Our VPC is built to grow and handle failures without any hiccups. By spreading our subnets across multiple AZs, we make sure that our services stay up even if one AZ has problems. The extra CIDR block for Kubernetes means we won’t run out of IPs as we add more pods. Plus, things like NAT Gateways, ALBs, and EKS nodes can scale automatically to handle sudden increases in traffic, keeping everything fast and reliable.
 
-- Scalability: With a large IP range & separate blocks for pods, we can keep adding more resources without running out of IPs. Our setup supports growing workloads without issues.
-- High Availability: By spreading subnets across multiple AZs, our services stay available even if one AZ has problems. This makes our system more resilient.
-- High Performance: Using AWS services like NAT Gateways & ALBs ensures that our resources communicate quickly & reliably. This keeps our applications running smoothly.
-- Security: Private subnets & strict access controls keep our important resources safe from the internet. Encryption protects our data both when it’s stored & when it’s moving around.
-- Cost Optimization: We save money by using fewer NAT Gateways in development & scaling them in production as needed. This way, we get the best performance without overspending.
+### Security
 
-### Security Measures
+Security is a top priority in our VPC design. Private subnets keep our critical resources hidden from the internet, and we use security groups and network ACLs to tightly control what traffic is allowed between resources. Our database subnets are completely isolated, making sure only the right parts of our application can talk to the database.
 
-Security is built into every part of our VPC:
+We use AWS KMS to encrypt sensitive data, and our ALBs have SSL certificates from AWS ACM to secure all communications. This means our data is always protected, whether it’s being stored or moving around.
 
-- Network Isolation: Private subnets keep critical resources hidden from the internet. Only necessary services are in public subnets.
-- Access Controls: Security groups & network ACLs control who can access what. Only allowed traffic can move between resources.
-- Data Encryption: We use AWS KMS to encrypt sensitive data at rest. ALBs use SSL certificates from AWS ACM to secure data in transit.
-- Managed Security Services: Tools like AWS WAF protect our APIs from common web attacks, adding an extra layer of security.
+Overall, our VPC setup gives us a strong, secure foundation that's ready to scale and handle any challenges. By following AWS best practices and using tools like Terraform, we've made sure our network is not only robust but also ready for the future.
 
 ## Elastic Kubernetes Service (EKS)
 
