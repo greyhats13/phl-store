@@ -248,12 +248,12 @@ After all main resources we need is provisioned
 - [KMS](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/main.tf#L2)
 - [S3 tfstate](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/main.tf#L23)
 - [Route53](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/main.tf#L23)
-- [Route53](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/main.tf#L65)
+- [ACM](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/main.tf#L65)
 - [Secret Manager](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/main.tf#L99)
 - [VPC](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/main.tf#154)
+- [EKS](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/main.tf#229)
 
-I started installing the EKS addons with their EKS Pods Identity (IRSA replacement) such as
-[ArgoCD](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/main.tf#L556)
+I started installing the EKS addons with their EKS Pods Identity (IRSA replacement) such as Atlantis and ArgoCD (for the detailed implementation click [here](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/)cloud/main.tf#L556)
 
 ```hcl
 module "argocd" {
@@ -262,8 +262,6 @@ module "argocd" {
   values           = ["${file("manifest/${local.argocd_standard.Feature}.yaml")}"]
 }
 ```
-
-and
 
 [Atlantis](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/main.tf#L637)
 
