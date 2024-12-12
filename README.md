@@ -24,87 +24,54 @@ c. Also include high level steps to make this infrastructure more secure, automa
 
 ## VPC
 
-The VPC in this setup is designed to be the backbone of our AWS infrastructure. It provides isolated networking for all resources, ensuring efficient communication while maintaining strict security boundaries. The CIDR block for the VPC is 10.0.0.0/16, giving us a large pool of IP addresses to allocate across subnets for different use cases.
+Our Virtual Private Cloud (VPC) is the heart of our AWS setup. It makes sure all our AWS resources can talk to each other securely and work well together. We designed the VPC to be scalable, highly available, high-performing, secure, and cost-effective.
 
-I’ve also added a secondary CIDR block, 100.64.0.0/16, which follows the RFC6598 standard. This block is specifically reserved for Kubernetes pods in EKS, making sure that pod IP addresses don’t conflict with node IPs or on-premise network configurations. By separating pod IPs into their own CIDR block, I avoid running out of IPs in the primary VPC range even as the cluster scales.
+### Core Design
+- Scalable: We use a CIDR block of 10.0.0.0/16 which gives us lots of IP addresses. This helps us add more resources easily as we grow. We also added a second CIDR block 100.64.0.0/16 for Kubernetes pods. This keeps pod IPs separate and avoids conflicts, so we never run out of IPs as our cluster gets bigger.
+- Highly Available: Our VPC spreads resources across multiple Availability Zones (AZs). This means if one AZ has problems, our services stay up and running in other AZs. No single point of failure!
+- High Performance: We use AWS services like NAT Gateways and Application Load Balancers (ALBs) to ensure fast and reliable communication between our resources. This setup helps keep our applications running smoothly.
+- Secure: Security is a top priority. We isolate critical resources in private subnets and use security groups and network ACLs to control who can access what. Data is encrypted both in transit and at rest using AWS KMS and SSL certificates.
+- Cost Optimized: We balance performance and cost by using resources wisely. For example, we use one NAT Gateway in development to save money and multiple NAT Gateways in production for reliability.
 
 ### Subnet Design
 
-The VPC has three types of subnets: public, private, and database subnets. These subnets are distributed across multiple Availability Zones (AZs) for fault tolerance.
-- Public Subnets are where internet-facing resources live, like NAT Gateways and Application Load Balancers (ALBs). These are also used for bastion hosts when you need secure administrative access to private resources. Public subnets have public IPs and are configured with proper routing to handle incoming and outgoing internet traffic. The ALBs distribute traffic to internal workloads, and the NAT Gateways allow private subnets to securely access external resources without exposing themselves.
-- Private Subnets are used for critical internal resources like Kubernetes worker nodes (EKS nodes) and application pods. These subnets don’t have direct internet access. Instead, all outbound traffic from these subnets goes through the NAT Gateways. Kubernetes workloads are dynamically scaled within these subnets, thanks to tagging for auto-discovery. Tags like kubernetes.io/role/internal-elb help Kubernetes know which subnets to use for internal load balancers, while tags like karpenter.sh/discovery let Karpenter manage autoscaling based on workload demands.
-- Database Subnets are isolated further, used only for our Aurora database instances. They are designed to keep the database secure and separate from application traffic, with strict access controls.
+Our VPC has three types of subnets, each with a specific role. These subnets are spread across different AZs to keep things running even if one AZ fails.
+- Public Subnets:
+- Purpose: Host internet-facing services like NAT Gateways, ALBs, and bastion hosts for secure admin access.
+- Interaction: ALBs handle incoming internet traffic and send it to our internal services. NAT Gateways let our private resources access the internet securely without being exposed directly.
+- Setup: These subnets have public IPs and proper routing to manage both incoming and outgoing internet traffic.
+- Private Subnets:
+- Purpose: Hold important internal resources like EKS worker nodes and application pods.
+- Interaction: These resources don’t have direct internet access. They use NAT Gateways to go out when needed. Tags like kubernetes.io/role/internal-elb help Kubernetes manage internal load balancers, and karpenter.sh/discovery helps with autoscaling.
+- Setup: Private subnets keep our critical resources secure and allow them to scale easily as demand grows.
+- Database Subnets:
+- Purpose: Only for our Aurora database instances.
+- Interaction: These subnets are extra secure and separate from other traffic. Only authorized application workloads can talk to the databases.
+- Setup: Strict access controls keep our databases safe from unauthorized access.
 
 ### NAT Gateways
 
-I’ve deployed NAT Gateways in public subnets to handle outbound internet traffic from private resources. For the development environment, I personally an use a single NAT Gateway to optimize costs. In production, each AZ has its own NAT Gateway for high availability. This setup ensures that even if one AZ or NAT Gateway fails, resources in other AZs can still access the internet.
+We use NAT Gateways to manage outbound internet traffic from our private subnets.
+- Development: One NAT Gateway helps keep costs low.
+- Production: Each AZ has its own NAT Gateway for better reliability. If one AZ or NAT Gateway fails, others keep working.
 
-NAT Gateways are crucial for security because they allow private resources to access external services (like downloading updates) without exposing themselves directly to the internet. Plus, they scale automatically to handle more traffic as needed, which makes them a perfect fit for a scalable architecture.
+NAT Gateways are important because they let our private resources access the internet securely without being exposed. They also scale automatically to handle more traffic when needed.
 
-### Scalability and Availability
+Why This VPC Design Works
+- Scalability: With a large IP range and separate blocks for pods, we can keep adding more resources without running out of IPs. Our setup supports growing workloads without issues.
+- High Availability: By spreading subnets across multiple AZs, our services stay available even if one AZ has problems. This makes our system more resilient.
+- High Performance: Using AWS services like NAT Gateways and ALBs ensures that our resources communicate quickly and reliably. This keeps our applications running smoothly.
+- Security: Private subnets and strict access controls keep our important resources safe from the internet. Encryption protects our data both when it’s stored and when it’s moving around.
+- Cost Optimization: We save money by using fewer NAT Gateways in development and scaling them in production as needed. This way, we get the best performance without overspending.
 
-The VPC is designed to support growth and handle failures gracefully. By spreading subnets across multiple AZs, we ensure that workloads remain available even if one AZ goes down. For Kubernetes, the RFC6598 secondary CIDR block provides a huge IP range dedicated to pods, so scaling up workloads will never run into IP address exhaustion issues. Additionally, resources like NAT Gateways, ALBs, and EKS nodes are designed to scale automatically, ensuring the system can handle sudden traffic spikes.
+### Security Measures
 
-### Security
-
-Security is baked into every layer of this design. Private subnets ensure that critical resources are not directly exposed to the internet. Security groups and network ACLs enforce strict traffic controls, only allowing necessary communication between resources. Database subnets are completely isolated, with access restricted to specific application workloads.
-
-The encryption is handled using AWS KMS for sensitive data, and the ALBs use SSL certificates from AWS ACM for secure communication. This way, data is always protected whether it’s at rest or in transit.
-
-This VPC setup is a solid foundation for our infrastructure. It’s scalable, secure, and built to handle failures without downtime. By following AWS best practices and using tools like Terraform, I’ve ensured that the network is robust and future-proof.
-
-### VPC: Talking is Cheap, Show Me the Code
-Path: iac/deployment/cloud/main.tf
-```hcl
- # VPC Locals
-  vpc_cidr     = "10.0.0.0/16"
-  rfc6598_cidr = "100.64.0.0/16"
-  service_cidr = "10.1.0.0/16"
-  azs          = slice(data.aws_availability_zones.available.names, 0, length(data.aws_availability_zones.available.names))
-  vpc_standard = {
-    Unit    = var.unit
-    Env     = var.env
-    Code    = "vpc"
-    Feature = "main"
-  }
-  vpc_naming_standard = "${local.vpc_standard.Unit}-${local.vpc_standard.Env}-${local.vpc_standard.Code}-${local.vpc_standard.Feature}"
-
-module "vpc_main" {
-  source  = "terraform-aws-modules/vpc/aws"
-  version = "~> 5.16.0"
-
-  name                  = local.vpc_naming_standard
-  cidr                  = local.vpc_cidr
-  secondary_cidr_blocks = [local.rfc6598_cidr]
-  azs                   = local.azs
-  private_subnets = concat(
-    [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 2, k)],
-    [for k, v in local.azs : cidrsubnet(local.rfc6598_cidr, 3, k)]
-  )
-  database_subnets        = length(local.azs) <= 2 ? [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 5, k + 16)] : [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 5, k + 16)]
-  public_subnets          = length(local.azs) <= 2 ? [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 5, k + 18)] : [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 5, k + 19)]
-  enable_nat_gateway      = true
-  single_nat_gateway      = var.env == "dev" ? true : false
-  one_nat_gateway_per_az  = var.env == "dev" ? false : true
-  map_public_ip_on_launch = true
-  private_subnet_names = concat(
-    [for k, v in local.azs : "${local.vpc_naming_standard}-node-${v}"],
-    # Custom network VPC CNI
-    [for k, v in local.azs : "${local.vpc_naming_standard}-app-${v}"]
-  )
-  public_subnet_tags = {
-    "kubernetes.io/role/elb" = 1
-  }
-
-  private_subnet_tags = {
-    "kubernetes.io/role/internal-elb" = 1
-    # Tags subnets for Karpenter auto-discovery
-    "karpenter.sh/discovery" = local.eks_naming_standard
-  }
-  tags = merge(local.tags, local.vpc_standard)
-}
-```
-
+Security is built into every part of our VPC:
+- Network Isolation: Private subnets keep critical resources hidden from the internet. Only necessary services are in public subnets.
+- Access Controls: Security groups and network ACLs control who can access what. Only allowed traffic can move between resources.
+- Data Encryption: We use AWS KMS to encrypt sensitive data at rest. ALBs use SSL certificates from AWS ACM to secure data in transit.
+- Managed Security Services: Tools like AWS WAF protect our APIs from common web attacks, adding an extra layer of security.
+  
 ## Elastic Kubernetes Service (EKS)
 The EKS setup in this design is built for running containerized workloads efficiently. It takes advantage of AWS-native tools and Kubernetes features to ensure high performance, availability, and robust security. By using modules, we’ve automated many configurations, such as creating all required security groups for the control plane, nodes, and other components.
 
@@ -145,7 +112,7 @@ The VPC CNI plugin is enhanced with:
 - Prefix delegation: This increases the number of available IPs per ENI, reducing the risk of IP exhaustion.
 - Custom ENI configuration: Subnets and security groups are explicitly defined, providing fine-grained control over network access.
 
-Add-ons for Observability and Scalability
+### Add-ons for Observability and Scalability
 
 Several add-ons are installed to enhance the functionality and observability of the cluster:
 - CloudWatch Observability: Provides centralized monitoring and logging for Kubernetes workloads. This simplifies debugging and ensures better visibility into the system performance.
@@ -158,326 +125,40 @@ For managing permissions, the cluster uses EKS Pod Identity instead of the tradi
 - Granular permissions: Pods can assume roles with minimal required permissions, enhancing security.
 - Simpler configuration: It reduces the need for managing trust relationships manually.
 
-### EKS: Talking is Cheap, Show Me the Code
-Path: iac/deployment/cloud/main.tf
-```hcl
-eks_standard = {
-  Unit    = var.unit
-  Env     = var.env
-  Code    = "eks"
-  Feature = "main"
-}
-eks_naming_standard = "${local.eks_standard.Unit}-${local.eks_standard.Env}-${local.eks_standard.Code}-${local.eks_standard.Feature}"
-cluster_version     = "1.31"
-eks_workload_type   = "ec2"
+## ALB as Ingress Controller and API Gateway
 
-module "eks_main" {
-  source  = "terraform-aws-modules/eks/aws"
-  version = "~> 20.31.0"
+The design is how we expose our backend APIs to the public securely and efficiently. To do this, we use AWS API Gateway combined with an internal Application Load Balancer (ALB) as an ingress controller in our EKS cluster.
 
-  vpc_id = module.vpc_main.vpc_id
-  # Only take non RFC 6598 private subnets
-  control_plane_subnet_ids  = module.vpc_main.intra_subnets
-  subnet_ids                = slice(module.vpc_main.private_subnets, 0, length(local.azs))
-  cluster_service_ipv4_cidr = local.service_cidr
-  enable_irsa               = true
-  create_kms_key            = false
-  cluster_version           = "1.31"
-  cluster_name              = local.eks_naming_standard
-  cluster_encryption_config = {
-    provider_key_arn = module.kms_main.key_arn
-    resources        = ["secrets"]
-  }
-  cluster_endpoint_public_access = var.env == "dev" ? true : false
-  cluster_ip_family              = "ipv4"
-  create_cloudwatch_log_group    = true
-  cluster_addons = {
-    eks-pod-identity-agent = {
-      before_compute = true // create the pod identity agent before the compute resources
-      most_recent    = true
-    }
-    vpc-cni = {
-      before_compute = true // create the vpc-cni before the compute resources
-      most_recent    = true
-      # service_account_role_arn = module.vpc_cni_irsa.iam_role_arn // for using irsa (deprecated) change to pod identity
-      configuration_values = jsonencode({
-        eniConfig = {
-          create = true,
-          region = var.region,
-          subnets = {
-            "${local.azs[0]}" = {
-              # Subnet ID for RFC 6598
-              id             = module.vpc_main.private_subnets[2]
-              securityGroups = [module.eks_main.cluster_primary_security_group_id, module.eks_main.cluster_security_group_id]
-            },
-            "${local.azs[1]}" = {
-              # Subnet ID for RFC 6598
-              id             = module.vpc_main.private_subnets[3]
-              securityGroups = [module.eks_main.cluster_primary_security_group_id, module.eks_main.cluster_security_group_id]
-            }
-          }
-        },
-        env = {
-          AWS_VPC_K8S_CNI_CUSTOM_NETWORK_CFG = "true",
-          ENI_CONFIG_LABEL_DEF               = "topology.kubernetes.io/zone"
-          # Reference docs https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses.html
-          ENABLE_PREFIX_DELEGATION = "true"
-          WARM_PREFIX_TARGET       = "1"
-        }
-      })
-    }
-    coredns = {
-      most_recent = true
-    }
-    kube-proxy = {
-      most_recent = true
-    }
-    aws-ebs-csi-driver = {
-      # service_account_role_arn = module.ebs_csi_irsa.iam_role_arn (deprecated)
-      most_recent = true
-    }
+### Exposing APIs with API Gateway
 
-    amazon-cloudwatch-observability = {
-      # service_account_role_arn = module.ebs_csi_irsa.iam_role_arn (deprecated)
-      most_recent = true
-    }
-  }
-  node_security_group_tags = {
-    "karpenter.sh/discovery" = local.eks_naming_standard
-  }
+To make our backend APIs accessible to users, I use AWS API Gateway. This service acts as a front door for our APIs, handling all the incoming requests from the internet. By using API Gateway, we can easily manage and scale our API traffic without worrying about the underlying infrastructure.
 
-  # Managed Node Groups for critical workloads, not for autoscaling
-  eks_managed_node_groups = {
-    "ng-ondemand-base" = {
-      ami_type                       = "BOTTLEROCKET_x86_64"
-      use_latest_ami_release_version = true
-      instance_types                 = var.env == "dev" ? ["t3.medium"] : ["m6i.large"]
-      enable_bootstrap_user_data     = true
-      capacity_type                  = var.env == "dev" ? "SPOT" : "ON_DEMAND"
-      min_size                       = 2
-      max_size                       = 2
-      desired_size                   = 2
-      force_update_version           = true
-      bootstrap_extra_args           = <<-EOT
-        # The admin host container provides SSH access and runs with "superpowers".
-        # It is disabled by default, but can be disabled explicitly.
-        [settings.host-containers.admin]
-        enabled = false
+### Secure Authentication with AWS Cognito
 
-        # The control host container provides out-of-band access via SSM.
-        # It is enabled by default, and can be disabled if you do not expect to use SSM.
-        # This could leave you with no way to access the API and change settings on an existing node!
-        [settings.host-containers.control]
-        enabled = true
+Security is a top priority, so I use AWS Cognito to handle authentication. Cognito serves as our authorizer, ensuring that only authenticated clients can access our APIs. We set it up to use client credentials, which means that our applications need to provide valid credentials to get access tokens. This way, we keep unauthorized users out and protect our backend services from misuse.
 
-        # extra args added
-        [settings.kernel]
-        lockdown = "integrity"
-      EOT
-      # update_config = {
-      #   max_unavailable_percentage = 1 # or set `max_unavailable`
-      # }
-      ebs_optimized           = true
-      disable_api_termination = false
-      enable_monitoring       = true
-      block_device_mappings = {
-        xvda = {
-          device_name = "/dev/xvda"
-          ebs = {
-            volume_size           = 20
-            volume_type           = "gp3"
-            iops                  = 3000
-            throughput            = 150
-            encrypted             = true
-            kms_key_id            = module.kms_main.key_arn
-            delete_on_termination = true
-          }
-        }
-      }
-    }
-  }
+### Integration with EKS ALB via VPC Link
 
-  # aws-auth configmap (deprecated use access_entries instead)
-  # manage_aws_auth_configmap = true
-  # aws_auth_users = [
-  #   {
-  #     userarn  = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
-  #     username = "root"
-  #     groups   = ["system:masters"]
-  #   }
-  # ]
+Our EKS cluster uses an internal ALB as an ingress controller to manage traffic within the VPC. To connect API Gateway with this internal ALB, we use a VPC Link. This setup ensures that the API Gateway can securely route requests to our backend services running inside the EKS cluster without exposing the internal ALB to the public internet.
 
-  # Cluster access entry
-  # To add the current caller identity as an administrator
-  enable_cluster_creator_admin_permissions = false
+### Enhancing Security and Performance
 
-  access_entries = {
-    # One access entry with a policy associated
-    iac = {
-      principal_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/iac"
-      policy_associations = {
-        iac = {
-          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-          access_scope = {
-            type = "cluster"
-          }
-        }
-      }
-    }
-    atlantis = {
-      principal_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/atlantis-role"
-      policy_associations = {
-        atlantis = {
-          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-          access_scope = {
-            type = "cluster"
-          }
-        }
-      }
-    }
-    admin = {
-      principal_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/imam.arief.rhmn@gmail.com"
-      policy_associations = {
-        iac = {
-          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-          access_scope = {
-            type = "cluster"
-          }
-        }
-      }
-    }
-  }
+To keep our application safe and perform well, I’ve added several security and performance features to API Gateway:
+- Throttling Rate Limits: We set up throttling to control the number of requests a client can make in a given time period. This helps prevent abuse and ensures that our services remain available even under high load.
+- CORS Configuration: Cross-Origin Resource Sharing (CORS) is configured to allow our frontend applications to interact with the API Gateway securely. This setup specifies which domains can make requests, what methods are allowed, and which headers can be used.
+- Web Application Firewall (WAF): AWS WAF is integrated with API Gateway to protect our APIs from common web exploits like SQL injection and cross-site scripting. WAF rules help filter out malicious traffic before it reaches our backend services.
 
-  tags = merge(
-    local.tags,
-    local.eks_standard,
-    {
-      "karpenter.sh/discovery" = local.eks_naming_standard
-    }
-  )
-}
+### Putting It All Together
 
-# # Create IAM Role for service accounts (IRSA) for VPC CNI
-# module "vpc_cni_irsa" {
-#   source = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-
-#   role_name_prefix      = "aws-vpc-cni-ipv4-irsa"
-#   attach_vpc_cni_policy = true
-#   vpc_cni_enable_ipv4   = true
-
-#   oidc_providers = {
-#     main = {
-#       provider_arn               = module.eks_main.oidc_provider_arn
-#       namespace_service_accounts = ["kube-system:aws-node"]
-#     }
-#   }
-#   tags = local.tags
-# }
-
-
-# EKS Pod Identity for VPC CNI
-module "aws_vpc_cni_ipv4_pod_identity" {
-  source  = "terraform-aws-modules/eks-pod-identity/aws"
-  version = "~> 1.7.0"
-
-  name = "aws-vpc-cni-ipv4"
-
-  attach_aws_vpc_cni_policy = true
-  aws_vpc_cni_enable_ipv4   = true
-
-  association_defaults = {
-    namespace       = "kube-system"
-    service_account = "aws-node"
-  }
-
-  # Cluster Association
-  associations = {
-    main = {
-      cluster_name = module.eks_main.cluster_name
-    }
-  }
-  tags = local.tags
-}
-
-# EKS Pod Identity for AWS EBS CSI
-module "aws_ebs_csi_pod_identity" {
-  source  = "terraform-aws-modules/eks-pod-identity/aws"
-  version = "~> 1.7.0"
-
-  name = "aws-ebs-csi"
-
-  attach_aws_ebs_csi_policy = true
-  aws_ebs_csi_kms_arns      = [module.kms_main.key_arn]
-  # Pod Identity Associations
-  association_defaults = {
-    namespace       = "kube-system"
-    service_account = "ebs-csi-controller-sa"
-  }
-  # Cluster Association
-  associations = {
-    main = {
-      cluster_name = module.eks_main.cluster_name
-    }
-  }
-
-  tags = local.tags
-}
-
-# Create Storage Class for gp3
-resource "kubernetes_storage_class_v1" "gp3" {
-  metadata {
-    name = "gp3"
-    annotations = {
-      "storageclass.kubernetes.io/is-default-class" = "true"
-    }
-  }
-  storage_provisioner = "ebs.csi.aws.com"
-  reclaim_policy      = "Delete"
-  parameters = {
-    type       = "gp3"
-    iops       = "3000"
-    throughput = "125"
-  }
-  volume_binding_mode = "WaitForFirstConsumer"
-}
-
-module "aws_cloudwatch_observability_pod_identity" {
-  source  = "terraform-aws-modules/eks-pod-identity/aws"
-  version = "~> 1.7.0"
-
-  name = "aws-cloudwatch-observability"
-
-  attach_aws_cloudwatch_observability_policy = true
-
-  # Pod Identity Associations
-  association_defaults = {
-    namespace       = "amazon-cloudwatch"
-    service_account = "cloudwatch-agent"
-  }
-
-  associations = {
-    main = {
-      cluster_name = module.eks_main.cluster_name
-    }
-  }
-
-  tags = {
-    Environment = "dev"
-  }
-}
-```
+By combining API Gateway with an internal ALB in EKS, and securing everything with Cognito, throttling, CORS, and WAF, we’ve built a robust and secure way to expose our backend APIs to the public. This architecture not only ensures that our APIs are safe and reliable but also makes it easy to scale and manage as our application grows.
 
 ## Aurora MySQL
 
-  Aurora MySQL is combination of performance, cost-efficiency, and MySQL compatibility. Aurora MySQL offers several advantages over standard RDS instances:
-	- Performance: Aurora is optimized for high throughput and low latency. It can handle millions of requests per second, which is critical for applications that need to scale.
-  - Managed Service: Aurora handles maintenance tasks like backups, failover, and updates automatically, freeing up operational overhead.
-	- MySQL Compatibility: It’s fully compatible with MySQL, making it easy to migrate and integrate with existing systems.
-	- Autoscaling: Aurora MySQL provides built-in autoscaling for both compute and storage, making it ideal for handling variable workloads.
+Aurora MySQL is combination of performance, cost-efficiency, and MySQL compatibility. Aurora MySQL offers s built-in autoscaling for both compute and storage, making it ideal for handling variable workloads.
 
 ### Private Database Setup
 
-The Aurora cluster is deployed in private subnets, ensuring that it’s not exposed to the internet. This design significantly reduces the attack surface by restricting access to internal workloads running in private subnets, such as Kubernetes pods. Only authorized resources within the VPC can communicate with the database.
+The Aurora cluster is deployed in database subnets, ensuring that it’s not exposed to the internet. This design significantly reduces the attack surface by restricting access to internal workloads running in private subnets, such as Kubernetes pods. Only authorized resources within the VPC can communicate with the database.
 
 ### Storage Encryption with KMS
 
@@ -513,20 +194,493 @@ Snapshots are an integral part of this setup for disaster recovery and data rete
 - Preserve Point-in-Time Data: Snapshots capture the state of the database at a specific time, which is helpful for compliance or testing.
 - Disaster Recovery: In case of accidental data loss, snapshots can be used to restore the database quickly.
 
-Performance Insights
+### Performance Insights
 
 Aurora is configured with Performance Insights, which provides detailed metrics for database performance. This helps in:
 - Identifying slow queries or performance bottlenecks.
 - Optimizing database configurations and query execution.
 
-### Aurora: Talking is Cheap, Show Me the Code
-Path: iac/deployment/cloud/main.tf
-```hcl
-  aurora_standard = {
-    Unit    = var.unit
-    Env     = var.env
-    Code    = "rds-aurora"
-    Feature = "main"
-  }
-  aurora_naming_standard = "${local.aurora_standard.Unit}-${local.aurora_standard.Env}-${local.aurora_standard.Code}-${local.aurora_standard.Feature}"
 
+# How to Setup/Run the Infrastructure and Deploy the App
+<p align="center">
+  <img src="img/atlantis.png" alt="aws">
+</p>
+
+Cara cepatnya untuk setup/run infrastructure  menggunakan Terraform.
+1. Install Terraform
+2. Develop code terraform untuk resource yang kita buat, 
+3. Jalan kan terraform init, plan, dan apply.
+
+Untuk mendeploy kita bisa menggunakan helm
+1. Install helm
+2. helm repo add https://runatlantis.github.io/helm-char
+3. Jalankan hellm install -f values.yaml
+
+Pada tahap awal kita masih perlu untuk membuat resource menggunakan terraform secara manual.
+Cara ini tidak efektif dan tidak efisien. Kita harus mensetup infrastruktur dan mendeploy aplikasi kedepan harus menerapkan membangun self service model 
+agar developer dapat memanaged aplikasinya sendiri.
+Kita membutuhkan EKS telah ready, Atlantis dan ArgoCD  telah terinstall lalu menggunakan argocd.
+
+
+Berikut terraform provider
+1. Deploy Atlantis dan ArgoCD pada EKS cluster menggunakan helm provider.
+Untuk mendeploy atlantis dan ArgocD, kita harus makesure aws-alb-ingress-controller dan external-dns telah terinstall pada eks cluster. Agar saat ingress kita terbuat, alb-ingress-controller dapat membuat ALB dan external-dns dapat membuat record di route53 secara otomatis.
+2. Lalu kita membuatkan IAM provider untuk membuat role dan policy yang dibutuhkan oleh atlantis dan argocd kita bisa menggunakan EKS Pod Identity atau IRSA. Tapi disini saya menggunakan EKS Pod Identity.
+Contoh terraform code:
+```hcl
+provider "aws" {
+  region = local.region
+  dynamic "assume_role" {
+    # If the current environment is running on EC2 then use instance profile to access AWS resources
+    for_each = local.is_ec2_environment ? [] : [1]
+    content {
+      role_arn = "arn:aws:iam::124456474132:role/iac"
+    }
+  }
+}
+
+# Create Helm provider
+provider "helm" {
+  kubernetes {
+    host                   = module.eks_main.cluster_endpoint
+    cluster_ca_certificate = base64decode(module.eks_main.cluster_certificate_authority_data)
+    token                  = data.aws_eks_cluster_auth.cluster.token
+  }
+}
+
+
+# Atlantis
+module "atlantis" {
+  source = "../../modules/helm"
+
+  region           = var.region
+  standard         = local.atlantis_standard
+  repository       = "https://runatlantis.github.io/helm-charts"
+  chart            = "atlantis"
+  values           = ["${file("manifest/${local.atlantis_standard.Feature}.yaml")}"]
+  namespace        = "atlantis"
+  create_namespace = true
+  dns_name         = local.route53_domain_name
+  extra_vars = {
+    github_user = var.github_owner
+
+    # ingress
+    ingress_enabled    = true
+    ingress_class_name = "alb"
+    # ingress alb
+    alb_certificate_arn              = module.acm_main.acm_certificate_arn
+    alb_ssl_policy                   = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+    alb_backend_protocol             = "HTTP"
+    alb_listen_ports                 = "[{\"HTTP\": 80}, {\"HTTPS\": 443}]"
+    alb_scheme                       = "internet-facing"
+    alb_target_type                  = "ip"
+    alb_group_name                   = "${var.unit}-${var.env}-${local.atlantis_standard.Code}-ingress"
+    alb_group_order                  = "2"
+    alb_healthcheck_path             = "/"
+    alb_ssl_redirect                 = 443
+    aws_alb_service_type             = "ClusterIP"
+    aws_alb_backend_protocol_version = "GRPC"
+  }
+  helm_sets_sensitive = [
+    {
+      name  = "github.token"
+      value = jsondecode(data.aws_secretsmanager_secret_version.secret_iac_current.secret_string)["github_token"]
+    },
+    {
+      name  = "github.secret"
+      value = random_password.atlantis_github_secret.result
+    },
+  ]
+  depends_on = [
+    module.eks_main,
+  ]
+}
+
+module "atlantis_custom_pod_identity" {
+  source  = "terraform-aws-modules/eks-pod-identity/aws"
+  version = "~> 1.7.0"
+
+  name            = "${local.atlantis_standard.Feature}-role"
+  use_name_prefix = false
+
+  # ArgoCD Vault Plugin (AVP) is installed in the argocd-repo-server 
+  # So we need to attach the policy to the argocd-repo-server service account
+  association_defaults = {
+    namespace       = local.atlantis_standard.Feature
+    service_account = "${local.atlantis_standard.Feature}-sa"
+    tags            = { App = local.atlantis_standard.Feature }
+  }
+
+  associations = {
+    main = {
+      cluster_name = module.eks_main.cluster_name
+    }
+  }
+
+  attach_custom_policy    = true
+  source_policy_documents = [data.aws_iam_policy_document.atlantis_policy.json]
+
+  tags = local.tags
+}
+
+# ArgoCD
+# ArgoCD is a declarative, GitOps continuous delivery tool for Kubernetes.
+module "argocd" {
+  source = "../../modules/helm"
+
+  region           = var.region
+  standard         = local.argocd_standard
+  repository       = "https://argoproj.github.io/argo-helm"
+  chart            = "argo-cd"
+  values           = ["${file("manifest/${local.argocd_standard.Feature}.yaml")}"]
+  namespace        = "argocd"
+  create_namespace = true
+  dns_name         = local.route53_domain_name
+  extra_vars = {
+    github_orgs      = var.github_orgs
+    github_client_id = var.github_oauth_client_id
+    ARGOCD_VERSION   = var.argocd_version
+    AVP_VERSION      = var.argocd_vault_plugin_version
+    server_insecure  = true
+
+    # ref https://github.com/argoproj/argo-helm/tree/main/charts/argo-cd
+    # ingress
+    ingress_enabled    = true
+    ingress_controller = "aws"
+    ingress_class_name = "alb"
+    # ingress alb
+    alb_certificate_arn              = module.acm_main.acm_certificate_arn
+    alb_ssl_policy                   = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+    alb_backend_protocol             = "HTTP"
+    alb_listen_ports                 = "[{\"HTTP\": 80}, {\"HTTPS\": 443}]"
+    alb_scheme                       = "internet-facing"
+    alb_target_type                  = "ip"
+    alb_group_name                   = "${var.unit}-${var.env}-${local.argocd_standard.Code}-ingress"
+    alb_group_order                  = "1"
+    alb_healthcheck_path             = "/"
+    alb_ssl_redirect                 = 443
+    aws_alb_service_type             = "ClusterIP"
+    aws_alb_backend_protocol_version = "GRPC"
+  }
+  helm_sets_sensitive = [
+    {
+      name  = "configs.secret.githubSecret"
+      value = random_password.argocd_github_secret.result
+    },
+    {
+      name  = "configs.secret.extra.dex\\.github\\.clientSecret"
+      value = jsondecode(data.aws_secretsmanager_secret_version.secret_iac_current.secret_string)["github_oauth_client_secret"]
+    },
+  ]
+  depends_on = [
+    module.eks_main,
+  ]
+}
+
+# ArgoCD Vault Plugin (AVP) Pod Identity
+module "avp_custom_pod_identity" {
+  source  = "terraform-aws-modules/eks-pod-identity/aws"
+  version = "~> 1.7.0"
+
+  name            = "avp_role"
+  use_name_prefix = false
+
+  # ArgoCD Vault Plugin (AVP) is installed in the argocd-repo-server 
+  # So we need to attach the policy to the argocd-repo-server service account
+  association_defaults = {
+    namespace       = "argocd"
+    service_account = "argocd-repo-server"
+    tags            = { App = "avp" }
+  }
+
+  associations = {
+    main = {
+      cluster_name = module.eks_main.cluster_name
+    }
+  }
+
+  attach_custom_policy    = true
+  source_policy_documents = [data.aws_iam_policy_document.avp_policy.json]
+
+  tags = local.tags
+}
+```
+
+Berikut manifestnya:
+iac/deployment/cloud/manifest/atlantis.yaml
+```yaml
+orgAllowlist: github.com/greyhats13/*
+
+environment:
+  GITHUB_OWNER: ${extra_vars.github_user}
+
+environmentSecrets:
+  - name: GITHUB_TOKEN
+    secretKeyRef:
+      name: ${unit}-${env}-${code}-${feature}-webhook
+      key: github_token
+
+github:
+  user: ${extra_vars.github_user}
+
+repoConfig: |
+ ---
+ repos:
+ - id: /.*/
+   branch: /.*/
+   repo_config_file: iac/atlantis.yaml
+   plan_requirements: []
+   apply_requirements: []
+   workflow: default
+   allowed_overrides: [apply_requirements, plan_requirements]
+   allow_custom_workflows: false
+ workflows:
+   default:
+     plan:
+       steps: [init, plan]
+     apply:
+       steps: [apply]
+serviceAccount:
+  name: ${feature}-sa
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 4141
+
+ingress:
+  enabled: ${extra_vars.ingress_enabled}
+  ingressClassName: ${extra_vars.ingress_class_name}
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: ${feature}.${dns_name}
+    external-dns.alpha.kubernetes.io/ttl: '300'
+    alb.ingress.kubernetes.io/group.name: ${extra_vars.alb_group_name}
+    alb.ingress.kubernetes.io/certificate-arn: ${extra_vars.alb_certificate_arn}
+    alb.ingress.kubernetes.io/ssl-policy: ${extra_vars.alb_ssl_policy}
+    alb.ingress.kubernetes.io/backend-protocol: ${extra_vars.alb_backend_protocol}
+    alb.ingress.kubernetes.io/listen-ports: '${extra_vars.alb_listen_ports}'
+    alb.ingress.kubernetes.io/scheme: ${extra_vars.alb_scheme}
+    alb.ingress.kubernetes.io/target-type: ${extra_vars.alb_target_type}
+    alb.ingress.kubernetes.io/group.order: '${extra_vars.alb_group_order}'
+    alb.ingress.kubernetes.io/healthcheck-path: ${extra_vars.alb_healthcheck_path}
+    alb.ingress.kubernetes.io/ssl-redirect: '${extra_vars.alb_ssl_redirect}'
+  host: ${feature}.${dns_name}
+  tls:
+    - hosts:
+        - ${feature}.${dns_name}
+
+volumeClaim:
+  storageClassName: gp3
+```
+
+Berikut manifestnya:
+iac/deployment/cloud/manifest/argocd.yaml
+```yaml
+# Ref: https://github.com/argoproj/argo-helm/tree/main/charts/argo-cd
+global:
+  domain: "${feature}.${dns_name}"
+
+configs:
+  cm:
+    url: "https://${feature}.${dns_name}"
+    dex.config: |
+      connectors:
+        - type: github
+          id: github
+          name: GitHub
+          config:
+            clientID: ${extra_vars.github_client_id}
+            clientSecret: $argocd-secret:dex.github.clientSecret
+            redirectURI: 'https://${feature}.${dns_name}/api/dex/callback'
+            orgs:
+              - name: ${extra_vars.github_orgs}
+  params:
+    server.insecure: ${extra_vars.server_insecure}
+  rbac:
+    policy.default: role:readonly
+    policy.csv: |
+      # default policy
+      p, role:readonly, applications, get, */*, allow
+      p, role:readonly, certificates, get, *, allow
+      p, role:readonly, clusters, get, *, allow
+      p, role:readonly, repositories, get, *, allow
+      p, role:readonly, projects, get, *, allow
+      p, role:readonly, accounts, get, *, allow
+      p, role:readonly, gpgkeys, get, *, allow
+      p, role:readonly, logs, get, */*, allow
+      # admin policy
+      p, role:devops-role, applications, create, */*, allow
+      p, role:devops-role, applications, update, */*, allow
+      p, role:devops-role, applications, delete, */*, allow
+      p, role:devops-role, applications, sync, */*, allow
+      p, role:devops-role, applications, override, */*, allow
+      p, role:devops-role, applications, action/*, */*, allow
+      p, role:devops-role, applicationsets, get, */*, allow
+      p, role:devops-role, applicationsets, create, */*, allow
+      p, role:devops-role, applicationsets, update, */*, allow
+      p, role:devops-role, applicationsets, delete, */*, allow
+      p, role:devops-role, certificates, create, *, allow
+      p, role:devops-role, certificates, update, *, allow
+      p, role:devops-role, certificates, delete, *, allow
+      p, role:devops-role, clusters, create, *, allow
+      p, role:devops-role, clusters, update, *, allow
+      p, role:devops-role, clusters, delete, *, allow
+      p, role:devops-role, repositories, create, *, allow
+      p, role:devops-role, repositories, update, *, allow
+      p, role:devops-role, repositories, delete, *, allow
+      p, role:devops-role, projects, create, *, allow
+      p, role:devops-role, projects, update, *, allow
+      p, role:devops-role, projects, delete, *, allow
+      p, role:devops-role, accounts, update, *, allow
+      p, role:devops-role, gpgkeys, create, *, allow
+      p, role:devops-role, gpgkeys, delete, *, allow
+      p, role:devops-role, exec, create, */*, allow
+      # set admin policy for devops team in github orgs
+      g, ${extra_vars.github_orgs}:devops, role:devops-role
+      g, devops, role:devops-role
+  # ref: https://github.com/argoproj-labs/argocd-vault-plugin/blob/main/manifests/cmp-sidecar/cmp-plugin.yaml
+  cmp:
+    # -- Create the argocd-cmp-cm configmap
+    create: true
+    plugins:
+      argocd-vault-plugin-helm:
+        allowConcurrency: true
+
+        # Note: this command is run _before_ any Helm templating is done, therefore the logic is to check
+        # if this looks like a Helm chart
+        discover:
+          find:
+            command:
+              - sh
+              - "-c"
+              - "find . -name 'Chart.yaml' && find . -name 'values.yaml'"
+        generate:
+          # **IMPORTANT**: passing effectively allows users to run arbitrary code in the Argo CD 
+          # repo-server (or, if using a sidecar, in the plugin sidecar). Only use this when the users are completely trusted. If
+          # possible, determine which Helm arguments are needed by your users and explicitly pass only those arguments.
+          command:
+            - sh
+            - "-c"
+            - |
+              helm template $ARGOCD_APP_NAME -n $ARGOCD_APP_NAMESPACE . --include-crds |
+              argocd-vault-plugin generate -
+        lockRepo: false
+      argocd-vault-plugin:
+        allowConcurrency: true
+        discover:
+          find:
+            command:
+              - sh
+              - "-c"
+              - "find . -name '*.yaml' | xargs -I {} grep \"<path\\|avp\\.kubernetes\\.io\" {} | grep ."
+        generate:
+          command:
+            - argocd-vault-plugin
+            - generate
+            - "."
+        lockRepo: false
+
+# ref: https://argo-cd.readthedocs.io/en/stable/operator-manual/declarative-setup/
+server:
+  ingress:
+    enabled: ${extra_vars.ingress_enabled}
+    controller: ${extra_vars.ingress_controller}
+    ingressClassName: ${extra_vars.ingress_class_name}
+    annotations:
+      external-dns.alpha.kubernetes.io/hostname: ${feature}.${dns_name}
+      external-dns.alpha.kubernetes.io/ttl: '300'
+      alb.ingress.kubernetes.io/group.name: ${extra_vars.alb_group_name}
+      alb.ingress.kubernetes.io/certificate-arn: ${extra_vars.alb_certificate_arn}
+      alb.ingress.kubernetes.io/ssl-policy: ${extra_vars.alb_ssl_policy}
+      alb.ingress.kubernetes.io/backend-protocol: ${extra_vars.alb_backend_protocol}
+      alb.ingress.kubernetes.io/listen-ports: '${extra_vars.alb_listen_ports}'
+      alb.ingress.kubernetes.io/scheme: ${extra_vars.alb_scheme}
+      alb.ingress.kubernetes.io/target-type: ${extra_vars.alb_target_type}
+      alb.ingress.kubernetes.io/group.order: '${extra_vars.alb_group_order}'
+      alb.ingress.kubernetes.io/healthcheck-path: ${extra_vars.alb_healthcheck_path}
+      alb.ingress.kubernetes.io/ssl-redirect: '${extra_vars.alb_ssl_redirect}'
+    aws:
+      serviceType: ${extra_vars.aws_alb_service_type}
+      backendProtocolVersion: ${extra_vars.aws_alb_backend_protocol_version}
+# ref: https://github.com/argoproj-labs/argocd-vault-plugin/blob/main/manifests/cmp-sidecar/argocd-repo-server.yaml
+repoServer:
+  serviceAccount:
+    name: ${feature}-repo-server
+    # Not strictly necessary, but required for passing AVP configuration from a secret and for using Kubernetes auth to Hashicorp Vault
+    automountServiceAccountToken: true
+  volumes:
+    - configMap:
+        name: argocd-cmp-cm
+      name: argocd-cmp-cm
+    - name: cmp-tmp
+      emptyDir: {}
+    - name: custom-tools
+      emptyDir: {}
+  initContainers:
+    - name: download-tools
+      image: registry.access.redhat.com/ubi8
+      env:
+        - name: AVP_VERSION
+          value: ${extra_vars.AVP_VERSION}
+      command: [sh, -c]
+      args:
+        - >-
+          curl -L https://github.com/argoproj-labs/argocd-vault-plugin/releases/download/v${extra_vars.AVP_VERSION}/argocd-vault-plugin_${extra_vars.AVP_VERSION}_linux_amd64 -o argocd-vault-plugin &&
+          chmod +x argocd-vault-plugin &&
+          mv argocd-vault-plugin /custom-tools/
+
+      volumeMounts:
+        - mountPath: /custom-tools
+          name: custom-tools
+  extraContainers:
+      # argocd-vault-plugin with Helm
+    - name: avp-helm
+      command: [/var/run/argocd/argocd-cmp-server]
+      image: quay.io/argoproj/argocd:${extra_vars.ARGOCD_VERSION}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+      volumeMounts:
+        - mountPath: /var/run/argocd
+          name: var-files
+        - mountPath: /home/argocd/cmp-server/plugins
+          name: plugins
+        - mountPath: /tmp
+          name: cmp-tmp
+
+        # Register plugins into sidecar
+        - mountPath: /home/argocd/cmp-server/config/plugin.yaml
+          subPath: argocd-vault-plugin-helm.yaml
+          name: argocd-cmp-cm
+
+        # Important: Mount tools into $PATH
+        - name: custom-tools
+          subPath: argocd-vault-plugin
+          mountPath: /usr/local/bin/argocd-vault-plugin
+    - name: avp
+      command: [/var/run/argocd/argocd-cmp-server]
+      image: quay.io/argoproj/argocd:${extra_vars.ARGOCD_VERSION}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+      volumeMounts:
+        - mountPath: /var/run/argocd
+          name: var-files
+        - mountPath: /home/argocd/cmp-server/plugins
+          name: plugins
+        - mountPath: /tmp
+          name: cmp-tmp
+
+        # Register plugins into sidecar
+        - mountPath: /home/argocd/cmp-server/config/plugin.yaml
+          subPath: argocd-vault-plugin.yaml
+          name: argocd-cmp-cm
+
+        # Important: Mount tools into $PATH
+        - name: custom-tools
+          subPath: argocd-vault-plugin
+          mountPath: /usr/local/bin/argocd-vault-plugin
+```
+
+
+2. Setelah kita atlantis terinstall. Untuk 
