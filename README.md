@@ -487,7 +487,7 @@ module "avp_custom_pod_identity" {
 
 **4.**	Create Secret Template for Helm Chart
 Now, AVP can read secrets from AWS Secrets Manager. We need to create a secret.yaml template for our Helm chart.
-[secret.yaml]https://github.com/greyhats13/phl-store/blob/main/gitops/charts/app/phl-products/templates/secret.yaml#L27)
+- [secret.yaml](https://github.com/greyhats13/phl-store/blob/main/gitops/charts/app/phl-products/templates/secret.yaml#L27)
 ```yaml
 apiVersion: v1
 kind: Secret
