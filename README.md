@@ -31,9 +31,9 @@ I’ve also added a secondary CIDR block, 100.64.0.0/16, which follows the RFC65
 ### Subnet Design
 
 The VPC has three types of subnets: public, private, and database subnets. These subnets are distributed across multiple Availability Zones (AZs) for fault tolerance.
-	•	Public Subnets are where internet-facing resources live, like NAT Gateways and Application Load Balancers (ALBs). These are also used for bastion hosts when you need secure administrative access to private resources. Public subnets have public IPs and are configured with proper routing to handle incoming and outgoing internet traffic. The ALBs distribute traffic to internal workloads, and the NAT Gateways allow private subnets to securely access external resources without exposing themselves.
-	•	Private Subnets are used for critical internal resources like Kubernetes worker nodes (EKS nodes) and application pods. These subnets don’t have direct internet access. Instead, all outbound traffic from these subnets goes through the NAT Gateways. Kubernetes workloads are dynamically scaled within these subnets, thanks to tagging for auto-discovery. Tags like kubernetes.io/role/internal-elb help Kubernetes know which subnets to use for internal load balancers, while tags like karpenter.sh/discovery let Karpenter manage autoscaling based on workload demands.
-	•	Database Subnets are isolated further, used only for our Aurora database instances. They are designed to keep the database secure and separate from application traffic, with strict access controls.
+- Public Subnets are where internet-facing resources live, like NAT Gateways and Application Load Balancers (ALBs). These are also used for bastion hosts when you need secure administrative access to private resources. Public subnets have public IPs and are configured with proper routing to handle incoming and outgoing internet traffic. The ALBs distribute traffic to internal workloads, and the NAT Gateways allow private subnets to securely access external resources without exposing themselves.
+- Private Subnets are used for critical internal resources like Kubernetes worker nodes (EKS nodes) and application pods. These subnets don’t have direct internet access. Instead, all outbound traffic from these subnets goes through the NAT Gateways. Kubernetes workloads are dynamically scaled within these subnets, thanks to tagging for auto-discovery. Tags like kubernetes.io/role/internal-elb help Kubernetes know which subnets to use for internal load balancers, while tags like karpenter.sh/discovery let Karpenter manage autoscaling based on workload demands.
+- Database Subnets are isolated further, used only for our Aurora database instances. They are designed to keep the database secure and separate from application traffic, with strict access controls.
 
 ### NAT Gateways
 
@@ -53,7 +53,7 @@ The encryption is handled using AWS KMS for sensitive data, and the ALBs use SSL
 
 This VPC setup is a solid foundation for our infrastructure. It’s scalable, secure, and built to handle failures without downtime. By following AWS best practices and using tools like Terraform, I’ve ensured that the network is robust and future-proof.
 
-### VPC Terraform
+### VPC: Talking is Cheap, Show Me the Code
 Path: iac/deployment/cloud/main.tf
 ```hcl
  # VPC Locals
@@ -113,52 +113,52 @@ The EKS setup in this design is built for running containerized workloads effici
 The EKS cluster runs Kubernetes version 1.31 and is designed to operate in a private networking setup. The control plane spans multiple AZs, ensuring high availability. All communication between the control plane and worker nodes is encrypted for security.
 
 The VPC’s subnets are configured to support the cluster’s needs:
-	•	The control plane uses private subnets for communication, ensuring that it is isolated from public exposure.
-	•	Worker nodes and pods run in private subnets to minimize exposure while allowing managed traffic routing through NAT Gateways and ALBs.
+- The control plane uses private subnets for communication, ensuring that it is isolated from public exposure.
+- Worker nodes and pods run in private subnets to minimize exposure while allowing managed traffic routing through NAT Gateways and ALBs.
 
 ### Why BottleRocket?
 
 The worker nodes in the managed node group use BottleRocket as the AMI. This is a lightweight, purpose-built OS for containerized workloads, and it comes with several advantages:
-	•	Performance: Since it’s stripped down to just the essentials for running containers, it boots faster and uses fewer resources compared to general-purpose OSes.
-	•	Security: BottleRocket minimizes the attack surface by removing unnecessary packages and includes built-in hardening features like kernel lockdown. It integrates seamlessly with AWS services like SSM for secure management.
+-	Performance: Since it’s stripped down to just the essentials for running containers, it boots faster and uses fewer resources compared to general-purpose OSes.
+- Security: BottleRocket minimizes the attack surface by removing unnecessary packages and includes built-in hardening features like kernel lockdown. It integrates seamlessly with AWS services like SSM for secure management.
 
 ### Node Groups and Autoscaling
 
 The cluster has a managed node group for critical workloads that require high reliability. These nodes:
-	•	Run on On-Demand instances to ensure stability during normal traffic conditions.
-	•	Have a fixed size (2 nodes) to avoid disruption from frequent scaling events.
+- Run on On-Demand instances to ensure stability during normal traffic conditions.
+- Have a fixed size (2 nodes) to avoid disruption from frequent scaling events.
 
 For handling dynamic workloads, the cluster relies on Karpenter. Karpenter automatically provisions nodes based on demand, offering rapid scaling and cost efficiency. This separation of critical and dynamic workloads ensures stability while maintaining flexibility.
 
 ### Storage and Volume Management
 
 The setup includes EBS CSI (Container Storage Interface) for Kubernetes, which allows the cluster to provision storage dynamically. We’ve configured gp3 volumes as the default storage class. The benefits of gp3 are:
-	•	Higher performance: With up to 3,000 IOPS and 125 MiB/s throughput, gp3 volumes provide consistent performance.
-	•	Cost efficiency: gp3 is cheaper than gp2 for equivalent performance.
-	•	Encryption: All volumes are encrypted using AWS KMS secure data at rest.
+- Higher performance: With up to 3,000 IOPS and 125 MiB/s throughput, gp3 volumes provide consistent performance.
+- Cost efficiency: gp3 is cheaper than gp2 for equivalent performance.
+- Encryption: All volumes are encrypted using AWS KMS secure data at rest.
 
 ### Networking with VPC CNI
 
 The cluster uses the AWS VPC CNI plugin to manage pod networking. It’s configured to use the secondary CIDR block (RFC6598, 100.64.0.0/16) to ensure there are enough IPs for pods, even in large-scale deployments. This separation also avoids conflicts with the primary CIDR and simplifies integration with on-prem networks.
 
 The VPC CNI plugin is enhanced with:
-	•	Prefix delegation: This increases the number of available IPs per ENI, reducing the risk of IP exhaustion.
-	•	Custom ENI configuration: Subnets and security groups are explicitly defined, providing fine-grained control over network access.
+- Prefix delegation: This increases the number of available IPs per ENI, reducing the risk of IP exhaustion.
+- Custom ENI configuration: Subnets and security groups are explicitly defined, providing fine-grained control over network access.
 
 Add-ons for Observability and Scalability
 
 Several add-ons are installed to enhance the functionality and observability of the cluster:
-	•	CloudWatch Observability: Provides centralized monitoring and logging for Kubernetes workloads. This simplifies debugging and ensures better visibility into the system performance.
-	•	CoreDNS: Handles service discovery within the cluster.
-	•	Kube-proxy: Manages network proxying for Kubernetes services.
+- CloudWatch Observability: Provides centralized monitoring and logging for Kubernetes workloads. This simplifies debugging and ensures better visibility into the system performance.
+- CoreDNS: Handles service discovery within the cluster.
+- Kube-proxy: Manages network proxying for Kubernetes services.
 
 ### IAM Integration with Pod Identity
 
 For managing permissions, the cluster uses EKS Pod Identity instead of the traditional IAM Roles for Service Accounts (IRSA). Pod Identity provides:
-	•	Granular permissions: Pods can assume roles with minimal required permissions, enhancing security.
-	•	Simpler configuration: It reduces the need for managing trust relationships manually.
+- Granular permissions: Pods can assume roles with minimal required permissions, enhancing security.
+- Simpler configuration: It reduces the need for managing trust relationships manually.
 
-### EKS Terraform
+### EKS: Talking is Cheap, Show Me the Code
 Path: iac/deployment/cloud/main.tf
 ```hcl
 eks_standard = {
@@ -519,7 +519,7 @@ Aurora is configured with Performance Insights, which provides detailed metrics 
 - Identifying slow queries or performance bottlenecks.
 - Optimizing database configurations and query execution.
 
-### Aurora Terraform
+### Aurora: Talking is Cheap, Show Me the Code
 Path: iac/deployment/cloud/main.tf
 ```hcl
   aurora_standard = {
@@ -530,43 +530,3 @@ Path: iac/deployment/cloud/main.tf
   }
   aurora_naming_standard = "${local.aurora_standard.Unit}-${local.aurora_standard.Env}-${local.aurora_standard.Code}-${local.aurora_standard.Feature}"
 
-
-# Aurora
-module "aurora_main" {
-  source          = "terraform-aws-modules/rds-aurora/aws"
-  version         = "~> 9.10.0"
-  name            = local.aurora_naming_standard
-  engine          = "aurora-mysql"
-  engine_version  = "8.0"
-  master_username = "root"
-  instance_class  = var.env == "dev" ? "db.t4g.large" : "db.r6g.large"
-  instances = {
-    one = {}
-  }
-  vpc_id               = module.vpc_main.vpc_id
-  db_subnet_group_name = module.vpc_main.database_subnet_group_name
-  security_group_rules = {
-    vpc_ingress = {
-      cidr_blocks = module.vpc_main.private_subnets_cidr_blocks // allow all private subnets (nodes and app subnets) to access the database
-    }
-  }
-  storage_encrypted                     = true
-  kms_key_id                            = module.kms_main.key_arn
-  manage_master_user_password           = true
-  iam_database_authentication_enabled   = true
-  autoscaling_enabled                   = true
-  autoscaling_min_capacity              = 1
-  autoscaling_max_capacity              = 5
-  apply_immediately                     = true
-  skip_final_snapshot                   = true
-  create_db_cluster_parameter_group     = false
-  create_db_parameter_group             = false
-  performance_insights_enabled          = true
-  performance_insights_kms_key_id       = module.kms_main.key_arn
-  performance_insights_retention_period = 7
-  publicly_accessible                   = false
-  enabled_cloudwatch_logs_exports       = ["audit", "error", "slowquery"]
-
-  tags = local.tags
-}
-  ```
