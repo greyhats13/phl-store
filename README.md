@@ -1,12 +1,11 @@
 # Instructions
 
-Starting from an AWS empty environment, setup Kubernetes cluster and Aurora MySQL cluster including all the necessary resources
+- Starting from an AWS empty environment, setup Kubernetes cluster and Aurora MySQL cluster including all the necessary resources
 using Terraform.
-Next deploy a sample application phl-store to the Kubernetes Cluster (preferably with Helm). It's a simple CRUD application and should
-be accessible from the outside world. The docker image URL can be found at https://hub.docker.com/r/zylwin/phl-store . The app uses
-MySQL as the database to store & retrieve data. The config file is mounted as /config/config.json . The docker-compose file is
-attached below for our reference.
-For the application deployment, use any CI/CD tools of our choice.
+- Next deploy a sample application phl-store to the Kubernetes Cluster (preferably with Helm). It's a simple CRUD application and should
+be accessible from the outside world. The docker image URL can be found at https://hub.docker.com/r/zylwin/phl-store . 
+- The app uses MySQL as the database to store & retrieve data. The config file is mounted as /config/config.json . The docker-compose file is below for your reference.
+For the application deployment, use any CI/CD tools of your choice.
 
 # Submission
 
@@ -15,9 +14,9 @@ For our submission, create a private Github repository & include the following
 1. Architectural diagram to explain yur architecture.
 2. The relevant configuration scripts (eg: Terraform).
 3. In the README, include
-   a. Instruction on how to setup/run the infrastructure & deploy the app
-   b. Include high level steps on how would you manage the secrets & configuration change
-   c. Also include high level steps to make this infrastructure more secure, automate & reliable
+   - Instruction on how to setup/run the infrastructure & deploy the app
+   - Include high level steps on how would you manage the secrets & configuration change
+   - Also include high level steps to make this infrastructure more secure, automate & reliable
 
 # Table of Contents
 
@@ -76,7 +75,7 @@ Here the architectural diagram, how we design the AWS infrastructure for the phl
   <img src="img/aws.png" alt="aws">
 </p>
 
-All the design diagram is implemented in the Terraform code. Here's the detail of the design:
+All the design diagram is implemented in the Terraform code. The phl-store repository is mono repo where Terraform code, GitOps repo (Helm), & services are all stored in one repository.
 
 ## VPC
 
@@ -100,9 +99,9 @@ We placed NAT Gateways in the public subnets to manage internet traffic from our
 
 NAT Gateways are great for security because they let our private resources reach out to the internet without being directly exposed. They also automatically scale to handle more traffic as needed, which is perfect for our growing and changing architecture.
 
-### Scalability and Availability
+### Room for Scalability and Availability
 
-Our VPC is built to grow and handle failures without any hiccups. By spreading our subnets across multiple AZs, we make sure that our services stay up even if one AZ has problems. The extra CIDR block for Kubernetes means we won’t run out of IPs as we add more pods. Plus, things like NAT Gateways, ALBs, and EKS nodes can scale automatically to handle sudden increases in traffic, keeping everything fast and reliable.
+Our VPC is built to grow and handle failures without any hiccups. By spreading our subnets across multiple AZs, we make sure that our services stay up even if one AZ has problems. We setup seconday CIDR block using RFC65898 so EKS nodes won’t run out of IPs as we add more pods. Plus, things like NAT Gateways, ALBs, and EKS nodes can scale automatically to handle sudden increases in traffic, keeping everything fast and reliable.
 
 ### Security
 
@@ -120,7 +119,7 @@ The EKS setup in this design is built for running containerized workloads effici
 
 The EKS cluster runs Kubernetes version 1.31 & is designed to operate in a private networking setup. The control plane spans multiple AZs, ensuring high availability. All communication between the control plane & worker nodes is encrypted for security.
 
-The VPC’s subnets are configured to support the cluster’s needs:
+The VPC’s subnets are configured to support the cluster needs:
 
 - The control plane uses private subnets for communication, ensuring that it is isolated from public exposure.
 - Worker nodes & pods run in private subnets to minimize exposure while allowing managed traffic routing through NAT Gateways & ALBs.
@@ -139,7 +138,7 @@ The cluster has a managed node group for critical workloads that require high re
 - Run on On-Dem& instances to ensure stability during normal traffic conditions.
 - Have a fixed size (2 nodes) to avoid disruption from frequent scaling events.
 
-For h&ling dynamic workloads, the cluster relies on Karpenter. Karpenter automatically provisions nodes based on dem&, offering rapid scaling & cost efficiency. This separation of critical & dynamic workloads ensures stability while maintaining flexibility.
+For handling dynamic workloads, the cluster relies on Karpenter. Karpenter automatically provisions nodes based on dem&, offering rapid scaling & cost efficiency. This separation of critical & dynamic workloads ensures stability while maintaining flexibility.
 
 ### Storage & Volume Management
 
@@ -163,7 +162,7 @@ The VPC CNI plugin is enhanced with:
 Several add-ons are installed to enhance the functionality & observability of the cluster:
 
 - CloudWatch Observability: Provides centralized monitoring & logging for Kubernetes workloads. This simplifies debugging & ensures better visibility into the system performance.
-- CoreDNS: H&les service discovery within the cluster.
+- CoreDNS: handles service discovery within the cluster.
 - Kube-proxy: Manages network proxying for Kubernetes services.
 
 ### IAM Integration with Pod Identity
@@ -179,11 +178,11 @@ The design is how we expose our backend APIs to the public securely & efficientl
 
 ### Exposing APIs with API Gateway
 
-To make our backend APIs accessible to users, I use AWS API Gateway. This service acts as a front door for our APIs, h&ling all the incoming requests from the internet. By using API Gateway, we can easily manage & scale our API traffic without worrying about the underlying infrastructure.
+To make our backend APIs accessible to users, I use AWS API Gateway. This service acts as a front door for our APIs, handling all the incoming requests from the internet. By using API Gateway, we can easily manage & scale our API traffic without worrying about the underlying infrastructure.
 
 ### Secure Authentication with AWS Cognito
 
-Security is a top priority, so I use AWS Cognito to h&le authentication. Cognito serves as our authorizer, ensuring that only authenticated clients can access our APIs. We set it up to use client credentials, which means that our applications need to provide valid credentials to get access tokens. This way, we keep unauthorized users out & protect our backend services from misuse.
+Security is a top priority, so I use AWS Cognito to handle authentication. Cognito serves as our authorizer, ensuring that only authenticated clients can access our APIs. We set it up to use client credentials, which means that our applications need to provide valid credentials to get access tokens. This way, we keep unauthorized users out & protect our backend services from misuse.
 
 ### Integration with EKS ALB via VPC Link
 
@@ -203,7 +202,7 @@ By combining API Gateway with an internal ALB in EKS, & securing everything with
 
 ## Aurora MySQL
 
-Aurora MySQL is combination of performance, cost-efficiency, & MySQL compatibility. Aurora MySQL offers s built-in autoscaling for both compute & storage, making it ideal for h&ling variable workloads.
+Aurora MySQL is combination of performance, cost-efficiency, & MySQL compatibility. Aurora MySQL offers s built-in autoscaling for both compute & storage, making it ideal for handling variable workloads.
 
 ### Private Database Setup
 
@@ -222,9 +221,9 @@ The Aurora cluster is configured with IAM database authentication, which allows 
 
 ### Autoscaling & Read Replicas
 
-Autoscaling is enabled for the Aurora cluster, allowing it to dynamically adjust compute capacity based on traffic. This is particularly important for h&ling:
+Autoscaling is enabled for the Aurora cluster, allowing it to dynamically adjust compute capacity based on traffic. This is particularly important for handling:
 
-- High Traffic Spikes: During peak traffic, read replicas can scale up to h&le increased read workloads, preventing bottlenecks.
+- High Traffic Spikes: During peak traffic, read replicas can scale up to handle increased read workloads, preventing bottlenecks.
 - Connection Pooling Issues: By adding more read replicas during high traffic, Aurora ensures the application doesn’t hit connection limits, improving response times & user experience.
 
 ### Read Replicas
@@ -422,7 +421,7 @@ projects:
       when_modified: ["*.tf*"]
 ```
 
-that's how we setup the infrastructure for the new service. The same process can be applied to other services.
+That's how we setup the infrastructure for the new service. The same process can be applied to other services.
 
 Check out an example that's have been done [here](https://github.com/greyhats13/phl-store/pull/36)
 
@@ -433,7 +432,7 @@ With Atlantis, developers can use templates provided by devops to create new ser
 
 
 
-## Deploying Service using GitOps
+## Deploying Applicationg with GitOps
 
 To deploy our service to EKS, we need CI/CD to speed up getting our app to market. So, we use ArgoCD as our GitOps tool to deploy our service to EKS. We will design our CI/CD pipeline like the picture below.
 
@@ -442,6 +441,17 @@ To deploy our service to EKS, we need CI/CD to speed up getting our app to marke
 </p>
 
 In this case, we use a mono repo where Terraform code, GitOps repo (Helm), & services are all stored in one repository. CI/CD triggers can vary for each community or company. Here, we use the Gitflow branching strategy. Okay, let’s continue.
+
+### Preparation
+1. Assume we already use Atlantis to provision our services and CI/CD components before deploying our application to EKS cluster
+2. We need to prepare our application code including th Dockerfile.
+3. We need to prepare the Helm chart for our service.
+We can create the helm chart
+```sh
+helm create phl-products
+```
+Here’s the [example](https://github.com/greyhats13/phl-store/blob/main/gitops/charts/app/phl-products/values.yaml#26
+4. We need to prepare the Github Action workflow for our CI/CD pipeline. We can use the template. Here’s the [example]([profile-ci.yml](https://github.com/greyhats13/phl-store/blob/main/.github/workflows/profile-ci.yml#L1)
 
 From the diagram, there are 5 stages:
 1. Check out code
@@ -474,10 +484,12 @@ c. Security Testing with OWASP ZAP
   - Using the Bearer Token saved in $GITHUB_ENV, we run OWASP ZAP.
   - After all tests, we upload the test reports to an S3 bucket.
 
-Reference: [profile-ci.yml](https://github.com/greyhats13/phl-store/blob/main/.github/workflows/products-ci.yml#L1)
+Reference: [products-ci.yml](https://github.com/greyhats13/phl-store/blob/main/.github/workflows/products-ci.yml#L1)
 
-# Securing the Application Secret
+# Designing scalable, secure & reliable application
 
+
+##
 There are many ways to secure secrets. We can use AWS Secret Store CSI Driver, External Secret, or ArgoCD Vault Plugin (AVP). Here’s the high-level design:
 
 <p align="center">
@@ -631,8 +643,8 @@ appSecret:
     port: <port>
 ```
 
-8. Use Distroless Image for Security
-To make secrets more secure, use a distroless image for our service. This way, no one can access secrets from the container.
+### Use Distroless Image for Security
+To make our application more secure, we can use a distroless image for our service. It can reduce the attack surface, minimized vulnerabilities, and improved the prformance. Also This way, no one can access secrets from the container.
 - [Dockerfile](https://github.com/greyhats13/phl-store/blob/main/services/phl-products/templates/Dockerfile-distrolessl#L27)
 ```Dockerfile
 # Use a minimal base image for distroless
@@ -648,5 +660,21 @@ EXPOSE 8080
 # Run the binary
 CMD ["/build/app"]
 ```
+
+### Implement HPA for  Pod Autoscaling and Karpenter for Node Autoscaling
+To make our application more scalable, we can use Horizontal Pod Autoscaler (HPA) in Kubernetes. HPA automatically scales the number of pods based on CPU/Memoery utilization or custom metrics. Here’s how we set up HPA for our service:
+- [HPA Configuration](https://github.com/greyhats13/phl-store/blob/main/gitops/charts/app/phl-products/values.yaml#135)
+```yaml
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 20
+  targetCPUUtilizationPercentage: 75
+  targetMemoryUtilizationPercentage: 75
+```
+We also have implement Karpenter for Node autoscalin to scale out the nodes as the pod increase so does the node. This way, we can handle traffic spikes & ensure our application is always available. It can scale in as well when the traffic is low.
+
+### Use  Redis for Caching
+To improve the performance of our application, we can use Redis for caching such as Amazon Elasticache. Redis is an in-memory data store that can help reduce latency & speed up response times. We can cache frequently accessed data in Redis, so our application doesn’t have to fetch it from the database every time. This way, we can improve the performance of our application &  a better user experience.provide. Current binary app has no implementation for Redis caching yet.
 
 We set up a GitOps pipeline using ArgoCD to deploy services to EKS. Our CI/CD pipeline includes building & tagging Docker images, deploying with ArgoCD, & running end-to-end tests. We also secured our application secrets using ArgoCD Vault Plugin with AWS Secrets Manager. This setup helps us deploy quickly, keep our services secure, & maintain a smooth workflow for our developers.
