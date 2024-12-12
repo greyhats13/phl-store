@@ -244,25 +244,18 @@ To check cloud resource deployment, you can see the path in this repo: `iac/depl
 
 Setelah semua resource yang dibutuhkan terbuat seperti s3 (tfstate), KMS, ACM, Route53, EKS. 
 I started installing the EKS addons with their EKS Pods Identity (IRSA replacement) such as Atlantis and ArgoCD.
-I
-Some of the EKS addons are managed by ArgoCD such as AWS Load Balancer Controler, and External DNS.
-
-At the start, setting up resources with Terraform manually can be slow & not very efficient. We need to move towards a self-service model so developers can manage their own applications in the long run. To do this, make sure EKS is ready, & Atlantis & ArgoCD are installed. Then, we use atlantis to provisiour our resource AWS and use ArgoCD for deployments.
-
+[Module ArgoCD](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/main.tf#L556) & [Module atlantis](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/main.tf#L637)
 Terraform Provider Setup 
 - Deploy Atlantis & ArgoCD on EKS
-Use the Helm provider to install Atlantis & ArgoCD on our EKS cluster. Make sure aws-alb-ingress-controller & external-dns are installed on the EKS cluster. This allows ALB Ingress Controller to create ALBs & External DNS to automatically create Route53 records. 
+Use the Helm provider to install Atlantis & ArgoCD on our EKS cluster. Make sure aws-alb-ingress-controller & external-dns are installed on the EKS cluster. This allows ALB Ingress Controller to create ALBs & External DNS to automatically create Route53 records.
+[Module ArgoCD](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/main.tf#L556) & [Module atlantis](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/main.tf#L637)
 - Create IAM Provider
-- Set up IAM roles & policies for Atlantis & ArgoCD. we can use EKS Pod Identity or IRSA. Here, we use EKS Pod Identity. Ensure the service account name match the one associated with the pod identity.
-
-(iac/deployment/cloud/main.tf)
+- Set up IAM roles & policies for Atlantis & ArgoCD. we can use EKS Pod Identity or IRSA. Here, we use EKS Pod Identity. Ensure the ArgoCD and  service account name match the one associated with the pod identity.
 
 ## Prepare Manifests for Atlantis & ArgoCD
 First, we need to set up manifests for Atlantis & ArgoCD. We can inject secrets from AWS Secret Manager into the Helm charts using the Helm provider & set `helm_sets_sensitive` to install ArgoCD.
-
 - Prepare Atlantis Manifest (iac/deployment/cloud/manifest/atlantis.yaml):
-
-Create Webhooks with Terraform & GitHub Provider
+- Create Webhooks with Terraform & GitHub Provider
 
 ### Self Service Model with Atlantis
 
@@ -292,8 +285,8 @@ This part isn’t CI/CD yet, but it’s about preparing a new service. Before de
 
 With Atlantis, developers can use templates provided by devops to create new services on their own. They just fill in details like database name & access user. Terraform code will automatically add secrets to AWS Secret Manager, create ECR repository, set up ArgoCD Application, & configure API Gateway.
 ```hcl
-# Databases Config
-## Create a Database
+// Databases Config
+// Create a Database
 resource "mysql_database" "db" {
   name = local.svc_naming_st&ard
 }
@@ -410,7 +403,7 @@ module "ecr" {
   }
 }
 
-# Prepare GitHub
+// Prepare GitHub
 module "github_action_env" {
   source                  = "../../../modules/github"
   repo_name               = var.github_repo
@@ -420,7 +413,7 @@ module "github_action_env" {
   github_action_secrets   = local.github_action_secrets
 }
 
-## ArgoCD Vault Plugin (AVP) Pod Identity
+// ArgoCD Vault Plugin (AVP) Pod Identity
 module "svc_custom_pod_identity" {
   source  = "terraform-aws-modules/eks-pod-identity/aws"
   version = "~> 1.7.0"
@@ -446,7 +439,7 @@ module "svc_custom_pod_identity" {
   tags = local.tags
 }
 
-## Create ArgoCD App
+// Create ArgoCD App
 module "argocd_app" {
   source     = "../../../modules/helm"
   region     = var.region
@@ -664,30 +657,30 @@ To deploy our service to EKS, we need CI/CD to speed up getting our app to marke
 In this case, we use a mono repo where Terraform code, GitOps repo (Helm), & services are all stored in one repository. CI/CD triggers can vary for each community or company. Here, we use the Gitflow branching strategy. Okay, let’s continue.
 
 From the diagram, there are 5 stages:
-	1.	Check out code
-	2.	Unit Test & Coverage
-	•	In the second step, we run unit tests & check coverage. GitHub Actions do the unit tests, & the reports are uploaded to artifacts for Sonar analysis. We use SonarQube for code quality & security analysis. But since we only have Docker images, we use SonarCloud.io as an alternative. I also removed the ./app binary from the zylwin/phl-store:latest image.
-	3.	Build & Tagging
-	•	Here, GitHub Actions build Docker images & tag them with the image SHA based on push events to the master or dev branch. After tagging, the images are pushed to the ECR registry. Authentication is done using GitHub OIDC.
-	4.	Deployment with ArgoCD
-	•	In this step, deployment happens after GitHub Actions have pushed the image tags.
-	•	ArgoCD clones the repository & uses sed to replace the image tag with the pushed image SHA in the Helm chart.
-	•	We replace appVersion in Chart.yaml with the new image tag. ArgoCD sees the change & syncs the desired state with the live state in EKS. Ideally, we use canary deployments, but due to time constraints, we do a rolling update instead.
-	5.	End to End Testing
-	•	After deployment, we run end-to-end tests.
+  1.	Check out code
+  2.	Unit Test & Coverage
+  •	In the second step, we run unit tests & check coverage. GitHub Actions do the unit tests, & the reports are uploaded to artifacts for Sonar analysis. We use SonarQube for code quality & security analysis. But since we only have Docker images, we use SonarCloud.io as an alternative. I also removed the ./app binary from the zylwin/phl-store:latest image.
+  3.	Build & Tagging
+  •	Here, GitHub Actions build Docker images & tag them with the image SHA based on push events to the master or dev branch. After tagging, the images are pushed to the ECR registry. Authentication is done using GitHub OIDC.
+  4.	Deployment with ArgoCD
+  •	In this step, deployment happens after GitHub Actions have pushed the image tags.
+  •	ArgoCD clones the repository & uses sed to replace the image tag with the pushed image SHA in the Helm chart.
+  •	We replace appVersion in Chart.yaml with the new image tag. ArgoCD sees the change & syncs the desired state with the live state in EKS. Ideally, we use canary deployments, but due to time constraints, we do a rolling update instead.
+  5.	End to End Testing
+  •	After deployment, we run end-to-end tests.
 a. API Testing with Newman
-	•	We use a Postman collection with pre-request & post-response scripts.
-	•	Since our endpoint needs Authorization, we generate a Bearer Token by hitting the oauth.phl.blast.co.id endpoint.
-	•	This endpoint is a custom domain from Cognito, which acts as the authorizer for our AWS API Gateway.
-	•	After getting the token, we save it to a Postman environment variable.
-	•	Then, we run the Postman collection with Newman for 5 iterations & a 200ms delay between each.
+  •	We use a Postman collection with pre-request & post-response scripts.
+  •	Since our endpoint needs Authorization, we generate a Bearer Token by hitting the oauth.phl.blast.co.id endpoint.
+  •	This endpoint is a custom domain from Cognito, which acts as the authorizer for our AWS API Gateway.
+  •	After getting the token, we save it to a Postman environment variable.
+  •	Then, we run the Postman collection with Newman for 5 iterations & a 200ms delay between each.
 b. Performance Testing with k6.io
-	•	We set up performance testing scenarios & develop a k6.js script.
-	•	Then, we run k6.io with 5 iterations & a 200ms delay between each.
+  •	We set up performance testing scenarios & develop a k6.js script.
+  •	Then, we run k6.io with 5 iterations & a 200ms delay between each.
 c. Security Testing with OWASP ZAP
-	•	We perform security testing with OWASP ZAP by preparing the OpenAPI spec of our service.
-	•	Using the Bearer Token saved in $GITHUB_ENV, we run OWASP ZAP.
-	•	After all tests, we upload the test reports to an S3 bucket.
+  •	We perform security testing with OWASP ZAP by preparing the OpenAPI spec of our service.
+  •	Using the Bearer Token saved in $GITHUB_ENV, we run OWASP ZAP.
+  •	After all tests, we upload the test reports to an S3 bucket.
 
 Here is the complete GitHub Action code I made:
 ```yml
@@ -887,10 +880,10 @@ There are many ways to secure secrets. We can use AWS Secret Store CSI Driver, E
 
 
 We will secure secrets using ArgoCD Vault Plugin (AVP) with AWS Secrets Manager. Here are the steps:
-	1.	Install ArgoCD & AVP on EKS
-	•	We already installed ArgoCD on our EKS cluster & added the ArgoCD Vault Plugin (AVP).
-	2.	Set Up IAM Policy for AVP
-	•	To use AVP, ArgoCD repo server needs permission to read secrets from Secrets Manager. First, we create an IAM policy:
+  1.	Install ArgoCD & AVP on EKS
+  •	We already installed ArgoCD on our EKS cluster & added the ArgoCD Vault Plugin (AVP).
+  2.	Set Up IAM Policy for AVP
+  •	To use AVP, ArgoCD repo server needs permission to read secrets from Secrets Manager. First, we create an IAM policy:
 
 # ArgoCD Vault Plugin IAM Policy
 ```hcl
@@ -908,8 +901,8 @@ data "aws_iam_policy_document" "avp_policy" {
 ```
 
 
-	3.	Attach IAM Policy to ArgoCD Repo Server
-	•	Next, we attach this policy to the IAM Role used by argocd-repo-server & associate the IAM Role with the Kubernetes service account.
+  3.	Attach IAM Policy to ArgoCD Repo Server
+  •	Next, we attach this policy to the IAM Role used by argocd-repo-server & associate the IAM Role with the Kubernetes service account.
 ```hcl
 module "avp_custom_pod_identity" {
   source  = "terraform-aws-modules/eks-pod-identity/aws"
@@ -994,7 +987,7 @@ appSecret:
 
 ```yaml
     avp.kubernetes.io/path: This is the name of our secret in AWS.
-	  avp.kubernetes.io/secret-version: This is the latest version of our secret.
+    avp.kubernetes.io/secret-version: This is the latest version of our secret.
 ```
 6. Replace Placeholders with Secrets
 When ArgoCD syncs, it replaces the placeholders with values from Secrets Manager.
@@ -1015,4 +1008,4 @@ EXPOSE 8080
 CMD ["/build/app"]
 ```
 
-We set up a GitOps pipeline using ArgoCD to deploy services to EKS. Our CI/CD pipeline includes building & tagging Docker images, deploying with ArgoCD, & running end-to-end tests. We also secured our application secrets using ArgoCD Vault Plugin with AWS Secrets Manager. This setup helps us deploy quickly, keep our services secure, & maintain a smooth workflow for our developers.!
+We set up a GitOps pipeline using ArgoCD to deploy services to EKS. Our CI/CD pipeline includes building & tagging Docker images, deploying with ArgoCD, & running end-to-end tests. We also secured our application secrets using ArgoCD Vault Plugin with AWS Secrets Manager. This setup helps us deploy quickly, keep our services secure, & maintain a smooth workflow for our developers.
