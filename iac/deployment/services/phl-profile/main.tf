@@ -61,9 +61,9 @@ module "secrets_iac" {
   # Version
   ignore_secret_changes = false
   secret_string = jsonencode({
-    # db_host           = data.terraform_remote_state.cloud.outputs.aurora_cluster_endpoint
-    # db_port           = tostring(data.terraform_remote_state.cloud.outputs.aurora_cluster_port)
-    # db_name           = mysql_database.db.name
+    db_host           = data.terraform_remote_state.cloud.outputs.aurora_cluster_endpoint
+    db_port           = tostring(data.terraform_remote_state.cloud.outputs.aurora_cluster_port)
+    db_name           = mysql_database.db.name
     db_user           = mysql_user.db.user
     db_password       = random_password.password.result
   })
