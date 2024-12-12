@@ -69,10 +69,10 @@ For our submission, create a private Github repository & include the following
     - [Replace Placeholders with Secrets](#replace-placeholders-with-secrets)
 - [Designing scalable, secure & reliable application](#designing-scalable-secure--reliable-application)
   - [Use Distroless Image for Security](#use-distroless-image-for-security)
-  - [Implement HPA for Pod Autoscaling and Karpenter for Node Autoscaling](#implement-hpa-for-pod-autoscaling-and-karpenter-for-node-autoscaling-1)
-  - [Increase Pod Security](#increase-pod-security-1)
-  - [Use API Gateway for Security & Rate Limiting](#use-api-gateway-for-security--rate-limiting-1)
-  - [Use Redis for Caching](#use-redis-for-caching-1)
+  - [Implement HPA for Pod Autoscaling and Karpenter for Node Autoscaling](#implement-hpa-for-pod-autoscaling-and-karpenter-for-node-autoscaling)
+  - [Increase Pod Security](#increase-pod-security)
+  - [Use API Gateway for Security & Rate Limiting](#use-api-gateway-for-security--rate-limiting)
+  - [Use Redis for Caching](#use-redis-for-caching)
   - [Use Distroless Image for Security](#use-distroless-image-for-security)
 
 # AWS Infrastructure Design
@@ -473,7 +473,7 @@ From the diagram, there are 5 stages:
   - In this step, deployment happens after GitHub Actions have pushed the image tags.
   - ArgoCD clones the repository & uses sed to replace the image tag with the pushed image SHA in the Helm chart.
   - Github action will replace appVersion in Chart.yaml with the new image tag. 
-  - ArgoCD then detect the the change & syncs the desired state with the live state in EKS. Ideally, we use canary deployments, but due to time constraints, we do a rolling update instead.
+  - ArgoCD then detect the the change & syncs the desired state with the live state in EKS. Ideally, we use canary deployments so we can test the new version before rolling it out to all users by splitting the traffic between the old & new versions, but due to time constraints, we do a rolling update instead.
 
 4. End to End Testing
   - API Testing with Newman
@@ -711,6 +711,12 @@ securityContext:
 To secure our APIs, we can use AWS API Gateway that we've created. It acts as a front door for our services, providing authentication, authorization, & rate limiting. We can set up API Gateway to require API keys, use AWS Cognito for user authentication, & integrate with AWS WAF for web application firewall protection. Here’s how we can configure API Gateway for our service:
 - [API Gateway Configuration](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/services/phl-products/main.yaml#184)
 We can also implement WAF rules to protect our APIs from common web exploits like SQL injection & cross-site scripting. This way, we can ensure our APIs are secure & reliable. As AWS API Gateway HTTP API doesnt support WAF, we can use AWS WAF with ALB to protect our APIs.
+
+### Provide API Testing, Performance Testing, & Security Testing
+To ensure our application is reliable & secure, we need to perform API testing, performance testing, & security testing. 
+API testing will check if our APIs are working as expected. We can use Postman & Newman to run API tests. We can also use k6.io for performance testing to check how our application performs under load. For security testing, we can use OWASP ZAP to find vulnerabilities in our application. Here’s how we can set up these tests:
+- [end_to_end_test](https://github.com/greyhats13/phl-store/blob/main/.github/workflows/products-ci.yml#L04)
+
 
 ### Use  Redis for Caching
 To improve the performance of our application, we can use Redis for caching such as Amazon Elasticache. Redis is an in-memory data store that can help reduce latency & speed up response times. We can cache frequently accessed data in Redis, so our application doesn’t have to fetch it from the database every time. This way, we can improve the performance of our application &  a better user experience.provide. Current binary app has no implementation for Redis caching yet.
