@@ -254,7 +254,6 @@ After all main resources we need is provisioned
 - [VPC](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/main.tf#154)
 - [EKS](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/main.tf#229)
 
-We can start deploy/install the EKS addons with their EKS Pods Identity (IRSA replacement) such as Atlantis and ArgoCD.
 
 ArgoCD
 
@@ -321,20 +320,28 @@ module "atlantis_custom_pod_identity" {
 ```
 For implementation detail, click the name.
 
-Terraform Provider Setup
-
-- Deploy Atlantis & ArgoCD on EKS
-  Use the Helm provider to install Atlantis & ArgoCD on our EKS cluster. Make sure aws-alb-ingress-controller & external-dns are installed on the EKS cluster. This allows ALB Ingress Controller to create ALBs & External DNS to automatically create Route53 records.
-  [Module ArgoCD](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/main.tf#L556) & [Module atlantis](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/main.tf#L637)
-- Create IAM Provider
-- Set up IAM roles & policies for Atlantis & ArgoCD. we can use EKS Pod Identity or IRSA. Here, we use EKS Pod Identity. Ensure the ArgoCD and service account name match the one associated with the pod identity.
 
 ## Prepare Manifests for Atlantis & ArgoCD
 
-First, we need to set up manifests for Atlantis & ArgoCD. We can inject secrets from AWS Secret Manager into the Helm charts using the Helm provider & set `helm_sets_sensitive` to install ArgoCD.
+First, we need to set up manifests for Atlantis & ArgoCD. As we treat the atlantis and ArgoCD manfest as template. We can inject secrets from AWS Secret Manager into the Helm charts using the Helm provider & set `helm_sets_sensitive` to install ArgoCD.
+Here's the detail of ArgoCD manifest
+[atlantis.yaml](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/manifest/argocd.yaml#8)
+-  [Setup Github Oauth](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/manifest/argocd.yaml#8)
+- [Installing ArgoCD Vault Plugin](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/manifest/argocd.yaml#68). ArgoCD Vault Plugin is crucial to secure our secrets. We'll discuss this in the next section.
+- [Setup the ArgoCD Server Ingress](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/manifest/argocd.yaml#107)
 
 - Prepare Atlantis Manifest (iac/deployment/cloud/manifest/atlantis.yaml):
 - Create Webhooks with Terraform & GitHub Provider
+
+After installing ArgoCD Server (UI) the internet yet. We need to expose it using ALB Ingress Controller.
+But before that we need to install the ALB Ingress Controller first.
+We can managed those using ArgoCD.
+we can access ArgoCD by creating a port-forward to the ArgoCD Server pod.
+```sh
+kubectl port-forward svc/argocd-server -n argocd 8080:80
+```
+Then, open the browser & go to `https://localhost:8080` & login with the default username & password (admin & the password is the name of the server pod).
+We can start deploy/install the EKS addons with their EKS Pods Identity (IRSA replacement) such as Atlantis and ArgoCD. However, we need to install aws-alb-controller and external-dns first so our work will be much easier.
 
 ### Self Service Model with Atlantis
 
