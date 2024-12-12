@@ -347,7 +347,7 @@ Once all components are installed, we can create a self-service model using Atla
 When we want to provision, set up, or update infrastructure, just make a pull request in the repository set up by Atlantis. 
 - Developer want to provision the new service call `phl-products`. Here's for the [example](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/services/phl-products#1)
 - Developer also need to add this part so Atlantis can detect the changes in the directory
-````yml
+```yml
 projects:
   - dir: iac/deployment/services/phl-profiles
     apply_requirements: ["mergeable,approved"]
@@ -360,7 +360,7 @@ projects:
 -  The infra or devops team reviews & approves the pull request. Let's say, we require at least two approvals & that the pull request is mergeable.
 - After approval, developer can start perform the `atlantis apply` to apply the changes to the infrastructure.
 - [atlantis.yaml](https://github.com/greyhats13/phl-store/blob/main/iac/atlantis.yaml#26)
-````yml
+```yml
 version: 3
 projects:
   - dir: iac/deployment/services/phl-profile
@@ -391,32 +391,37 @@ To deploy our service to EKS, we need CI/CD to speed up getting our app to marke
 In this case, we use a mono repo where Terraform code, GitOps repo (Helm), & services are all stored in one repository. CI/CD triggers can vary for each community or company. Here, we use the Gitflow branching strategy. Okay, let’s continue.
 
 From the diagram, there are 5 stages:
-- Check out code
-- Unit Test & Coverage stages
-- In the second step, we run unit tests & check coverage. GitHub Actions do the unit tests, & the reports are uploaded to artifacts for Sonar analysis. We use SonarQube for code quality & security analysis. But since we only have Docker images, we use SonarCloud.io as an alternative. I also removed the ./app binary from the zylwin/phl-store:latest image.
-- Build & Tagging stages
-  •	Here, GitHub Actions build Docker images & tag them with the image SHA based on push events to the master or dev branch. After tagging, the images are pushed to the ECR registry. Authentication is done using GitHub OIDC.
+1. Check out code
+2. Unit Test & Coverage stages (not implemented as planned)
+  - Because we only have Docker images, we only see the ./app binary from the zylwin/phl-store:latest image.
+  - The ideal step is we run unit tests & check coverage. 
+  - GitHub Actions do the unit tests, & the reports are uploaded to artifacts for Sonar analysis. We use SonarQube for code quality & security analysis. 
+3. Build & Tagging stages
+  - Here, GitHub Actions build Docker images 
+  - Tag them with the image SHA based on push events to the master or dev branch.
+  - After tagging, the images are pushed to the ECR registry. Authentication is done using GitHub OIDC.
 - Deployment with ArgoCD
-In this step, deployment happens after GitHub Actions have pushed the image tags.
-ArgoCD clones the repository & uses sed to replace the image tag with the pushed image SHA in the Helm chart.
-  •	We replace appVersion in Chart.yaml with the new image tag. ArgoCD sees the change & syncs the desired state with the live state in EKS. Ideally, we use canary deployments, but due to time constraints, we do a rolling update instead.
-- End to End Testing
-  •	After deployment, we run end-to-end tests.
-a. API Testing with Newman
-  •	We use a Postman collection with pre-request & post-response scripts.
-  •	Since our endpoint needs Authorization, we generate a Bearer Token by hitting the oauth.phl.blast.co.id endpoint.
-  •	This endpoint is a custom domain from Cognito, which acts as the authorizer for our AWS API Gateway.
-  •	After getting the token, we save it to a Postman environment variable.
-  •	Then, we run the Postman collection with Newman for 5 iterations & a 200ms delay between each.
-b. Performance Testing with k6.io
-  •	We set up performance testing scenarios & develop a k6.js script.
-  •	Then, we run k6.io with 5 iterations & a 200ms delay between each.
-c. Security Testing with OWASP ZAP
-  •	We perform security testing with OWASP ZAP by preparing the OpenAPI spec of our service.
-  •	Using the Bearer Token saved in $GITHUB_ENV, we run OWASP ZAP.
-  •	After all tests, we upload the test reports to an S3 bucket.
+  - In this step, deployment happens after GitHub Actions have pushed the image tags.
+  - ArgoCD clones the repository & uses sed to replace the image tag with the pushed image SHA in the Helm chart.
+  - Github action will replace appVersion in Chart.yaml with the new image tag. 
+  - ArgoCD then detect the the change & syncs the desired state with the live state in EKS. Ideally, we use canary deployments, but due to time constraints, we do a rolling update instead.
 
-Reference: [profile-ci.yml](https://github.com/greyhats13/phl-store/blob/main/.github/workflows/products-ci.yml)
+4. End to End Testing
+  - API Testing with Newman
+  - We use a Postman collection with pre-request & post-response scripts.
+  - Since our endpoint needs Authorization, we generate a Bearer Token by hitting the oauth.phl.blast.co.id endpoint.
+  - This endpoint is a custom domain from Cognito, which acts as the authorizer for our AWS API Gateway.
+  - After getting the token, we save it to a Postman environment variable.
+  - Then, we run the Postman collection with Newman for 5 iterations & a 200ms delay between each.
+b. Performance Testing with k6.io
+  - We set up performance testing scenarios & develop a k6.js script.
+  - Then, we run k6.io with 5 iterations & a 200ms delay between each.
+c. Security Testing with OWASP ZAP
+  - We perform security testing with OWASP ZAP by preparing the OpenAPI spec of our service.
+  - Using the Bearer Token saved in $GITHUB_ENV, we run OWASP ZAP.
+  - After all tests, we upload the test reports to an S3 bucket.
+
+Reference: [profile-ci.yml](https://github.com/greyhats13/phl-store/blob/main/.github/workflows/products-ci.yml#L1)
 
 # Securing the Application Secret
 
@@ -426,14 +431,14 @@ There are many ways to secure secrets. We can use AWS Secret Store CSI Driver, E
   <img src="img/cicd.png" alt="aws">
 </p>
 
-
+## Preparation
 We will secure secrets using ArgoCD Vault Plugin (AVP) with AWS Secrets Manager. Here are the steps:
-  1.	Install ArgoCD & AVP on EKS
-  •	We already installed ArgoCD on our EKS cluster & added the ArgoCD Vault Plugin (AVP).
-  2.	Set Up IAM Policy for AVP
-  •	To use AVP, ArgoCD repo server needs permission to read secrets from Secrets Manager. First, we create an IAM policy:
+1.	Install ArgoCD & AVP on EKS
+- We already installed ArgoCD on our EKS cluster & added the ArgoCD Vault Plugin (AVP).
+2.	Set Up IAM Policy for AVP
+- To use AVP, ArgoCD repo server needs permission to read secrets from Secrets Manager. First, we create an IAM policy:
 
-# ArgoCD Vault Plugin IAM Policy
+[ArgoCD Vault Plugin IAM Policy](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/iam_policies.tf#L27)
 ```hcl
 data "aws_iam_policy_document" "avp_policy" {
   statement {
@@ -448,9 +453,9 @@ data "aws_iam_policy_document" "avp_policy" {
 }
 ```
 
-
 **3**	Attach IAM Policy to ArgoCD Repo Server
 - Next, we attach this policy to the IAM Role used by argocd-repo-server & associate the IAM Role with the Kubernetes service account.
+[ArgoCD Vault Plugin IAM Policy](https://github.com/greyhats13/phl-store/blob/main/iac/deployment/cloud/main.tf#L609)
 ```hcl
 module "avp_custom_pod_identity" {
   source  = "terraform-aws-modules/eks-pod-identity/aws"
@@ -482,7 +487,7 @@ module "avp_custom_pod_identity" {
 
 **4.**	Create Secret Template for Helm Chart
 Now, AVP can read secrets from AWS Secrets Manager. We need to create a secret.yaml template for our Helm chart.
-
+[secret.yaml]https://github.com/greyhats13/phl-store/blob/main/gitops/charts/app/phl-products/templates/secret.yaml#L27)
 ```yaml
 apiVersion: v1
 kind: Secret
