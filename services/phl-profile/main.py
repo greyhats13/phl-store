@@ -1,3 +1,4 @@
+import lru_cache
 from fastapi import FastAPI, APIRouter, status, Depends, HTTPException
 from sqlmodel import SQLModel, Field, select
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -24,8 +25,11 @@ class Settings(BaseSettings):
 
     model_config = ConfigDict(env_file=".env", env_file_encoding="utf-8")
 
+@lrucache()
+def get_settings():
+    return Settings()
 
-settings = Settings()
+settings = get_settings()
 
 # Async Engine and Session
 engine = create_async_engine(settings.database_url, echo=True)
