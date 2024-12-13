@@ -1,0 +1,52 @@
+services:
+  db:
+    container_name: mysql
+    image: mysql:8.0
+    restart: always
+    networks:
+      - phl-network
+    environment:
+      MYSQL_ROOT_PASSWORD: passwdRoot123
+      MYSQL_DATABASE: profile
+      MYSQL_USER: dev
+      MYSQL_PASSWORD: passwdDev123
+    ports:
+      - "3306:3306"
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
+  phl-profile:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - DB_HOST=mysql
+      - DB_USER=dev
+      - DB_PASSWORD=passwdDev123
+      - DB_NAME=profile
+      - DB_PORT=3306
+    # Create health check at path /healthcheck
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://phl-profile:8000/healthcheck"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    restart: always
+    ports:
+      - "8000:8000"
+    networks:
+      - phl-network
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db-data:
+
+networks:
+  phl-network:
