@@ -150,11 +150,16 @@ class ProfileService:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup code: create tables
-    async with engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.create_all)
-    yield
-    # Shutdown code (if any)
-
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(SQLModel.metadata.create_all)
+        yield
+    except Exception as e:
+        logger.error(f"Error during startup: {e}")
+        raise
+    finally:
+        # Shutdown code: dispose engine
+        await engine.dispose()
 
 async def get_profile_service(session: AsyncSession = Depends(get_session)):
     return ProfileService(session=session)
@@ -164,17 +169,17 @@ async def get_profile_service(session: AsyncSession = Depends(get_session)):
 app = FastAPI(lifespan=lifespan)
 app.state.settings = get_settings()
 # Router
-profile_router = APIRouter(prefix="/v1/profile")
+profile_router = APIRouter(prefix="/v1")
 
 
 # Routes
 
-@profile_router.get("/healthcheck", status_code=status.HTTP_200_OK)
+@profile_router.get("/profile/healthcheck", status_code=status.HTTP_200_OK)
 async def healthcheck(service: Annotated[ProfileService, Depends(get_profile_service)]):
     return await service.health()
 
 @profile_router.get(
-    "/", response_model=List[ProfileResponseModel], status_code=status.HTTP_200_OK
+    "/profile", response_model=List[ProfileResponseModel], status_code=status.HTTP_200_OK
 )
 async def list(
     service: Annotated[ProfileService, Depends(get_profile_service)]
@@ -183,7 +188,7 @@ async def list(
 
 
 @profile_router.post(
-    "/", response_model=ProfileResponseModel, status_code=status.HTTP_201_CREATED
+    "/profile", response_model=ProfileResponseModel, status_code=status.HTTP_201_CREATED
 )
 async def post(
     profile: ProfileCreateModel,
@@ -193,7 +198,7 @@ async def post(
 
 
 @profile_router.get(
-    "/{userid}", response_model=ProfileResponseModel, status_code=status.HTTP_200_OK
+    "/profile/{userid}", response_model=ProfileResponseModel, status_code=status.HTTP_200_OK
 )
 async def get(
     userid: int, service: Annotated[ProfileService, Depends(get_profile_service)]
@@ -202,7 +207,7 @@ async def get(
 
 
 @profile_router.put(
-    "/{userid}", response_model=ProfileResponseModel, status_code=status.HTTP_200_OK
+    "/profile/{userid}", response_model=ProfileResponseModel, status_code=status.HTTP_200_OK
 )
 async def put(
     userid: int,
@@ -212,7 +217,7 @@ async def put(
     return await service.update_profile(userid, profile)
 
 
-@profile_router.delete("/{userid}", status_code=status.HTTP_204_NO_CONTENT)
+@profile_router.delete("/profile/{userid}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete(
     userid: int, service: Annotated[ProfileService, Depends(get_profile_service)]
 ):
