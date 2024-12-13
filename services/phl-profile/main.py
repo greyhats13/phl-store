@@ -129,7 +129,7 @@ class ProfileService:
         await self.session.delete(profile)
         await self.session.commit()
 
-    async def health(self):
+    async def health(self)->dict:
         """
         Checks the health of the service by verifying database connectivity.
         Returns True if healthy, False otherwise.
@@ -139,9 +139,9 @@ class ProfileService:
             result = await self.session.execute(select(1))
             # Fetch the result to ensure the query was successful
             await result.fetchall()
-            return JSONResponse(content={"status": "ok"})
+            return {"status": "ok"}
         except Exception as e:
-            return JSONResponse(content={"status": "error", "message": str(e)}, status_code=503)
+            raise HTTPException(status_code=503, detail={"status": "error", "message": str(e)})
 
 # Event Startup and Shutdown
 @asynccontextmanager
