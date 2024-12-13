@@ -76,7 +76,7 @@ service:
 
 # This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
 ingress:
-  enabled: true
+  enabled: false
   className: "alb"
   annotations:
     # kubernetes.io/ingress.class: nginx
@@ -86,7 +86,7 @@ ingress:
     alb.ingress.kubernetes.io/group.name: phl-dev-svc-ingress
     alb.ingress.kubernetes.io/healthcheck-path: /v1/profile/healthcheck
     alb.ingress.kubernetes.io/success-codes: "200"
-    alb.ingress.kubernetes.io/listener-attributes.HTTP-8080: routing.http.response.server.enabled=true
+    alb.ingress.kubernetes.io/listener-attributes.HTTP-8000: routing.http.response.server.enabled=true
     alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-west-1:124456474132:certificate/155ec9de-d537-4b5f-9fc3-bbf43c8f91d5
     alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS13-1-2-2021-06
     alb.ingress.kubernetes.io/backend-protocol: HTTP
