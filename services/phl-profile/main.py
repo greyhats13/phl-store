@@ -129,7 +129,7 @@ class ProfileService:
         await self.session.delete(profile)
         await self.session.commit()
 
-    async def health(self) -> bool:
+    async def health(self):
         """
         Checks the health of the service by verifying database connectivity.
         Returns True if healthy, False otherwise.
