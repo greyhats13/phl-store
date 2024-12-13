@@ -1,12 +1,13 @@
 from functools import lru_cache
-from fastapi import FastAPI, APIRouter, status, Depends, HTTPException
+from fastapi import FastAPI, APIRouter, status, Depends, HTTPException, Response
+from fastapi.responses import JSONResponse
 from sqlmodel import SQLModel, Field, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import sessionmaker
 from pydantic_settings import BaseSettings
 from pydantic import BaseModel, EmailStr, ConfigDict, Field as PydanticField
-from typing import Optional, List, AsyncGenerator
+from typing import Annotated, Optional, List, AsyncGenerator,
 from datetime import datetime
 from contextlib import asynccontextmanager
 
@@ -128,7 +129,7 @@ class ProfileService:
         await self.session.delete(profile)
         await self.session.commit()
 
-    async def check_health(self) -> bool:
+    async def health(self) -> bool:
         """
         Checks the health of the service by verifying database connectivity.
         Returns True if healthy, False otherwise.
@@ -138,12 +139,9 @@ class ProfileService:
             result = await self.session.execute(select(1))
             # Fetch the result to ensure the query was successful
             await result.fetchall()
-            return True
+            return JSONResponse(content={"status": "ok"})
         except Exception as e:
-            # Log the exception for debugging purposes
-            logger.error(f"Healthcheck failed: {e}")
-            return False
-
+            return JSONResponse(content={"status": "error", "message": str(e)}, status_code=503)
 
 # Event Startup and Shutdown
 @asynccontextmanager
@@ -154,6 +152,8 @@ async def lifespan(app: FastAPI):
     yield
     # Shutdown code (if any)
 
+async def get_profile_service(session: Annotated[AsyncSession, Depends(get_session)])
+    return ProfileService(session=session)
 
 # FastAPI App
 app = FastAPI(lifespan=lifespan)
@@ -163,66 +163,33 @@ profile_router = APIRouter(prefix="/profiles")
 
 
 # Routes
-@profile_router.get(
-    "/", response_model=List[ProfileResponseModel], status_code=status.HTTP_200_OK
-)
+
 
 @profile_router.get("/healthcheck", status_code=status.HTTP_200_OK)
-async def healthcheck(session: AsyncSession = Depends(get_session)):
-    """
-    Healthcheck endpoint to verify service health.
-    Checks database connectivity and basic application responsiveness.
-    """
-    service = ProfileService(session)
-    is_healthy = await service.check_health()
-    if is_healthy:
-        return {"status": "healthy"}
-    else:
-        # Returning 503 Service Unavailable if healthcheck fails
-        raise HTTPException(status_code=503, detail="Service Unhealthy")
-    
-async def list_profiles(session: AsyncSession = Depends(get_session)):
-    service = ProfileService(session)
-    profiles = await service.get_profiles()
-    return profiles
+async def healthcheck(service: Annotated[ProfileService, Depends(get_profile_service)]):
+    return await service.health()
+
+@profile_router.get("/", response_model=List[ProfileResponseModel], status_code=status.HTTP_200_OK)   
+async def list_profiles(service: Annotated[ProfileService, Depends(get_profile_service)]):
+    return await service.get_profiles()
+
+@profile_router.post("/", response_model=ProfileResponseModel, status_code=status.HTTP_201_CREATED)
+async def create_profile(profile: ProfileCreateModel, service: Annotated[ProfileService, Depends(get_profile_service)]):
+    return await service.create_profile(profile)
 
 
-@profile_router.post(
-    "/", response_model=ProfileResponseModel, status_code=status.HTTP_201_CREATED
-)
-async def create_profile(
-    profile: ProfileCreateModel, session: AsyncSession = Depends(get_session)
-):
-    service = ProfileService(session)
-    new_profile = await service.create_profile(profile)
-    return new_profile
+@profile_router.get("/{userid}", response_model=ProfileResponseModel, status_code=status.HTTP_200_OK)
+async def get_profile(userid: int, service: Annotated[ProfileService, Depends(get_profile_service)]):
+    return await service.get_profile(userid)
 
-
-@profile_router.get(
-    "/{userid}", response_model=ProfileResponseModel, status_code=status.HTTP_200_OK
-)
-async def get_profile(userid: int, session: AsyncSession = Depends(get_session)):
-    service = ProfileService(session)
-    profile = await service.get_profile(userid)
-    return profile
-
-
-@profile_router.put(
-    "/{userid}", response_model=ProfileResponseModel, status_code=status.HTTP_200_OK
-)
-async def update_profile(
-    userid: int,
-    profile_data: ProfileUpdateModel,
-    session: AsyncSession = Depends(get_session),
-):
-    service = ProfileService(session)
-    updated_profile = await service.update_profile(userid, profile_data)
-    return updated_profile
+@profile_router.put("/{userid}", response_model=ProfileResponseModel, status_code=status.HTTP_200_OK)
+async def update_profile(userid: int, profile: ProfileUpdateModel, service: Annotated[ProfileService, Depends(get_profile_service)]):
+    return await service.update_profile(userid, profile)
 
 
 @profile_router.delete("/{userid}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_profile(userid: int, session: AsyncSession = Depends(get_session)):
-    service = ProfileService(session)
+async def delete_profile(userid: int, service: Annotated[ProfileService, Depends(get_profile_service)]):
     await service.delete_profile(userid)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 app.include_router(profile_router, tags=["profiles"])
