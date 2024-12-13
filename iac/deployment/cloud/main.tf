@@ -194,7 +194,7 @@ module "aurora_main" {
   engine          = "aurora-mysql"
   engine_version  = "8.0"
   master_username = "root"
-  instance_class  = var.env == "dev" ? "db.t4g.large" : "db.r6g.large"
+  instance_class  = var.env == "dev" ? "db.t4g.medium" : "db.r6g.large"
   instances = {
     one = {}
   }

@@ -128,6 +128,22 @@ class ProfileService:
         await self.session.delete(profile)
         await self.session.commit()
 
+    async def check_health(self) -> bool:
+        """
+        Checks the health of the service by verifying database connectivity.
+        Returns True if healthy, False otherwise.
+        """
+        try:
+            # Execute a simple query to ensure the database is reachable
+            result = await self.session.execute(select(1))
+            # Fetch the result to ensure the query was successful
+            await result.fetchall()
+            return True
+        except Exception as e:
+            # Log the exception for debugging purposes
+            logger.error(f"Healthcheck failed: {e}")
+            return False
+
 
 # Event Startup and Shutdown
 @asynccontextmanager
@@ -194,5 +210,18 @@ async def delete_profile(userid: int, session: AsyncSession = Depends(get_sessio
     service = ProfileService(session)
     await service.delete_profile(userid)
 
+@profile_router.get("/healthcheck", status_code=status.HTTP_200_OK)
+async def healthcheck(session: AsyncSession = Depends(get_session)):
+    """
+    Healthcheck endpoint to verify service health.
+    Checks database connectivity and basic application responsiveness.
+    """
+    service = ProfileService(session)
+    is_healthy = await service.check_health()
+    if is_healthy:
+        return {"status": "healthy"}
+    else:
+        # Returning 503 Service Unavailable if healthcheck fails
+        raise HTTPException(status_code=503, detail="Service Unhealthy")
 
 app.include_router(profile_router, tags=["profiles"])
