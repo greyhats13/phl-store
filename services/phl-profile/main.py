@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import sessionmaker
 from pydantic_settings import BaseSettings
 from pydantic import BaseModel, EmailStr, ConfigDict, Field as PydanticField
-from typing import Annotated, Optional, List, AsyncGenerator,
+from typing import Annotated, Optional, List, AsyncGenerator
 from datetime import datetime
 from contextlib import asynccontextmanager
 
