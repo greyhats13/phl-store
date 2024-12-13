@@ -164,7 +164,7 @@ async def get_profile_service(session: AsyncSession = Depends(get_session)):
 app = FastAPI(lifespan=lifespan)
 app.state.settings = get_settings()
 # Router
-profile_router = APIRouter(prefix="/v1/profiles")
+profile_router = APIRouter(prefix="/v1/profile")
 
 
 # Routes
