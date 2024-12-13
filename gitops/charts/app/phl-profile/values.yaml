@@ -120,7 +120,7 @@ resources:
 # This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
 livenessProbe:
   httpGet:
-    path: /profiles/healthcheck
+    path: /healthcheck
     port: http
     scheme: HTTP
   initialDelaySeconds: 30
@@ -130,7 +130,7 @@ livenessProbe:
 
 readinessProbe:
   httpGet:
-    path: /profiles/healthcheck
+    path: /healthcheck
     port: http
     scheme: HTTP
   initialDelaySeconds: 5
