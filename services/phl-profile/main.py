@@ -179,7 +179,7 @@ async def healthcheck(service: Annotated[ProfileService, Depends(get_profile_ser
 async def list(
     service: Annotated[ProfileService, Depends(get_profile_service)]
 ):
-    return await service.list()
+    return await service.list_profiles()
 
 
 @profile_router.post(
