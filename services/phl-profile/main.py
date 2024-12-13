@@ -152,7 +152,7 @@ async def lifespan(app: FastAPI):
     yield
     # Shutdown code (if any)
 
-async def get_profile_service(session: Annotated[AsyncSession, Depends(get_session)])
+async def get_profile_service(session: AsyncSession = Depends(get_session)):
     return ProfileService(session=session)
 
 # FastAPI App
