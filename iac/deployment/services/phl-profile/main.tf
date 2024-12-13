@@ -195,7 +195,7 @@ module "api_integration_routes" {
   deploy_stage                   = false
   create_routes_and_integrations = true
   routes = {
-    "GET /healthcheck" = {
+    "GET /v1/${local.svc_standard.Feature}/healthcheck" = {
       throttling_rate_limit  = 80
       throttling_burst_limit = 40
 
@@ -210,12 +210,12 @@ module "api_integration_routes" {
         }
         request_parameters = {
           "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
-          "overwrite:path"        = "/healthcheck"
+          "overwrite:path"        = "/v1/${local.svc_standard.Feature}/healthcheck"
         }
       }
     }
 
-    "GET /${local.svc_standard.Feature}" = {
+    "GET /v1/${local.svc_standard.Feature}" = {
       authorization_type     = "JWT"
       authorizer_key         = "cognito-authorizer"
       authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
@@ -239,7 +239,7 @@ module "api_integration_routes" {
       }
     }
 
-    "POST /${local.svc_standard.Feature}" = {
+    "POST /v1/${local.svc_standard.Feature}" = {
       authorization_type     = "JWT"
       authorizer_key         = "cognito-authorizer"
       authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
@@ -271,7 +271,7 @@ module "api_integration_routes" {
       }
     }
 
-    "GET /${local.svc_standard.Feature}/{id}" = {
+    "GET /v1/${local.svc_standard.Feature}/{id}" = {
       authorization_type     = "JWT"
       authorizer_key         = "cognito-authorizer"
       authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
@@ -295,7 +295,7 @@ module "api_integration_routes" {
       }
     }
 
-    "PUT /${local.svc_standard.Feature}/{id}" = {
+    "PUT /v1/${local.svc_standard.Feature}/{id}" = {
       authorization_type     = "JWT"
       authorizer_key         = "cognito-authorizer"
       authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]
@@ -319,7 +319,7 @@ module "api_integration_routes" {
       }
     }
 
-    "DELETE /${local.svc_standard.Feature}/{id}" = {
+    "DELETE /v1/${local.svc_standard.Feature}/{id}" = {
       authorization_type     = "JWT"
       authorizer_key         = "cognito-authorizer"
       authorizer_id          = data.terraform_remote_state.cloud.outputs.api_authorizers["cognito"]["id"]

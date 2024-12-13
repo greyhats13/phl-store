@@ -84,7 +84,7 @@ ingress:
     external-dns.alpha.kubernetes.io/hostname: "profile.phl.blast.co.id"
     external-dns.alpha.kubernetes.io/ttl: "300"
     alb.ingress.kubernetes.io/group.name: phl-dev-svc-ingress
-    alb.ingress.kubernetes.io/healthcheck-path: /healthcheck
+    alb.ingress.kubernetes.io/healthcheck-path: /v1/profiles/healthcheck
     alb.ingress.kubernetes.io/success-codes: "200"
     alb.ingress.kubernetes.io/listener-attributes.HTTP-8080: routing.http.response.server.enabled=true
     alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-west-1:124456474132:certificate/155ec9de-d537-4b5f-9fc3-bbf43c8f91d5
@@ -98,7 +98,7 @@ ingress:
   hosts:
     - host: profile.phl.blast.co.id
       paths:
-        - path: /profile
+        - path: /v1/profiles
           pathType: Prefix
   tls:
     - hosts:
@@ -120,7 +120,7 @@ resources:
 # This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
 livenessProbe:
   httpGet:
-    path: /healthcheck
+    path: /v1/profiles/healthcheck
     port: http
     scheme: HTTP
   initialDelaySeconds: 30
@@ -130,7 +130,7 @@ livenessProbe:
 
 readinessProbe:
   httpGet:
-    path: /healthcheck
+    path: /v1/profiles/healthcheck
     port: http
     scheme: HTTP
   initialDelaySeconds: 5
