@@ -214,7 +214,7 @@ module "api_integration_routes" {
         }
         request_parameters = {
           "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
-          "overwrite:path"        = "/api/${local.svc_standard.Feature}"
+          "overwrite:path"        = "/${local.svc_standard.Feature}"
         }
       }
     }
@@ -238,7 +238,7 @@ module "api_integration_routes" {
         }
         request_parameters = {
           "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
-          "overwrite:path"        = "/api/${local.svc_standard.Feature}"
+          "overwrite:path"        = "/${local.svc_standard.Feature}"
         }
         response_parameters = [
           {
@@ -270,7 +270,7 @@ module "api_integration_routes" {
         }
         request_parameters = {
           "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
-          "overwrite:path"        = "/api/${local.svc_standard.Feature}/$request.path.id"
+          "overwrite:path"        = "/${local.svc_standard.Feature}/$request.path.id"
         }
       }
     }
@@ -294,7 +294,7 @@ module "api_integration_routes" {
         }
         request_parameters = {
           "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
-          "overwrite:path"        = "/api/${local.svc_standard.Feature}/$request.path.id"
+          "overwrite:path"        = "/${local.svc_standard.Feature}/$request.path.id"
         }
       }
     }
@@ -318,7 +318,7 @@ module "api_integration_routes" {
         }
         request_parameters = {
           "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
-          "overwrite:path"        = "/api/${local.svc_standard.Feature}/$request.path.id"
+          "overwrite:path"        = "/${local.svc_standard.Feature}/$request.path.id"
         }
         response_parameters = [
           {
