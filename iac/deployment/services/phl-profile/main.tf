@@ -210,7 +210,7 @@ module "api_integration_routes" {
         }
         request_parameters = {
           "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
-          "overwrite:path"        = "/${local.svc_standard.Feature}"
+          "overwrite:path"        = "/healthcheck"
         }
       }
     }
