@@ -164,12 +164,12 @@ async def get_profile_service(session: AsyncSession = Depends(get_session)):
 app = FastAPI(lifespan=lifespan)
 app.state.settings = get_settings()
 # Router
-profile_router = APIRouter(prefix="/profiles")
+profile_router = APIRouter(prefix="/v1/profile")
 
 
 # Routes
 
-@app.get("/healthcheck", status_code=status.HTTP_200_OK)
+@profile_router.get("/healthcheck", status_code=status.HTTP_200_OK)
 async def healthcheck(service: Annotated[ProfileService, Depends(get_profile_service)]):
     return await service.health()
 
