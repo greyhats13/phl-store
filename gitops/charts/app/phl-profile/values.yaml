@@ -121,7 +121,7 @@ resources:
 livenessProbe:
   httpGet:
     path: /profiles/healthcheck
-    port: 8000
+    port: http
     scheme: HTTP
   initialDelaySeconds: 30
   periodSeconds: 10
@@ -131,7 +131,7 @@ livenessProbe:
 readinessProbe:
   httpGet:
     path: /profiles/healthcheck
-    port: 8000
+    port: http
     scheme: HTTP
   initialDelaySeconds: 5
   periodSeconds: 10

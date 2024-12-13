@@ -166,6 +166,21 @@ profile_router = APIRouter(prefix="/profiles")
 @profile_router.get(
     "/", response_model=List[ProfileResponseModel], status_code=status.HTTP_200_OK
 )
+
+@profile_router.get("/healthcheck", status_code=status.HTTP_200_OK)
+async def healthcheck(session: AsyncSession = Depends(get_session)):
+    """
+    Healthcheck endpoint to verify service health.
+    Checks database connectivity and basic application responsiveness.
+    """
+    service = ProfileService(session)
+    is_healthy = await service.check_health()
+    if is_healthy:
+        return {"status": "healthy"}
+    else:
+        # Returning 503 Service Unavailable if healthcheck fails
+        raise HTTPException(status_code=503, detail="Service Unhealthy")
+    
 async def list_profiles(session: AsyncSession = Depends(get_session)):
     service = ProfileService(session)
     profiles = await service.get_profiles()
@@ -209,19 +224,5 @@ async def update_profile(
 async def delete_profile(userid: int, session: AsyncSession = Depends(get_session)):
     service = ProfileService(session)
     await service.delete_profile(userid)
-
-@profile_router.get("/healthcheck", status_code=status.HTTP_200_OK)
-async def healthcheck(session: AsyncSession = Depends(get_session)):
-    """
-    Healthcheck endpoint to verify service health.
-    Checks database connectivity and basic application responsiveness.
-    """
-    service = ProfileService(session)
-    is_healthy = await service.check_health()
-    if is_healthy:
-        return {"status": "healthy"}
-    else:
-        # Returning 503 Service Unavailable if healthcheck fails
-        raise HTTPException(status_code=503, detail="Service Unhealthy")
 
 app.include_router(profile_router, tags=["profiles"])
