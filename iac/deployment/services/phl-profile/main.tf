@@ -61,11 +61,11 @@ module "secrets_iac" {
   # Version
   ignore_secret_changes = true
   secret_string = jsonencode({
-    db_host           = data.terraform_remote_state.cloud.outputs.aurora_cluster_endpoint
-    db_port           = tostring(data.terraform_remote_state.cloud.outputs.aurora_cluster_port)
-    db_name           = mysql_database.db.name
-    db_user           = mysql_user.db.user
-    db_password       = random_password.password.result
+    db_host     = data.terraform_remote_state.cloud.outputs.aurora_cluster_endpoint
+    db_port     = tostring(data.terraform_remote_state.cloud.outputs.aurora_cluster_port)
+    db_name     = mysql_database.db.name
+    db_user     = mysql_user.db.user
+    db_password = random_password.password.result
   })
 
   tags = merge(local.tags, local.svc_standard)
@@ -195,6 +195,26 @@ module "api_integration_routes" {
   deploy_stage                   = false
   create_routes_and_integrations = true
   routes = {
+    "GET /healthcheck" = {
+      throttling_rate_limit  = 80
+      throttling_burst_limit = 40
+
+      integration = {
+        connection_type = "VPC_LINK"
+        connection_id   = data.terraform_remote_state.cloud.outputs.api_vpc_links["vpc-main"]["id"]
+        type            = "HTTP_PROXY"
+        method          = "GET"
+        uri             = data.aws_lb_listener.listener.arn
+        tls_config = {
+          server_name_to_verify = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+        }
+        request_parameters = {
+          "overwrite:header.Host" = "${local.svc_standard.Feature}.${data.terraform_remote_state.cloud.outputs.dns_name}"
+          "overwrite:path"        = "/${local.svc_standard.Feature}"
+        }
+      }
+    }
+
     "GET /${local.svc_standard.Feature}" = {
       authorization_type     = "JWT"
       authorizer_key         = "cognito-authorizer"
