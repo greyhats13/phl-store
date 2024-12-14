@@ -1,7 +1,7 @@
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
-  name: metrics-server-issuer
+  name: selfsigned-phl
   namespace: kube-system
 spec:
   selfSigned: {}

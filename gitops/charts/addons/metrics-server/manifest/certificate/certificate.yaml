@@ -16,6 +16,6 @@ spec:
   duration: 1h
   renewBefore: 30m
   issuerRef:
-    name: metrics-server-issuer
-    kind: Issuer
+    name: selfsigned-phl
+    kind: ClusterIssuer
     group: cert-manager.io

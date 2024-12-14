@@ -9,21 +9,6 @@ apiService:
   insecureSkipTLSVerify: false
 # Required cert-manager installed
 tls:
-  type: "cert-manager"
-
-
-  clusterDomain: cluster.local
-
-  certManager:
-    existingIssuer:
-      enabled: true
-      kind: "ClusterIssuer"
-      name: "selfsigned-phl"
-    # # Set the requested duration (i.e. lifetime) of the Certificate.
-    # # See https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec
-    # duration: 1h
-    # # How long before the currently issued certificate’s expiry cert-manager should renew the certificate.
-    # # See https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec
-    # renewBefore: 30m
-      annotations:
-         cert-manager.io/inject-ca-from: kube-system/metrics-server
+  type: "existingSecret"
+  existingSecret:
+    name: "metrics-server"
