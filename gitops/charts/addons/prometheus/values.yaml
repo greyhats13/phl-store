@@ -1,6 +1,40 @@
+# Prometheus values.yaml
 server:
   persistentVolume:
     storageClass: "gp3"
+  ingress:
+    enabled: true
+    className: alb
+    annotations:
+      external-dns.alpha.kubernetes.io/hostname: "prometheus.phl.blast.co.id"
+      external-dns.alpha.kubernetes.io/ttl: "300"
+      alb.ingress.kubernetes.io/group.name: phl-dev-addon-ingress
+      alb.ingress.kubernetes.io/healthcheck-path: /healthz
+      alb.ingress.kubernetes.io/success-codes: "200"
+      alb.ingress.kubernetes.io/listener-attributes.HTTP-8081: routing.http.response.server.enabled=true
+      alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-west-1:124456474132:certificate/155ec9de-d537-4b5f-9fc3-bbf43c8f91d5
+      alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS13-1-2-2021-06
+      alb.ingress.kubernetes.io/backend-protocol: HTTP
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80},{"HTTPS": 443}]'
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/target-type: ip
+      alb.ingress.kubernetes.io/group.order: "3"
+      alb.ingress.kubernetes.io/ssl-redirect: "443"
+  hosts:
+    - host: profile.phl.blast.co.id
+      paths:
+        - path: /v1/profile
+          pathType: Prefix
+  tls:
+    - hosts:
+        - profile.phl.blast.co.id
+      alb.ingress.kubernetes.io/scheme: internet-facing
+
+
+    hosts:
+      - host: "prometheus.${cluster_name}.${base_domain}"
+        paths:
 aletmanager:
   persistentVolume:
     storageClass: "gp3"
+
