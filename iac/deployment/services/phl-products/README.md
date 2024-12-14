@@ -3,7 +3,7 @@
 
 | Name | Version |
 |------|---------|
-| aws | 5.80.0 |
+| aws | 5.81.0 |
 | helm | 2.16.1 |
 | kubernetes | 2.34.0 |
 | mysql | 3.0.67 |
@@ -12,7 +12,7 @@
 
 | Name | Version |
 |------|---------|
-| aws | 5.80.0 |
+| aws | 5.81.0 |
 | external | 2.3.4 |
 | mysql | 3.0.67 |
 | random | 3.6.3 |
@@ -35,13 +35,13 @@
 | [mysql_grant.db](https://registry.terraform.io/providers/petoju/mysql/3.0.67/docs/resources/grant) | resource |
 | [mysql_user.db](https://registry.terraform.io/providers/petoju/mysql/3.0.67/docs/resources/user) | resource |
 | [random_password.password](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) | resource |
-| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/5.80.0/docs/data-sources/caller_identity) | data source |
-| [aws_eks_cluster_auth.cluster](https://registry.terraform.io/providers/hashicorp/aws/5.80.0/docs/data-sources/eks_cluster_auth) | data source |
-| [aws_eks_cluster_auth.eks](https://registry.terraform.io/providers/hashicorp/aws/5.80.0/docs/data-sources/eks_cluster_auth) | data source |
-| [aws_iam_policy_document.svc_policy](https://registry.terraform.io/providers/hashicorp/aws/5.80.0/docs/data-sources/iam_policy_document) | data source |
-| [aws_lb.selected](https://registry.terraform.io/providers/hashicorp/aws/5.80.0/docs/data-sources/lb) | data source |
-| [aws_lb_listener.listener](https://registry.terraform.io/providers/hashicorp/aws/5.80.0/docs/data-sources/lb_listener) | data source |
-| [aws_secretsmanager_secret_version.aurora_password](https://registry.terraform.io/providers/hashicorp/aws/5.80.0/docs/data-sources/secretsmanager_secret_version) | data source |
+| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/5.81.0/docs/data-sources/caller_identity) | data source |
+| [aws_eks_cluster_auth.cluster](https://registry.terraform.io/providers/hashicorp/aws/5.81.0/docs/data-sources/eks_cluster_auth) | data source |
+| [aws_eks_cluster_auth.eks](https://registry.terraform.io/providers/hashicorp/aws/5.81.0/docs/data-sources/eks_cluster_auth) | data source |
+| [aws_iam_policy_document.svc_policy](https://registry.terraform.io/providers/hashicorp/aws/5.81.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_lb.selected](https://registry.terraform.io/providers/hashicorp/aws/5.81.0/docs/data-sources/lb) | data source |
+| [aws_lb_listener.listener](https://registry.terraform.io/providers/hashicorp/aws/5.81.0/docs/data-sources/lb_listener) | data source |
+| [aws_secretsmanager_secret_version.aurora_password](https://registry.terraform.io/providers/hashicorp/aws/5.81.0/docs/data-sources/secretsmanager_secret_version) | data source |
 | [external_external.is_running_on_ec2](https://registry.terraform.io/providers/hashicorp/external/latest/docs/data-sources/external) | data source |
 | [terraform_remote_state.cloud](https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/data-sources/remote_state) | data source |
 

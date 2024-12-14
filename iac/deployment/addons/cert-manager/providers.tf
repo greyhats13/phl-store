@@ -5,7 +5,7 @@ locals {
 terraform {
   backend "s3" {
     bucket = "phl-dev-s3-tfstate"
-    key    = "phl/deployment/svc/phl-dev-deployment-svc-profile.tfstate"
+    key    = "phl/deployment/addons/phl-dev-deployment-addons-cert-manager.tfstate"
     region = "us-west-1"
   }
   required_providers {
@@ -20,14 +20,6 @@ terraform {
     helm = {
       source  = "hashicorp/helm"
       version = "2.16.1"
-    }
-    mysql = {
-      source  = "petoju/mysql"
-      version = "3.0.67"
-    }
-    github = {
-      source  = "integrations/github"
-      version = "~> 6.4.0"
     }
   }
 }
@@ -58,10 +50,4 @@ provider "helm" {
     cluster_ca_certificate = base64decode(data.terraform_remote_state.cloud.outputs.eks_cluster_certificate_authority_data)
     token                  = data.aws_eks_cluster_auth.cluster.token
   }
-}
-
-provider "mysql" {
-  endpoint = "${data.terraform_remote_state.cloud.outputs.aurora_cluster_endpoint}:${data.terraform_remote_state.cloud.outputs.aurora_cluster_port}"
-  username = data.terraform_remote_state.cloud.outputs.aurora_cluster_username
-  password = jsondecode(data.aws_secretsmanager_secret_version.aurora_password.secret_string)["password"]
 }

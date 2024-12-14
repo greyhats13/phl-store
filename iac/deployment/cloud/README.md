@@ -7,7 +7,7 @@ Terraform module to deploy the cloud infrastructure for the deployment of the ap
 
 | Name | Version |
 |------|---------|
-| aws | 5.80.0 |
+| aws | 5.81.0 |
 | github | ~> 6.4.0 |
 | helm | 2.16.1 |
 | kubernetes | 2.34.0 |
@@ -16,8 +16,8 @@ Terraform module to deploy the cloud infrastructure for the deployment of the ap
 
 | Name | Version |
 |------|---------|
-| aws | 5.80.0 |
-| aws.virginia | 5.80.0 |
+| aws | 5.81.0 |
+| aws.virginia | 5.81.0 |
 | external | 2.3.4 |
 | kubernetes | 2.34.0 |
 | random | 3.6.3 |
@@ -59,16 +59,16 @@ Terraform module to deploy the cloud infrastructure for the deployment of the ap
 | [random_password.atlantis_password](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) | resource |
 | [tls_private_key.argocd_ssh](https://registry.terraform.io/providers/hashicorp/tls/latest/docs/resources/private_key) | resource |
 | [tls_private_key.atlantis_ssh](https://registry.terraform.io/providers/hashicorp/tls/latest/docs/resources/private_key) | resource |
-| [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/5.80.0/docs/data-sources/availability_zones) | data source |
-| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/5.80.0/docs/data-sources/caller_identity) | data source |
-| [aws_ecrpublic_authorization_token.token](https://registry.terraform.io/providers/hashicorp/aws/5.80.0/docs/data-sources/ecrpublic_authorization_token) | data source |
-| [aws_eks_cluster_auth.cluster](https://registry.terraform.io/providers/hashicorp/aws/5.80.0/docs/data-sources/eks_cluster_auth) | data source |
-| [aws_iam_policy_document.atlantis_policy](https://registry.terraform.io/providers/hashicorp/aws/5.80.0/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.avp_policy](https://registry.terraform.io/providers/hashicorp/aws/5.80.0/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.custom_bucket_policy](https://registry.terraform.io/providers/hashicorp/aws/5.80.0/docs/data-sources/iam_policy_document) | data source |
-| [aws_lb.alb](https://registry.terraform.io/providers/hashicorp/aws/5.80.0/docs/data-sources/lb) | data source |
-| [aws_lb_listener.listener](https://registry.terraform.io/providers/hashicorp/aws/5.80.0/docs/data-sources/lb_listener) | data source |
-| [aws_secretsmanager_secret_version.secret_iac_current](https://registry.terraform.io/providers/hashicorp/aws/5.80.0/docs/data-sources/secretsmanager_secret_version) | data source |
+| [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/5.81.0/docs/data-sources/availability_zones) | data source |
+| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/5.81.0/docs/data-sources/caller_identity) | data source |
+| [aws_ecrpublic_authorization_token.token](https://registry.terraform.io/providers/hashicorp/aws/5.81.0/docs/data-sources/ecrpublic_authorization_token) | data source |
+| [aws_eks_cluster_auth.cluster](https://registry.terraform.io/providers/hashicorp/aws/5.81.0/docs/data-sources/eks_cluster_auth) | data source |
+| [aws_iam_policy_document.atlantis_policy](https://registry.terraform.io/providers/hashicorp/aws/5.81.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.avp_policy](https://registry.terraform.io/providers/hashicorp/aws/5.81.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.custom_bucket_policy](https://registry.terraform.io/providers/hashicorp/aws/5.81.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_lb.alb](https://registry.terraform.io/providers/hashicorp/aws/5.81.0/docs/data-sources/lb) | data source |
+| [aws_lb_listener.listener](https://registry.terraform.io/providers/hashicorp/aws/5.81.0/docs/data-sources/lb_listener) | data source |
+| [aws_secretsmanager_secret_version.secret_iac_current](https://registry.terraform.io/providers/hashicorp/aws/5.81.0/docs/data-sources/secretsmanager_secret_version) | data source |
 | [external_external.is_running_on_ec2](https://registry.terraform.io/providers/hashicorp/external/latest/docs/data-sources/external) | data source |
 
 ## Inputs

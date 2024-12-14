@@ -3,7 +3,7 @@
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | 5.80.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | 5.81.0 |
 | <a name="requirement_helm"></a> [helm](#requirement\_helm) | 2.16.1 |
 | <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | 2.34.0 |
 
@@ -11,7 +11,7 @@
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.80.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.81.0 |
 | <a name="provider_external"></a> [external](#provider\_external) | 2.3.4 |
 | <a name="provider_terraform"></a> [terraform](#provider\_terraform) | n/a |
 
@@ -26,7 +26,7 @@
 
 | Name | Type |
 |------|------|
-| [aws_eks_cluster_auth.cluster](https://registry.terraform.io/providers/hashicorp/aws/5.80.0/docs/data-sources/eks_cluster_auth) | data source |
+| [aws_eks_cluster_auth.cluster](https://registry.terraform.io/providers/hashicorp/aws/5.81.0/docs/data-sources/eks_cluster_auth) | data source |
 | [external_external.is_running_on_ec2](https://registry.terraform.io/providers/hashicorp/external/latest/docs/data-sources/external) | data source |
 | [terraform_remote_state.cloud](https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/data-sources/remote_state) | data source |
 
