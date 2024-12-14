@@ -91,9 +91,9 @@ To keep things running smoothly with Kubernetes in EKS, we added another CIDR bl
 
 ### Subnets
 
-We set up three kinds of subnets: public, private, and database. These are spread out over multiple Availability Zones (AZs) to make sure everything keeps running even if one zone has issues.
+We set up three kinds of subnets: public, private, & database. These are spread out over multiple Availability Zones (AZs) to make sure everything keeps running even if one zone has issue.
 
-- **Public Subnets** are where things like NAT Gateways and Application Load Balancers (ALBs) live. These subnets have public IPs and handle internet traffic. We also use them for bastion hosts when we need secure admin access to our private resources. The ALBs help distribute traffic to our internal services, and the NAT Gateways let our private subnets reach the internet safely without being directly exposed.
+- **Public Subnets** are where things like NAT Gateways and ALB live. These subnets have public IPs & handle internet traffic. We also use them for bastion hosts when we need secure admin access to our private resources. The ALBs help distribute traffic to our internal services, & the NAT Gateways let our private subnets reach the internet safely without being directly exposed.
 
 - **Private Subnets** are for our important internal stuff like Kubernetes worker nodes and application pods. These don’t have direct internet access. Instead, any outgoing traffic goes through the NAT Gateways. This setup helps us scale our Kubernetes workloads easily without worrying about IP address limits, thanks to tags that help with auto-discovery and autoscaling.
 
@@ -103,11 +103,11 @@ We set up three kinds of subnets: public, private, and database. These are sprea
 
 We placed NAT Gateways in the public subnets to manage internet traffic from our private resources. For our development environment, we use just one NAT Gateway to keep costs down. In production, each AZ has its own NAT Gateway to ensure high availability. This way, if one AZ or NAT Gateway has issues, the others can keep things running smoothly.
 
-NAT Gateways are great for security because they let our private resources reach out to the internet without being directly exposed. They also automatically scale to handle more traffic as needed, which is perfect for our growing and changing architecture.
+NAT Gateways are great for security because they let our private resources reach out to the internet without being directly exposed. They also automatically scale to handle more traffic as needed, which is perfct for our growing and changing architecture.
 
 ### Room for Scalability and Availability
 
-Our VPC is built to grow and handle failures without any hiccups. By spreading our subnets across multiple AZs, we make sure that our services stay up even if one AZ has problems. We setup seconday CIDR block using RFC65898 so EKS nodes won’t run out of IPs as we add more pods. Plus, things like NAT Gateways, ALBs, and EKS nodes can scale automatically to handle sudden increases in traffic, keeping everything fast and reliable.
+Our VPC is built to grow & handle failures without any obsta . By spreading our subnets across multiple AZs, we make sure that our services stay up even if one AZ has problems. We setup seconday CIDR block using RFC65898 so EKS nodes wont run out of IPs as we add more pod. Plus, things like NAT Gateways, ALBs, and EKS nodes can scale automatically to handle sudden increases in traffic, keeping everything fast & reliable.
 
 ### Security
 
@@ -132,7 +132,7 @@ The VPC’s subnets are configured to support the cluster needs:
 
 ### Why BottleRocket?
 
-The worker nodes in the managed node group use BottleRocket as the AMI. This is a lightweight, purpose-built OS for containerized workloads, & it comes with several advantages:
+The worker nodes in the managed node group use BottleRocket as the AMI. This is a lightweight, purpose built OS for containerized workloads & it comes with several advantages:
 
 - Performance: Since it’s stripped down to just the essentials for running containers, it boots faster & uses fewer resources compared to general-purpose OSes.
 - Security: BottleRocket minimizes the attack surface by removing unnecessary packages & includes built-in hardening features like kernel lockdown. It integrates seamlessly with AWS services like SSM for secure management.
@@ -156,7 +156,7 @@ The setup includes EBS CSI (Container Storage Interface) for Kubernetes, which a
 
 ### Networking with VPC CNI
 
-The cluster uses the AWS VPC CNI plugin to manage pod networking. It’s configured to use the secondary CIDR block (RFC6598, 100.64.0.0/16) to ensure there are enough IPs for pods, even in large-scale deployments. This separation also avoids conflicts with the primary CIDR & simplifies integration with on-prem networks.
+The cluster uses the AWS VPC CNI plugin to manage pod networking. Its is configured to use the secondary CIDR block (RFC6598, 100.64.0.0/16) to ensure there are enough IPs for pods, even in large scale deployments. This separation also avoids conflicts with the primary CIDR & simplifies integration with on-prem networks.
 
 The VPC CNI plugin is enhanced with:
 
@@ -167,7 +167,7 @@ The VPC CNI plugin is enhanced with:
 
 Several add-ons are installed to enhance the functionality & observability of the cluster:
 
-- CloudWatch Observability: Provides centralized monitoring & logging for Kubernetes workloads. This simplifies debugging & ensures better visibility into the system performance.
+- CloudWatch Observability: Provide centralizd monitoring & logging for Kubernetes workloads. This simplify debugging & ensures better visibility into the system performance.
 - CoreDNS: handles service discovery within the cluster.
 - Kube-proxy: Manages network proxying for Kubernetes services.
 
@@ -668,6 +668,7 @@ CMD ["/build/app"]
 ```
 
 ### Implement HPA for  Pod Autoscaling and Karpenter for Node Autoscaling
+we need to set up the metrics server in our EKS cluster first before stepping up the HPA.
 To make our application more scalable, we can use Horizontal Pod Autoscaler (HPA) in Kubernetes. HPA automatically scales the number of pods based on CPU/Memoery utilization or custom metrics. Here’s how we set up HPA for our service:
 - [HPA Configuration](https://github.com/greyhats13/phl-store/blob/main/gitops/charts/app/phl-products/values.yaml#135)
 ```yaml
