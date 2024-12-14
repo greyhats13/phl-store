@@ -1,0 +1,50 @@
+# Path: /fta_profile/Dockerfile-distroless
+
+# Stage 1: Builder
+FROM python:3.11-slim-bookworm AS builder
+
+# Set environment variables to prevent the creation of .pyc files and enable unbuffered output
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# Set working directory
+WORKDIR /app
+
+# Install build dependencies (necessary for compiling some Python packages)
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential
+
+# Copy only the requirements file to leverage Docker layer caching
+COPY requirements.txt .
+
+# Upgrade pip and install Python dependencies into the standard location
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application code
+COPY . .
+
+# Stage 2: Final Image
+FROM gcr.io/distroless/python3-debian12:nonroot AS runner
+
+# Set environment variables
+ENV PYTHONPATH=/usr/local/lib/python3.11/site-packages
+
+# Set working directory
+WORKDIR /app
+
+# Copy Python dependencies from builder
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+
+# Copy application code
+COPY --from=builder /app /app
+
+# Expose the application port (optional, for documentation)
+EXPOSE 8000
+
+ENTRYPOINT ["python", "-m"]
+
+# Run using uvicorn
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--log-level", "info"]
+
+# # Run using gunicorn
+# CMD ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "-b", "0.0.0.0:8000", "-w", "2", "main:app", "--log-level", "info"]

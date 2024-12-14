@@ -1,0 +1,7 @@
+[run]
+source = app
+relative_files = True
+omit =
+    */tests/*
+    */migrations/*
+    */settings/*
