@@ -16,16 +16,16 @@ applications:
       - repoURL: ${extra_vars.source_override_repoURL}
         targetRevision: ${extra_vars.source_override_targetRevision}
         ref: values
-      - repoURL: ${extra_vars.source_override_repoURL}
-        targetRevision: ${extra_vars.source_override_targetRevision}
-        path: ${extra_vars.issuer_path}
-        directory:
-          recurse: true
-      - repoURL: ${extra_vars.source_override_repoURL}
-        targetRevision: ${extra_vars.source_override_targetRevision}
-        path: ${extra_vars.certificate_path}
-        directory:
-          recurse: true
+      # - repoURL: ${extra_vars.source_override_repoURL}
+      #   targetRevision: ${extra_vars.source_override_targetRevision}
+      #   path: ${extra_vars.issuer_path}
+      #   directory:
+      #     recurse: true
+      # - repoURL: ${extra_vars.source_override_repoURL}
+      #   targetRevision: ${extra_vars.source_override_targetRevision}
+      #   path: ${extra_vars.certificate_path}
+      #   directory:
+      #     recurse: true
     destination:
       server: ${extra_vars.destination_server}
       namespace: ${extra_vars.destination_namespace}
