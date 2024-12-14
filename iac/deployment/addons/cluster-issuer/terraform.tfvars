@@ -1,5 +1,0 @@
-unit         = "phl"
-env          = "dev"
-region       = "us-west-1"
-github_repo  = "phl-store"
-github_owner = "greyhats13"
