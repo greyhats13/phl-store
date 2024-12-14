@@ -13,8 +13,8 @@ spec:
   privateKey:
     algorithm: RSA
     size: 2048
-  duration: 1h
-  renewBefore: 30m
+  duration: 2160h
+  renewBefore: 360h
   issuerRef:
     name: selfsigned-phl
     kind: ClusterIssuer
