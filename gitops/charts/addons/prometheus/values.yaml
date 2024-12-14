@@ -1,0 +1,6 @@
+server:
+  persistentVolume:
+    storageClass: "gp3"
+aletmanager:
+  persistentVolume:
+    storageClass: "gp3"
