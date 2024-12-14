@@ -5,9 +5,10 @@ replicas: 1
 args:
   - --kubelet-insecure-tls
 
-apiService:
-  insecureSkipTLSVerify: false
-# Required cert-manager installed
+# apiService:
+#   insecureSkipTLSVerify: false
+# # Required cert-manager installed
+
 tls:
   type: "existingSecret"
   existingSecret:
