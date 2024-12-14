@@ -27,7 +27,7 @@ server:
     tls:
       - secretName: prometheus-server-tls
         hosts:
-          - phl.blast.co.id
+          - prometheus.phl.blast.co.id
 aletmanager:
   persistentVolume:
     storageClass: "gp3"
