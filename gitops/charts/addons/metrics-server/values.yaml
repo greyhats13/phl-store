@@ -1,7 +1,8 @@
+replicas: 1
 # This is hardened configuration for the metrics-server Helm chart
 # Ref: https://github.com/kubernetes-sigs/metrics-server/tree/master/charts/metrics-server
-apiService:
-  insecureSkipTLSVerify: false
-# Required cert-manager installed
-tls:
-  type: "cert-manager"
+# apiService:
+#   insecureSkipTLSVerify: false
+# # Required cert-manager installed
+# tls:
+#   type: "cert-manager"

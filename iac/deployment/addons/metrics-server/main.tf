@@ -1,17 +1,18 @@
 module "argocd_app" {
-  source     = "../../../modules/helm"
-  region     = var.region
-  standard   = local.addon_standard
-  repository = "https://argoproj.github.io/argo-helm"
-  chart      = "argocd-apps"
-  values     = ["${file("manifest/${local.addon_standard.Feature}.yaml")}"]
-  namespace  = "argocd"
-  dns_name   = "${local.addon_standard.Feature}.${var.unit}.blast.co.id"
+  source        = "../../../modules/helm"
+  region        = var.region
+  standard      = local.addon_standard
+  override_name = local.addon_standard.Feature
+  repository    = "https://argoproj.github.io/argo-helm"
+  chart         = "argocd-apps"
+  values        = ["${file("manifest/${local.addon_standard.Feature}.yaml")}"]
+  namespace     = "argocd"
+  dns_name      = "${local.addon_standard.Feature}.${var.unit}.blast.co.id"
   extra_vars = {
     argocd_namespace                       = "argocd"
     source_origin_repoURL                  = "https://kubernetes-sigs.github.io/metrics-server/"
     source_origin_chart                    = local.addon_standard.Feature
-    source_origin_targetRevision           = "0.7.2"
+    source_origin_targetRevision           = "3.12.2"
     source_override_repoURL                = "git@github.com:${var.github_owner}/${var.github_repo}.git"
     source_override_targetRevision         = "main"
     source_override_path                   = "gitops/charts/addons/${local.addon_standard.Feature}/values.yaml"

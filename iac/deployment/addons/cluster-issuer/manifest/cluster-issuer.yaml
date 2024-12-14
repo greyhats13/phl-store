@@ -1,0 +1,29 @@
+applications:
+  ${feature}:
+    namespace: ${extra_vars.argocd_namespace}
+    additionalLabels: {}
+    additionalAnnotations: {}
+    finalizers:
+    - resources-finalizer.argocd.argoproj.io
+    project: ${extra_vars.project}
+    source:
+      repoURL: ${extra_vars.source_repoURL}
+      targetRevision: ${extra_vars.source_targetRevision}
+      path: ${extra_vars.source_path}
+      directory:
+        recurse: false
+    destination:
+      server: ${extra_vars.destination_server}
+    syncPolicy:
+      automated:
+        prune: ${extra_vars.syncPolicy_automated_prune}
+        selfHeal: ${extra_vars.syncPolicy_automated_selfHeal}
+    revisionHistoryLimit: null
+    ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+      - /spec/replicas
+    # info:
+    # - name: url
+    #   value: https://argoproj.github.io/
