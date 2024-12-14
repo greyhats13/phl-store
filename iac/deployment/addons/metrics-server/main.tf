@@ -11,13 +11,13 @@ module "argocd_app" {
     argocd_namespace                       = "argocd"
     source_origin_repoURL                  = "https://kubernetes-sigs.github.io/metrics-server/"
     source_origin_chart                    = local.addon_standard.Feature
-    source_origin_targetRevision           = "1.16.2"
+    source_origin_targetRevision           = "0.7.2"
     source_override_repoURL                = "git@github.com:${var.github_owner}/${var.github_repo}.git"
     source_override_targetRevision         = "main"
     source_override_path                   = "gitops/charts/addons/${local.addon_standard.Feature}/values.yaml"
     project                                = "default"
     destination_server                     = "https://kubernetes.default.svc"
-    destination_namespace                  = local.addon_standard.Feature
+    destination_namespace                  = "kube-system"
     syncPolicy_automated_prune             = true
     syncPolicy_automated_selfHeal          = true
     syncPolicy_syncOptions_CreateNamespace = true
