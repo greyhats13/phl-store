@@ -18,10 +18,10 @@ module "argocd_app" {
     source_override_path                   = "gitops/charts/addons/${local.addon_standard.Feature}/values.yaml"
     project                                = "default"
     destination_server                     = "https://kubernetes.default.svc"
-    destination_namespace                  = local.addon_standard.Feature
+    destination_namespace                  = "kube-system"
     syncPolicy_automated_prune             = true
     syncPolicy_automated_selfHeal          = true
-    syncPolicy_syncOptions_CreateNamespace = true
+    syncPolicy_syncOptions_CreateNamespace = false
     issuer_path                            = "gitops/charts/addons/${local.addon_standard.Feature}/manifest/cluster-issuer"
   }
 }

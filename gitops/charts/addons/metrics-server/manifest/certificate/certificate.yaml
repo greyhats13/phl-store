@@ -13,8 +13,8 @@ spec:
   privateKey:
     algorithm: RSA
     size: 2048
-  duration: lifetime
-  renewBefore: 8760h
+  duration: 1h
+  renewBefore: 30m
   issuerRef:
     name: metrics-server-issuer
     kind: Issuer

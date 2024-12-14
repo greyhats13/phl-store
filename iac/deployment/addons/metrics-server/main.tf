@@ -21,8 +21,8 @@ module "argocd_app" {
     destination_namespace                  = "kube-system"
     syncPolicy_automated_prune             = true
     syncPolicy_automated_selfHeal          = true
-    syncPolicy_syncOptions_CreateNamespace = true
+    syncPolicy_syncOptions_CreateNamespace = false
     issuer_path                            = "gitops/charts/addons/${local.addon_standard.Feature}/manifest/issuer"
-
+    certificate_path                       = "gitops/charts/addons/${local.addon_standard.Feature}/manifest/certificate"
   }
 }
