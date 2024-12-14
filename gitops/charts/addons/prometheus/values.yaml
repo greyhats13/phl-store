@@ -20,20 +20,14 @@ server:
       alb.ingress.kubernetes.io/target-type: ip
       alb.ingress.kubernetes.io/group.order: "3"
       alb.ingress.kubernetes.io/ssl-redirect: "443"
-  hosts:
-    - host: profile.phl.blast.co.id
-      paths:
-        - path: /v1/profile
-          pathType: Prefix
-  tls:
-    - hosts:
-        - profile.phl.blast.co.id
-      alb.ingress.kubernetes.io/scheme: internet-facing
-
-
     hosts:
-      - host: "prometheus.${cluster_name}.${base_domain}"
-        paths:
+      - prometheus.phl.blast.co.id
+    path: /
+    pathType: Prefix
+    tls:
+      - secretName: prometheus-server-tls
+        hosts:
+          - phl.blast.co.id
 aletmanager:
   persistentVolume:
     storageClass: "gp3"
