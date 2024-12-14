@@ -1,21 +1,3 @@
-module "external_dns_pod_identity" {
-  source                        = "terraform-aws-modules/eks-pod-identity/aws"
-  version                       = "~> 1.7.0"
-  name                          = local.addon_standard.Feature
-  attach_external_dns_policy    = true
-  external_dns_hosted_zone_arns = [data.terraform_remote_state.cloud.outputs.route53_zone_arn["phl.blast.co.id"]]
-  association_defaults = {
-    namespace       = local.addon_standard.Feature
-    service_account = "${local.addon_standard.Feature}-sa"
-  }
-  associations = {
-    main = {
-      cluster_name = data.terraform_remote_state.cloud.outputs.eks_cluster_name
-    }
-  }
-  tags = local.tags
-}
-
 module "argocd_app" {
   source     = "../../../modules/helm"
   region     = var.region
