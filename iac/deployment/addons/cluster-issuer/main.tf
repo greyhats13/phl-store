@@ -1,12 +1,13 @@
 module "argocd_app_k8s" {
-  source     = "../../../modules/helm"
-  region     = var.region
-  standard   = local.addon_standard
-  repository = "https://argoproj.github.io/argo-helm"
-  chart      = "argocd-apps"
-  values     = ["${file("manifest/${local.addon_standard.Feature}.yaml")}"]
-  namespace  = "argocd"
-  dns_name   = "${local.addon_standard.Feature}.${var.unit}.blast.co.id"
+  source        = "../../../modules/helm"
+  region        = var.region
+  standard      = local.addon_standard
+  override_name = local.addon_standard.Feature
+  repository    = "https://argoproj.github.io/argo-helm"
+  chart         = "argocd-apps"
+  values        = ["${file("manifest/${local.addon_standard.Feature}.yaml")}"]
+  namespace     = "argocd"
+  dns_name      = "${local.addon_standard.Feature}.${var.unit}.blast.co.id"
   extra_vars = {
     argocd_namespace                       = "argocd"
     source_repoURL                         = "git@github.com:${var.github_owner}/${var.github_repo}.git"

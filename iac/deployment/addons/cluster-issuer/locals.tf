@@ -7,7 +7,7 @@ locals {
   addon_standard = {
     Unit    = var.unit
     Env     = var.env
-    Code    = "addon"
+    Code    = "cert-manager"
     Feature = "cluster-issuer"
   }
   addon_naming_standard = "${local.addon_standard.Unit}-${local.addon_standard.Code}-${local.addon_standard.Feature}"
