@@ -18,7 +18,7 @@ applications:
         ref: values
       - repoURL: ${extra_vars.source_override_repoURL}
         targetRevision: ${extra_vars.source_override_targetRevision}
-        path: ${extra_vars.cluster_issuer_path}
+        path: ${extra_vars.issuer_path}
         directory:
           recurse: true
     destination:

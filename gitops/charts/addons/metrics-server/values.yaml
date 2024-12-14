@@ -10,3 +10,19 @@ apiService:
 # Required cert-manager installed
 tls:
   type: "cert-manager"
+
+
+  clusterDomain: cluster.local
+
+  certManager:
+    addInjectorAnnotations: true
+    existingIssuer:
+      enabled: true
+      kind: "Issuer"
+      name: "metrics-server-issuer"
+    # Set the requested duration (i.e. lifetime) of the Certificate.
+    # See https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec
+    duration: "lifetime"
+    # How long before the currently issued certificate’s expiry cert-manager should renew the certificate.
+    # See https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec
+    renewBefore: "8760h"

@@ -22,5 +22,7 @@ module "argocd_app" {
     syncPolicy_automated_prune             = true
     syncPolicy_automated_selfHeal          = true
     syncPolicy_syncOptions_CreateNamespace = true
+    issuer_path                            = "gitops/charts/addons/${local.addon_standard.Feature}/manifest/issuer"
+
   }
 }
