@@ -18,8 +18,8 @@ tls:
     addInjectorAnnotations: true
     existingIssuer:
       enabled: true
-      kind: "Issuer"
-      name: "metrics-server-issuer"
+      kind: "ClusterIssuer"
+      name: "selfsigned-phl"
     # Set the requested duration (i.e. lifetime) of the Certificate.
     # See https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec
     duration: 1h
