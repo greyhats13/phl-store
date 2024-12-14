@@ -10,3 +10,5 @@ crds:
   # (Certificates, Issuers, ...) will be removed too by the garbage collector.
   keep: false
 replicaCount: 1
+extraArgs:
+  - --enable-certificate-owner-ref
