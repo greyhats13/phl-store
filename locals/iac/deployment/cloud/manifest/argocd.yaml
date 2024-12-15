@@ -3,6 +3,8 @@ global:
   domain: "${feature}.${dns_name}"
   params:
     server.insecure: ${extra_vars.server_insecure}
+certificate:
+  enabled: true
 server:
   ingress:
     enabled: ${extra_vars.ingress_enabled}
@@ -13,17 +15,7 @@ server:
       kubernetes.io/tls-acme: "true"
       cert-manager.io/cluster-issuer: "letsencrypt-phl"
       nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-      nginx.ingress.kubernetes.io/ssl-passthrough: "true"
-  tls: true
-  hosts:
-    - host: ${feature}.${dns_name}
-      paths:
-        - path: /
-          pathType: ImplementationSpecific
-  tls:
-    - secretName: argocd-tls
-      hosts:
-        - ${feature}.${dns_name}
+      nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
 
 # ref: https://github.com/argoproj-labs/argocd-vault-plugin/blob/main/manifests/cmp-sidecar/argocd-repo-server.yaml
 repoServer:
