@@ -22,6 +22,11 @@ variable "cloudflare_zone_id" {
   description = "Cloudflare zone ID"
 }
 
+variable "local_dns" {
+  type        = string
+  description = "Local DNS"
+}
+
 ## Config
 ### Github
 variable "github_owner" {

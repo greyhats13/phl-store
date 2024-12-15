@@ -8,7 +8,20 @@ server:
     enabled: ${extra_vars.ingress_enabled}
     ingressClassName: ${extra_vars.ingress_class_name}
     annotations:
-      kubernetes.io/ingress.class: ${extra_vars.ingress_class_name}
+      external-dns.alpha.kubernetes.io/hostname: "${feature}.${dns_name}"
+      external-dns.alpha.kubernetes.io/ttl: "300"
+      kubernetes.io/tls-acme: "true"
+      cert-manager.io/cluster-issuer: "letsencrypt-phl"
+  hosts:
+    - host: ${feature}.${dns_name}
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls:
+    - secretName: argocd-tls
+      hosts:
+        - ${feature}.${dns_name}
+
 # ref: https://github.com/argoproj-labs/argocd-vault-plugin/blob/main/manifests/cmp-sidecar/argocd-repo-server.yaml
 repoServer:
   serviceAccount:

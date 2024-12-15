@@ -12,7 +12,7 @@ module "argocd_app" {
     argocd_namespace                       = "argocd"
     source_origin_repoURL                  = "https://kubernetes.github.io/ingress-nginx"
     source_origin_chart                    = local.addon_standard.Feature
-    source_origin_targetRevision           = "1.16.2"
+    source_origin_targetRevision           = "4.11.3"
     source_override_repoURL                = "git@github.com:${var.github_owner}/${var.github_repo}.git"
     source_override_targetRevision         = "local"
     source_override_path                   = "locals/gitops/charts/addons/${local.addon_standard.Feature}/values.yaml"

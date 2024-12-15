@@ -5,3 +5,4 @@ policy: sync
 cloudflare:
   secretName: "cloudflare-api-key"
   email: "webmaster@blast.co.id"
+  proxied: false

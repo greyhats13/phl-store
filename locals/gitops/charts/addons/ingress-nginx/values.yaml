@@ -17,4 +17,3 @@ controller:
     annotations:
       external-dns.alpha.kubernetes.io/hostname: local.blast.co.id
       external-dns.alpha.kubernetes.io/ttl: "300"
-

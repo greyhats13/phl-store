@@ -11,7 +11,7 @@ module "argocd" {
   values           = ["${file("manifest/${local.argocd_standard.Feature}.yaml")}"]
   namespace        = local.argocd_standard.Feature
   create_namespace = true
-  dns_name         = "local.blast.co.id"
+  dns_name         = var.local_dns
   extra_vars = {
     github_orgs      = var.github_orgs
     github_client_id = var.github_oauth_client_id
@@ -21,7 +21,7 @@ module "argocd" {
 
     # ref https://github.com/argoproj/argo-helm/tree/main/charts/argo-cd
     # ingress
-    ingress_enabled    = false
+    ingress_enabled    = true
     ingress_class_name = "nginx"
   }
 }
@@ -40,12 +40,4 @@ module "repo_phl" {
   depends_on = [
     module.argocd,
   ]
-}
-
-resource "cloudflare_dns_record" "example" {
-  zone_id = var.cloudflare_zone_id
-  name    = "argocd.local"
-  value   = "172.0.0.1"
-  type    = "A"
-  ttl     = 300
 }
