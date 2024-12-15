@@ -1,7 +1,7 @@
 # Prometheus values.yaml
 server:
   ingress:
-    enabled: false
+    enabled: true
     className: nginx
     annotations:
       external-dns.alpha.kubernetes.io/hostname: "prometheus.local.blast.co.id"
