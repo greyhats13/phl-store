@@ -1,21 +1,3 @@
-module "external_dns_pod_identity" {
-  source                        = "terraform-aws-modules/eks-pod-identity/aws"
-  version                       = "~> 1.7.0"
-  name                          = local.addon_standard.Feature
-  attach_external_dns_policy    = true
-  external_dns_hosted_zone_arns = [data.terraform_remote_state.cloud.outputs.route53_zone_arn["phl.blast.co.id"]]
-  association_defaults = {
-    namespace       = local.addon_standard.Feature
-    service_account = "${local.addon_standard.Feature}-sa"
-  }
-  associations = {
-    main = {
-      cluster_name = data.terraform_remote_state.cloud.outputs.eks_cluster_name
-    }
-  }
-  tags = local.tags
-}
-
 module "argocd_app" {
   source     = "../../../modules/helm"
   region     = var.region
@@ -43,7 +25,6 @@ module "argocd_app" {
 }
 
 resource "kubernetes_secret_v1" "argocd" {
-  count = var.add_repo_ssh_key_to_argocd ? 1 : 0
   metadata {
     name      = "cloudflare-api-key"
     namespace = local.addon_standard.Feature
@@ -53,4 +34,5 @@ resource "kubernetes_secret_v1" "argocd" {
     CF_API_EMAIL = "webmaster@blast.co.id"
     CF_API_KEY   = var.cloudflare_api_key
   }
+  depends_on = [module.argocd_app]
 }
