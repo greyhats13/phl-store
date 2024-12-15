@@ -12,6 +12,9 @@ server:
       external-dns.alpha.kubernetes.io/ttl: "300"
       kubernetes.io/tls-acme: "true"
       cert-manager.io/cluster-issuer: "letsencrypt-phl"
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+  tls: true
   hosts:
     - host: ${feature}.${dns_name}
       paths:
