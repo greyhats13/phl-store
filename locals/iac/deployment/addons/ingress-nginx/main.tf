@@ -10,7 +10,7 @@ module "argocd_app" {
   dns_name      = "${local.addon_standard.Feature}.${var.unit}.blast.co.id"
   extra_vars = {
     argocd_namespace                       = "argocd"
-    source_origin_repoURL                  = "https://charts.jetstack.io"
+    source_origin_repoURL                  = "https://kubernetes.github.io/ingress-nginx"
     source_origin_chart                    = local.addon_standard.Feature
     source_origin_targetRevision           = "1.16.2"
     source_override_repoURL                = "git@github.com:${var.github_owner}/${var.github_repo}.git"
