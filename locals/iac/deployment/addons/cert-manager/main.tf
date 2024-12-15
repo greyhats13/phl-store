@@ -25,3 +25,15 @@ module "argocd_app" {
     issuer_path                            = "locals/gitops/charts/addons/${local.addon_standard.Feature}/manifest/cluster-issuer"
   }
 }
+
+resource "kubernetes_secret_v1" "cert-manager" {
+  metadata {
+    name      = "cloudflare-api-token-secret"
+    namespace = local.addon_standard.Feature
+  }
+
+  data = {
+    api-token = var.cloudflare_api_key
+  }
+  depends_on = [module.argocd_app]
+}

@@ -9,9 +9,11 @@ spec:
     privateKeySecretRef:
       name: letsencrypt-phl
     solvers:
-    - http01:
-        ingress:
-          class: nginx
+    - dns01:
+        cloudflare:
+          apiTokenSecretRef:
+            name: cloudflare-api-token-secret
+            key: api-token
 ---
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer

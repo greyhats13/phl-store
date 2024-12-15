@@ -24,7 +24,7 @@ module "argocd_app" {
   }
 }
 
-resource "kubernetes_secret_v1" "argocd" {
+resource "kubernetes_secret_v1" "external-dns" {
   metadata {
     name      = "cloudflare-api-key"
     namespace = local.addon_standard.Feature
