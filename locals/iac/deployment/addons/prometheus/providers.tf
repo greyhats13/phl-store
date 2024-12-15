@@ -1,10 +1,9 @@
-
-
 terraform {
   backend "s3" {
     bucket = "phl-dev-s3-tfstate"
-    key    = "phl/deployment/addons/phl-local-deployment-addons-prometheus.tfstate"
+    key    = "phl/deployment/cloud/phl-local-addon-prometheus.tfstate"
     region = "us-west-1"
+    # profile = "phl-local"
   }
   required_providers {
     aws = {
@@ -19,33 +18,31 @@ terraform {
       source  = "hashicorp/helm"
       version = "2.16.1"
     }
+    github = {
+      source  = "integrations/github"
+      version = "~> 6.4.0"
+    }
   }
 }
 
 # Create AWS provider
 provider "aws" {
   region = local.region
-  dynamic "assume_role" {
-    # If the current environment is running on EC2 then use instance profile to access AWS resources
-    for_each = local.is_ec2_environment ? [] : [1]
-    content {
-      role_arn = "arn:aws:iam::124456474132:role/iac"
-    }
+  assume_role {
+    role_arn = "arn:aws:iam::124456474132:role/iac"
   }
 }
 
 # Create Kubernetes provider
 provider "kubernetes" {
-  host                   = data.terraform_remote_state.cloud.outputs.eks_cluster_endpoint
-  cluster_ca_certificate = base64decode(data.terraform_remote_state.cloud.outputs.eks_cluster_certificate_authority_data)
-  token                  = data.aws_eks_cluster_auth.cluster.token
+  config_path    = "~/.kube/config"
+  config_context = "docker-desktop"
 }
 
 # Create Helm provider
 provider "helm" {
   kubernetes {
-    host                   = data.terraform_remote_state.cloud.outputs.eks_cluster_endpoint
-    cluster_ca_certificate = base64decode(data.terraform_remote_state.cloud.outputs.eks_cluster_certificate_authority_data)
-    token                  = data.aws_eks_cluster_auth.cluster.token
+  config_path    = "~/.kube/config"
+  config_context = "docker-desktop"
   }
 }
