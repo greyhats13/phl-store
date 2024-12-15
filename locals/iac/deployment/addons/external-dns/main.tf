@@ -31,8 +31,7 @@ resource "kubernetes_secret_v1" "argocd" {
   }
 
   data = {
-    CF_API_EMAIL = "webmaster@blast.co.id"
-    CF_API_KEY   = var.cloudflare_api_key
+    cloudflare_api_key = var.cloudflare_api_key
   }
   depends_on = [module.argocd_app]
 }
