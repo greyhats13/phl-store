@@ -28,12 +28,12 @@ module "argocd_app" {
 
 resource "kubernetes_secret_v1" "cert-manager" {
   metadata {
-    name      = "cloudflare-api-token-secret"
+    name      = "cloudflare-api-key-secret"
     namespace = local.addon_standard.Feature
   }
 
   data = {
-    api-token = var.cloudflare_api_key
+    api-key = var.cloudflare_api_key
   }
   depends_on = [module.argocd_app]
 }

@@ -13,8 +13,8 @@ spec:
         cloudflare:
           email: webmaster@blast.co.id
           apiTokenSecretRef:
-            name: cloudflare-api-token-secret
-            key: api-token
+            name: cloudflare-api-key-secret
+            key: api-key
 ---
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
