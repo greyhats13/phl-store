@@ -11,6 +11,7 @@ spec:
     solvers:
     - dns01:
         cloudflare:
+          email: webmaster@blast.co.id
           apiTokenSecretRef:
             name: cloudflare-api-token-secret
             key: api-token
