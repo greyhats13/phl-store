@@ -1,9 +1,3 @@
-# if the current environment is running on EC2 then use instance profile to access AWS resources
-# otherwise assume the iac role
-locals {
-  is_ec2_environment = data.external.is_running_on_ec2.result["on_ec2"] == "true" ? true : false
-}
-
 terraform {
   backend "s3" {
     bucket = "phl-dev-s3-tfstate"
@@ -34,14 +28,11 @@ terraform {
 # Create AWS provider
 provider "aws" {
   region = local.region
-  dynamic "assume_role" {
-    # If the current environment is running on EC2 then use instance profile to access AWS resources
-    for_each = local.is_ec2_environment ? [] : [1]
-    content {
-      role_arn = "arn:aws:iam::124456474132:role/iac"
-    }
+  assume_role {
+    role_arn = "arn:aws:iam::124456474132:role/iac"
   }
 }
+
 
 # Create Kubernetes provider
 provider "kubernetes" {

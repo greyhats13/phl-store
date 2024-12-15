@@ -21,7 +21,7 @@ module "argocd_app" {
     destination_namespace                  = local.addon_standard.Feature
     syncPolicy_automated_prune             = true
     syncPolicy_automated_selfHeal          = true
-    syncPolicy_syncOptions_CreateNamespace = false
+    syncPolicy_syncOptions_CreateNamespace = true
     issuer_path                            = "locals/gitops/charts/addons/${local.addon_standard.Feature}/manifest/cluster-issuer"
   }
 }
