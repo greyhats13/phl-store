@@ -21,7 +21,7 @@ module "argocd" {
 
     # ref https://github.com/argoproj/argo-helm/tree/main/charts/argo-cd
     # ingress
-    ingress_enabled    = true
+    ingress_enabled    = false
     ingress_class_name = "nginx"
   }
 }
