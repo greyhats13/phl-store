@@ -1,9 +1,0 @@
-serviceAccount:
-  create: true
-  name: "aws-load-balancer-controller-sa"
-clusterName: phl-dev-eks-main
-region: us-west-1
-vpcId: vpc-00d44bf9d61925462
-disableIngressClassAnnotation: true
-ingressClassConfig:
-  default: true
