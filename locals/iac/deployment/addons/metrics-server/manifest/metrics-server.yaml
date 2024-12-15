@@ -9,7 +9,7 @@ applications:
     sources:
       - repoURL: ${extra_vars.source_origin_repoURL}
         chart: ${extra_vars.source_origin_chart}
-        targetRevision: ${extra_vars.source_origin_targetRevision}  # 8.3.8
+        targetRevision: ${extra_vars.source_origin_targetRevision}
         helm:
           valueFiles:
             - $values/${extra_vars.source_override_path}

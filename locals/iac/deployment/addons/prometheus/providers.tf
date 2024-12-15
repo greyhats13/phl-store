@@ -1,11 +1,9 @@
-locals {
-  is_ec2_environment = data.external.is_running_on_ec2.result["on_ec2"] == "true" ? true : false
-}
+
 
 terraform {
   backend "s3" {
     bucket = "phl-dev-s3-tfstate"
-    key    = "phl/deployment/addons/phl-dev-deployment-addons-prometheus.tfstate"
+    key    = "phl/deployment/addons/phl-local-deployment-addons-prometheus.tfstate"
     region = "us-west-1"
   }
   required_providers {

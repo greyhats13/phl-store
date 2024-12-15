@@ -14,7 +14,7 @@ module "argocd_app" {
     source_origin_chart                    = local.addon_standard.Feature
     source_origin_targetRevision           = "26.0.1"
     source_override_repoURL                = "git@github.com:${var.github_owner}/${var.github_repo}.git"
-    source_override_targetRevision         = "main"
+    source_override_targetRevision         = "local"
     source_override_path                   = "locals/gitops/charts/addons/${local.addon_standard.Feature}/values.yaml"
     project                                = "default"
     destination_server                     = "https://kubernetes.default.svc"
