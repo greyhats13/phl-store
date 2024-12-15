@@ -1,0 +1,21 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: metrics-server
+  namespace: kube-system
+spec:
+  commonName: metrics-server
+  dnsNames:
+  secretName: metrics-server
+  usages:
+    - server auth
+    - client auth
+  privateKey:
+    algorithm: RSA
+    size: 2048
+  duration: 2160h
+  renewBefore: 360h
+  issuerRef:
+    name: selfsigned-phl
+    kind: ClusterIssuer
+    group: cert-manager.io

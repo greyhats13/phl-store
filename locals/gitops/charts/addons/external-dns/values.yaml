@@ -1,0 +1,7 @@
+serviceAccount:
+  name: "external-dns-sa"
+provider: aws
+policy: sync
+aws:
+  region: us-west-1
+  zoneType: public

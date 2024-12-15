@@ -1,0 +1,29 @@
+version: 3
+projects:
+  # Cloud infrastructure
+  - dir: iac/deployment/cloud
+    apply_requirements: ["mergeable"]
+    autoplan:
+      when_modified: ["*.tf*"]
+  # EKS addons
+  - dir: iac/deployment/addons/aws-load-balancer-controller
+    apply_requirements: ["mergeable"]
+    autoplan:
+      when_modified: ["*.tf*"]
+  - dir: iac/deployment/addons/external-dns
+    apply_requirements: ["mergeable"]
+    autoplan:
+      when_modified: ["*.tf*"]
+  - dir: iac/deployment/addons/karpenter
+    apply_requirements: ["mergeable"]
+    autoplan:
+      when_modified: ["*.tf*"]
+  # EKS Services
+  - dir: iac/deployment/services/phl-products
+    apply_requirements: ["mergeable"]
+    autoplan:
+      when_modified: ["*.tf*"]
+  - dir: iac/deployment/services/phl-profile
+    apply_requirements: ["mergeable"]
+    autoplan:
+      when_modified: ["*.tf*"]

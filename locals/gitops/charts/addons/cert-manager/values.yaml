@@ -1,0 +1,9 @@
+crds:
+  enabled: true
+  keep: false
+replicaCount: 1
+
+global:
+  leaderElection:
+    # Override the namespace used for the leader election lease.
+    namespace: "kube-system"
