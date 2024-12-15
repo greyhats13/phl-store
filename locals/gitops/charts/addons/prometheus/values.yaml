@@ -4,15 +4,15 @@ server:
     enabled: true
     className: nginx
     annotations:
-      external-dns.alpha.kubernetes.io/hostname: "prometheus.phl.blast.co.id"
+      external-dns.alpha.kubernetes.io/hostname: "prometheus.local.blast.co.id"
       external-dns.alpha.kubernetes.io/ttl: "300"
       kubernetes.io/tls-acme: "true"
       cert-manager.io/cluster-issuer: "letsencrypt-phl"
     hosts:
-      - prometheus.phl.blast.co.id
+      - prometheus.local.blast.co.id
     path: /
     pathType: Prefix
     tls:
       - secretName: prometheus-server-tls
         hosts:
-          - prometheus.phl.blast.co.id
+          - prometheus.local.blast.co.id
