@@ -16,3 +16,7 @@ server:
       - secretName: prometheus-server-tls
         hosts:
           - prometheus.local.blast.co.id
+prometheus-node-exporter:
+  hostRootFsMount:
+    enabled: false
+    mountPropagation: HostToContainer
