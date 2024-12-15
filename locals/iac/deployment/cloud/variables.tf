@@ -16,6 +16,12 @@ variable "env" {
 
 # Terraform vars config
 
+# Cloudflare
+variable "cloudflare_zone_id" {
+  type        = string
+  description = "Cloudflare zone ID"
+}
+
 ## Config
 ### Github
 variable "github_owner" {

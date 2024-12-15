@@ -1,5 +1,6 @@
 unit                        = "phl"
 env                         = "local"
+cloudflare_zone_id          = "54fa9effc64925e75126d042897d3d51"
 region                      = "us-west-1"
 github_repo                 = "phl-store"
 github_owner                = "greyhats13"

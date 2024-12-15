@@ -1,7 +1,6 @@
 serviceAccount:
   name: "external-dns-sa"
-provider: aws
+provider: cloudflare
 policy: sync
 aws:
-  region: us-west-1
-  zoneType: public
+  secretName: "cloudflare-api-key"

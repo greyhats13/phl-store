@@ -15,4 +15,5 @@ controller:
   ingressClass: nginx
   service:
     annotations:
-      external-dns.alpha.kubernetes.io/hostname: profile.blast.local
+      external-dns.alpha.kubernetes.io/hostname: profile.local.blast.co.id
+      cert-manager.io/cluster-issuer: letsencrypt-prod
