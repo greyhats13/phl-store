@@ -73,9 +73,10 @@
 
 # CI/CD Components
 module "ecr" {
-  source  = "terraform-aws-modules/ecr/aws"
-  version = "~> 2.3.0"
-
+  source          = "terraform-aws-modules/ecr/aws"
+  version         = "~> 2.3.0"
+  
+  create          = false
   repository_name = local.svc_naming_standard
   repository_read_write_access_arns = [
     "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/iac",
