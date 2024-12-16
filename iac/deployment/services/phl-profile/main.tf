@@ -71,56 +71,57 @@
 #   tags = merge(local.tags, local.svc_standard)
 # }
 
-# # CI/CD Components
-# module "ecr" {
-#   source  = "terraform-aws-modules/ecr/aws"
-#   version = "~> 2.3.0"
+# CI/CD Components
+module "ecr" {
+  source  = "terraform-aws-modules/ecr/aws"
+  version = "~> 2.3.0"
 
-#   repository_name = local.svc_naming_standard
-#   repository_read_write_access_arns = [
-#     "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/iac",
-#     "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/atlantis-role",
-#     "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/github",
-#     "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
-#   ]
-#   repository_image_tag_mutability = "MUTABLE"
-#   repository_lifecycle_policy = jsonencode({
-#     rules = [
-#       {
-#         rulePriority = 1,
-#         description  = "Keep last 30 images",
-#         selection = {
-#           tagStatus     = "tagged",
-#           tagPrefixList = ["v"],
-#           countType     = "imageCountMoreThan",
-#           countNumber   = 30
-#         },
-#         action = {
-#           type = "expire"
-#         }
-#       }
-#     ]
-#   })
-#   manage_registry_scanning_configuration = true
-#   registry_scan_type                     = "BASIC"
-#   registry_scan_rules = [
-#     {
-#       scan_frequency = "SCAN_ON_PUSH"
-#       filter = [
-#         {
-#           filter      = "phl-*"
-#           filter_type = "WILDCARD"
-#         }
-#       ]
-#     }
-#   ]
-#   repository_encryption_type = "KMS"
-#   repository_kms_key         = data.terraform_remote_state.cloud.outputs.main_key_arn
-#   tags = {
-#     Terraform   = "true"
-#     Environment = "dev"
-#   }
-# }
+  repository_name = local.svc_naming_standard
+  repository_read_write_access_arns = [
+    "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/iac",
+    "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/atlantis-role",
+    "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/github",
+    "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+  ]
+  repository_image_tag_mutability = "MUTABLE"
+  repository_lifecycle_policy = jsonencode({
+    rules = [
+      {
+        rulePriority = 1,
+        description  = "Keep last 30 images",
+        selection = {
+          tagStatus     = "tagged",
+          tagPrefixList = ["v"],
+          countType     = "imageCountMoreThan",
+          countNumber   = 30
+        },
+        action = {
+          type = "expire"
+        }
+      }
+    ]
+  })
+  manage_registry_scanning_configuration = true
+  registry_scan_type                     = "BASIC"
+  registry_scan_rules = [
+    {
+      scan_frequency = "SCAN_ON_PUSH"
+      filter = [
+        {
+          filter      = "phl-*"
+          filter_type = "WILDCARD"
+        }
+      ]
+    }
+  ]
+  repository_encryption_type = "KMS"
+  repository_kms_key         = data.terraform_remote_state.cloud.outputs.main_key_arn
+  repository_force_delete    = true
+  tags = {
+    Terraform   = "true"
+    Environment = "dev"
+  }
+}
 
 # # Prepare GIthub
 # module "github_action_env" {
