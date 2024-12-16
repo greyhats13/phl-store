@@ -2,7 +2,7 @@
 server:
   ingress:
     enabled: true
-    className: nginx
+    ingressClassName: nginx
     annotations:
       external-dns.alpha.kubernetes.io/hostname: "prometheus.lokal.blast.co.id"
       external-dns.alpha.kubernetes.io/ttl: "300"
