@@ -43,7 +43,7 @@ data "aws_eks_cluster_auth" "cluster" {
 #   name = "k8s-phldevsvcingress-95c2777f2b"
 # }
 
-data "aws_lb_listener" "listener" {
-  load_balancer_arn = data.aws_lb.selected.arn
-  port              = 443
-}
+# data "aws_lb_listener" "listener" {
+#   load_balancer_arn = data.aws_lb.selected.arn
+#   port              = 443
+# }
