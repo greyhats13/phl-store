@@ -790,7 +790,7 @@ resource "kubectl_manifest" "karpenter_node_class" {
     apiVersion: karpenter.k8s.aws/v1beta1
     kind: EC2NodeClass
     metadata:
-      name: default
+      name: autoscaling
     spec:
       amiFamily: Bottlerocket
       role: ${module.karpenter.node_iam_role_name}
