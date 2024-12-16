@@ -10,10 +10,15 @@ server:
     annotations:
       external-dns.alpha.kubernetes.io/hostname: "${feature}.${dns_name}"
       external-dns.alpha.kubernetes.io/ttl: "300"
-      kubernetes.io/tls-acme: "true"
-      cert-manager.io/cluster-issuer: "letsencrypt-phl"
-      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+      external-dns.alpha.kubernetes.io/target: "127.0.0.1"
+      # kubernetes.io/tls-acme: "true"
+      # nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+      # cert-manager.io/cluster-issuer: "letsencrypt-phl"
       nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+      nginx.ingress.kubernetes.io/ssl-redirect: "false"
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+      nginx.ingress.kubernetes.io/secure-backends: "false"
+    tls: false
 
 # ref: https://github.com/argoproj-labs/argocd-vault-plugin/blob/main/manifests/cmp-sidecar/argocd-repo-server.yaml
 repoServer:
