@@ -1,0 +1,35 @@
+{
+    "email": "alex@fta.com",
+    "firstname": "Alex",
+    "lastname": "Invianto",
+    "birthdate": "1970-12-15",
+    "gender": "male",
+    "addresses": [
+        {
+            "type": "billing",
+            "address": "Jl. Kebayan No 42",
+            "subdistrict": "Uma Sima",
+            "district": "Sumbawa",
+            "city": "Subawa",
+            "province": "NTB",
+            "country": "Indonesia",
+            "postalCode": 84317
+        },
+        {
+            "type": "shipping",
+            "address": "Jl. Kebayan No 42",
+            "subdistrict": "Uma Sima",
+            "district": "Sumbawa",
+            "city": "Sumbawa",
+            "province": "NTB",
+            "country": "Indonesia",
+            "postalCode": 84317
+        }
+    ],
+    "image": {
+        "name": "felix.png",
+        "url": "https://cdn.blast.co.id/felix.png"
+    },
+    "createdAt": "2024-10-02T01:58:51.703432",
+    "updatedAt": "2024-10-02T01:58:51.703374"
+}

@@ -1,0 +1,43 @@
+# Ignore Python bytecode files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore virtual environments
+venv/
+env/
+tests/
+# *.env
+
+# Ignore local development files
+*.log
+*.sqlite3
+*.db
+*.swp
+
+# Ignore configuration files
+.idea/
+.vscode/
+*.bak
+*.tmp
+
+# Ignore Docker-related files
+Dockerfile
+.dockerignore
+.gitignore
+.coveragerc
+
+# Ignore OS-generated files
+.DS_Store
+Thumbs.db
+
+# Ignore project-specific files
+.github
+.env-example
+docker-compose.yml
+LICENSE
+README.md
+pytest.ini
+sonar-project.properties
+requirement-test.txt

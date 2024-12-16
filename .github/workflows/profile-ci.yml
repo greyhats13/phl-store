@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - dev
+      - local
     paths:
       - "services/phl-profile/**"
     tags:
@@ -29,22 +30,39 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Configure AWS Credentials
+        if: ${{ github.ref != 'refs/heads/local' }}
         uses: aws-actions/configure-aws-credentials@v4
         with:
           # audience: sts.amazonaws.com
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: ${{ vars.GH_OIDC_ROLE_ARN }}
 
+      - name: Login to Docker Registry
+        if: ${{ github.ref == 'refs/heads/local' }}
+        uses: docker/login-action@v3.3.0
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
       - name: Login to Amazon ECR
+        # if not branch local
+        if: ${{ github.ref != 'refs/heads/local' }}
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Retrieve ECR repo and Set Image Tag vased on environment
+      - name: Retrieve Docker repo and Set Image Tag vased on environment
         id: set_image_tag
         run: |
           echo "GITHUB_REF: $GITHUB_REF"
+          # if the branch is dev, tag the image as incubator
+          if [[ $GITHUB_REF == refs/heads/local ]]; then
+            echo "image_tag_sha=incubator-${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
+            echo "chart_path=gitops/charts/app/${{ vars.PROFILE_SVC_NAME }}" >> $GITHUB_OUTPUT
+            echo "IMAGE_TAG_SHA=incubator-${GITHUB_SHA:0:7}" >> $GITHUB_ENV
+            echo "IMAGE_TAG_LATEST=incubator-latest" >> $GITHUB_ENV
+            echo "CHART_PATH=gitops/charts/app/${{ vars.PROFILE_SVC_NAME }}" >> $GITHUB_ENV
           # if the branch is dev, tag the image as alpha
-          if [[ $GITHUB_REF == refs/heads/dev ]]; then
+          elif [[ $GITHUB_REF == refs/heads/dev ]]; then
             echo "image_tag_sha=alpha-${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
             echo "chart_path=gitops/charts/app/${{ vars.PROFILE_SVC_NAME }}" >> $GITHUB_OUTPUT
             echo "IMAGE_TAG_SHA=alpha-${GITHUB_SHA:0:7}" >> $GITHUB_ENV
@@ -61,6 +79,22 @@ jobs:
 
       - name: Build, Tag, and Push
         uses: docker/build-push-action@v6.9.0
+        if: ${{ github.ref == 'refs/heads/local' }}
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        with:
+          context: ./services/phl-profile/
+          # Distroless
+          # file: ./Dockerfile-distroless
+          push: true
+          tags: |
+            ${{ vars.GH_OWNER }}/${{ vars.PROFILE_SVC_NAMING_STANDARD }}:${{ env.IMAGE_TAG_SHA }}
+            ${{ vars.GH_OWNER }}/${{ vars.PROFILE_SVC_NAMING_STANDARD }}:${{ env.IMAGE_TAG_LATEST }}
+          platforms: linux/amd64
+
+      - name: Build, Tag, and Push
+        uses: docker/build-push-action@v6.9.0
+        if: ${{ github.ref != 'refs/heads/local' }}
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         with:
@@ -93,7 +127,11 @@ jobs:
           git clone git@github.com:${{ vars.GH_OWNER }}/${{ vars.GH_REPO_NAME }}.git
           echo ${{ vars.GH_REPO_NAME }}/${{ needs.build_push_tag.outputs.chart_path }}
           cd ${{ vars.GH_REPO_NAME }}/${{ needs.build_push_tag.outputs.chart_path }}
-          sed -i "s|repository: .*|repository: ${{ needs.build_push_tag.outputs.registry }}/${{ vars.PROFILE_SVC_NAMING_STANDARD }}|" values.yaml
+          if [[ $GITHUB_REF == refs/heads/local ]]; then
+            sed -i "s|repository: .*|repository: ${{ vars.GH_OWNER }}/${{ vars.PROFILE_SVC_NAMING_STANDARD }}|" values.yaml
+          else
+            sed -i "s|repository: .*|repository: ${{ needs.build_push_tag.outputs.registry }}/${{ vars.PROFILE_SVC_NAMING_STANDARD }}|" values.yaml
+          fi
           sed -i "s/appVersion: \".*\"/appVersion: \"${{ needs.build_push_tag.outputs.image_tag_sha }}\"/" Chart.yaml
           git add values.yaml Chart.yaml
           git config --global user.email "imam.arief.rhmn@gmail.com"

@@ -1,0 +1,279 @@
+name: CI/CD Pipeline for fta_profile
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+    tags:
+      - 'v*'
+    pull_request:
+      types: [opened, synchronize, reopened]
+
+jobs:
+  test_and_coverages:
+    environment: fta_profile
+    name: Test and Coverages
+    runs-on: ubuntu-latest
+    outputs:
+      quality_gate_status: ${{ steps.set_quality_gate_status.outputs.quality_gate_status }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-test.txt
+
+      - name: Lint with flake8
+        run: |
+          pip install flake8
+          flake8 .
+
+      - name: Format with black
+        run: |
+          pip install black
+          black --check .
+
+      - name: Run Unit Tests and Generate Coverage Report
+        run: pytest
+
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@v3.0.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+      - name: SonarQube Quality Gate Check
+        id: sonar-quality-gate
+        uses: sonarsource/sonarqube-quality-gate-action@v1.1.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+      - name: Set Quality Gate Status Output
+        id: set_quality_gate_status
+        run: |
+          echo "quality_gate_status=${{ steps.sonar-quality-gate.outputs.quality-gate-status }}" >> $GITHUB_OUTPUT
+          echo "Quality Gate Status: ${{ steps.sonar-quality-gate.outputs.quality-gate-status }}"
+
+  build_push_tag:
+    environment: fta_profile
+    name: Build, Push, Tag
+    runs-on: ubuntu-latest
+    needs: test_and_coverages
+    # if: ${{ needs.test_and_coverages.outputs.quality_gate_status != 'FAILED' && (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
+    if: ${{ github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main' }}
+    outputs:
+      image_tag_sha: ${{ steps.set_image_tag.outputs.image_tag_sha }}
+      chart_path: ${{ steps.set_image_tag.outputs.chart_path }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3.6.1
+
+      - name: Login to Docker Registry
+        uses: docker/login-action@v3.3.0
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Set Image Tag
+        id: set_image_tag
+        run: |
+          echo "GITHUB_REF: $GITHUB_REF"
+          echo "GITOPS_PATH_DEV FROM VARS: ${{ vars.GITOPS_PATH_DEV }}"
+          echo "GITOPS_PATH_STG FROM VARS: ${{ vars.GITOPS_PATH_STG }}"
+          if [[ $GITHUB_REF == refs/heads/dev ]]; then
+            echo "image_tag_sha=alpha-${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
+            echo "chart_path=${{ vars.GITOPS_PATH_DEV }}" >> $GITHUB_OUTPUT
+            echo "IMAGE_TAG_SHA=alpha-${GITHUB_SHA:0:7}" >> $GITHUB_ENV
+            echo "IMAGE_TAG_LATEST=alpha-latest" >> $GITHUB_ENV
+            echo "CHART_PATH=${{ vars.GITOPS_PATH_DEV }}" >> $GITHUB_ENV
+          elif [[ $GITHUB_REF == refs/heads/main ]]; then
+            echo "image_tag_sha=beta-${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
+            echo "chart_path=${{ vars.GITOPS_PATH_STG }}" >> $GITHUB_OUTPUT
+            echo "IMAGE_TAG_LATEST=beta-latest" >> $GITHUB_ENV
+            echo "IMAGE_TAG_SHA=beta-${GITHUB_SHA:0:7}" >> $GITHUB_ENV
+            echo "CHART_PATH=${{ vars.GITOPS_PATH_STG }}" >> $GITHUB_ENV
+          fi
+
+      - name: Build, Tag, and Push
+        uses: docker/build-push-action@v6.9.0
+        with:
+          context: .
+          # Distroless
+          file: ./Dockerfile-distroless
+          push: true
+          tags: |
+            ${{ vars.DOCKER_REPOSITORY_URI }}:${{ env.IMAGE_TAG_SHA }}
+            ${{ vars.DOCKER_REPOSITORY_URI }}:${{ env.IMAGE_TAG_LATEST }}
+          platforms: linux/amd64
+          # # multi-platform
+          # platforms: linux/amd64,linux/arm64
+
+  retag_and_push:
+    environment: fta_profile
+    name: Retag and Push
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    outputs:
+      image_tag_sha: ${{ steps.set_image_tag.outputs.image_tag_sha }}
+      chart_path: ${{ steps.set_image_tag.outputs.chart_path }}
+    steps:
+      - name: Login to Docker Registry
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Retag and Push for Release
+        run: |
+          docker pull ${{ vars.DOCKER_REPOSITORY_URI }}:beta-latest
+          docker tag ${{ vars.DOCKER_REPOSITORY_URI }}:beta-latest ${{ vars.DOCKER_REPOSITORY_URI }}:${{ github.ref_name }}
+          docker tag ${{ vars.DOCKER_REPOSITORY_URI }}:beta-latest ${{ vars.DOCKER_REPOSITORY_URI }}:latest
+          docker push ${{ vars.DOCKER_REPOSITORY_URI }}:${{ github.ref_name }}
+          docker push ${{ vars.DOCKER_REPOSITORY_URI }}:latest
+
+      - name: Set IMAGE_TAG_SHA and CHART_PATH outputs
+        id: set_image_tag
+        run: |
+          echo "image_tag_sha=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          echo "chart_path=${{ vars.GITOPS_PATH_PRD }}" >> $GITHUB_OUTPUT
+
+  deployment:
+    environment: fta_profile
+    name: Deployment
+    runs-on: ubuntu-latest
+    needs: [build_push_tag, retag_and_push]
+    if: ${{ always() && (needs.build_push_tag.result == 'success' || needs.retag_and_push.result == 'success') }}
+    steps:
+      - name: Determine IMAGE_TAG_SHA and CHART_PATH
+        run: |
+          if [ "${{ needs.build_push_tag.result }}" == "success" ]; then
+            echo "IMAGE_TAG_SHA=${{ needs.build_push_tag.outputs.image_tag_sha }}" >> $GITHUB_ENV
+            echo "CHART_PATH=${{ needs.build_push_tag.outputs.chart_path }}" >> $GITHUB_ENV
+          elif [ "${{ needs.retag_and_push.result }}" == "success" ]; then
+            echo "IMAGE_TAG_SHA=${{ needs.retag_and_push.outputs.image_tag_sha }}" >> $GITHUB_ENV
+            echo "CHART_PATH=${{ needs.retag_and_push.outputs.chart_path }}" >> $GITHUB_ENV
+          else
+            echo "No build or retag job succeeded."
+            exit 1
+          fi
+
+      - name: Update Helm Chart
+        run: |
+          echo "IMAGE_TAG_SHA: ${{ env.IMAGE_TAG_SHA }}"
+          echo "CHART_PATH: ${{ env.CHART_PATH }}"
+          eval "$(ssh-agent -s)"
+          echo "${{ secrets.GITOPS_SSH_PRIVATE_KEY }}" > id_rsa
+          chmod 400 id_rsa
+          ssh-add id_rsa
+          git clone ${{ vars.REPO_GITOPS_SSH }}
+          echo ${{ vars.GITOPS_REPO_NAME }}/${{ env.CHART_PATH }}
+          cd ${{ vars.GITOPS_REPO_NAME }}/${{ env.CHART_PATH }}
+          sed -i "s|repository: .*|repository: ${{ vars.DOCKER_REPOSITORY_URI }}|" values.yaml
+          sed -i "s/appVersion: \".*\"/appVersion: \"${{ env.IMAGE_TAG_SHA }}\"/" Chart.yaml
+          git add values.yaml Chart.yaml
+          git config --global user.email "imam.arief.rhmn@gmail.com"
+          git config --global user.name "greyhats13"
+          git commit -m "Update image tag to ${{ env.IMAGE_TAG_SHA }}"
+          git push origin main
+
+
+  end_to_end_test:
+    name: End-to-End Test
+    runs-on: ubuntu-latest
+    needs: [deployment]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          npm install -g newman
+
+      - name: Start the Application
+        run: |
+          uvicorn main:app --host 0.0.0.0 --port 8000 &
+          sleep 5
+
+      - name: Run Newman Tests
+        run: |
+          newman run profile.postman_collection.json --env-var "base_url=http://127.0.0.1:8000"
+
+      - name: Stop the Application
+        run: |
+          pkill uvicorn
+
+  performance_test:
+    name: Performance Test
+    runs-on: ubuntu-latest
+    needs: [deployment]
+    steps:
+      - name: Install K6
+        run: |
+          sudo apt update
+          sudo apt install -y gnupg software-properties-common
+          wget -qO - https://dl.k6.io/key.gpg | sudo apt-key add -
+          echo "deb https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt update
+          sudo apt install -y k6
+
+      - name: Run K6 Load Test
+        env:
+          BASE_URL: 'https://profile.dev.fta.blast.co.id'
+        run: |
+          k6 run tests/performance/loadtest.js
+
+  security_test:
+    name: Security Test
+    runs-on: ubuntu-latest
+    needs: [deployment]
+    steps:
+      - name: Run OWASP ZAP Baseline Scan
+        run: |
+          docker pull owasp/zap2docker-stable
+          docker run -v $(pwd):/zap/wrk/:rw -t owasp/zap2docker-stable zap-baseline.py -t https://profile.dev.fta.blast.co.id -r zap_report.html
+
+      - name: Upload ZAP Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: zap-report
+          path: zap_report.html
+
+  # notification:
+  #   environment: fta_profile
+  #   name: Notification
+  #   runs-on: ubuntu-latest
+  #   needs: [test_and_coverages, build_push_tag, retag_and_push, deployment]
+  #   if: always()
+  #   steps:
+  #     - name: Send Notification
+  #       run: |
+  #         echo "Pipeline completed."
+  #         echo "Quality Gate Status: ${{ needs.test_and_coverages.outputs.quality_gate_status }}"
+  #         # Here you can add the code to send a notification to Slack or any other service.

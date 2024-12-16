@@ -1,0 +1,8 @@
+replicas: 1
+args:
+  - --kubelet-insecure-tls
+  
+tls:
+  type: "existingSecret"
+  existingSecret:
+    name: "metrics-server"

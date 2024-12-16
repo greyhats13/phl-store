@@ -1,0 +1,33 @@
+# Prometheus values.yaml
+server:
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      external-dns.alpha.kubernetes.io/hostname: "prometheus.lokal.blast.co.id"
+      external-dns.alpha.kubernetes.io/ttl: "300"
+      external-dns.alpha.kubernetes.io/target: "127.0.0.1"
+      kubernetes.io/tls-acme: "true"
+      cert-manager.io/cluster-issuer: "letsencrypt-phl"
+    hosts:
+      - prometheus.lokal.blast.co.id
+    path: /
+    pathType: Prefix
+    tls:
+      - secretName: prometheus-server-tls
+        hosts:
+          - prometheus.lokal.blast.co.id
+  # additionalScrapeConfigs:
+  #   - job_name: 'open-telemetry'
+  #     static_configs:
+  #       - targets: ['open-telemetry.open-telemetry.svc.cluster.local:8888']
+
+extraScrapeConfigs: |
+  - job_name: 'opentelemetry-collector'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['opentelemetry-collector.pipeline.svc.cluster.local:8889']
+prometheus-node-exporter:
+  hostRootFsMount:
+    enabled: false
+    mountPropagation: HostToContainer

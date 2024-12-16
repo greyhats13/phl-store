@@ -1,0 +1,26 @@
+# Ref: https://github.com/argoproj/argo-helm/tree/main/charts/argo-cd
+global:
+  domain: "${feature}.${dns_name}"
+  params:
+    server.insecure: ${extra_vars.server_insecure}
+server:
+  ingress:
+    enabled: ${extra_vars.ingress_enabled}
+    ingressClassName: ${extra_vars.ingress_class_name}
+    annotations:
+      external-dns.alpha.kubernetes.io/hostname: "${feature}.${dns_name}"
+      external-dns.alpha.kubernetes.io/ttl: "300"
+      external-dns.alpha.kubernetes.io/target: "127.0.0.1"
+      kubernetes.io/tls-acme: "true"
+      nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+      cert-manager.io/cluster-issuer: "letsencrypt-phl"
+      nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    tls: true
+
+# ref: https://github.com/argoproj-labs/argocd-vault-plugin/blob/main/manifests/cmp-sidecar/argocd-repo-server.yaml
+repoServer:
+  serviceAccount:
+    name: ${feature}-repo-server
+    # Not strictly necessary, but required for passing AVP configuration from a secret and for using Kubernetes auth to Hashicorp Vault
+    automountServiceAccountToken: true

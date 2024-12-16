@@ -1,0 +1,172 @@
+{
+	"info": {
+		"_postman_id": "b3f88d02-e64b-48ad-a54e-0dea9cb4c72c",
+		"name": "profile",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "17496406",
+		"_collection_link": "https://cloudy-comet-657520.postman.co/workspace/80a25a47-86cf-491e-a426-a186d45351a6/collection/17496406-b3f88d02-e64b-48ad-a54e-0dea9cb4c72c?action=share&source=collection_link&creator=17496406"
+	},
+	"item": [
+		{
+			"name": "List Profile",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{base_url}}/v1/profiles?orderby=uuid&limit=1&offset=500",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"v1",
+						"profiles"
+					],
+					"query": [
+						{
+							"key": "orderby",
+							"value": "uuid"
+						},
+						{
+							"key": "limit",
+							"value": "1"
+						},
+						{
+							"key": "offset",
+							"value": "500"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Profile",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{base_url}}/v1/profiles/8916002e-4889-4df0-9f69-2ee8922e08d0",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"v1",
+						"profiles",
+						"8916002e-4889-4df0-9f69-2ee8922e08d0"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Profile",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"rikha@fta.com\",\n    \"firstname\": \"Rikha\",\n    \"lastname\": \"Anggraeni\",\n    \"birthdate\": \"1997-12-15\",\n    \"gender\": \"female\",\n    \"addresses\": [\n        {\n            \"type\": \"billing\",\n            \"address\": \"Jl. Kebayan No 42\",\n            \"subdistrict\": \"Uma Sima\",\n            \"district\": \"Sumbawa\",\n            \"city\": \"Subawa\",\n            \"province\": \"NTB\",\n            \"country\": \"Indonesia\",\n            \"postalCode\": 84317\n        },\n        {\n            \"type\": \"shipping\",\n            \"address\": \"Jl. Kebayan No 42\",\n            \"subdistrict\": \"Uma Sima\",\n            \"district\": \"Sumbawa\",\n            \"city\": \"Sumbawa\",\n            \"province\": \"NTB\",\n            \"country\": \"Indonesia\",\n            \"postalCode\": 84317\n        }\n    ],\n    \"image\": {\n        \"name\": \"felix.png\",\n        \"url\": \"https://cdn.blast.co.id/felix.png\"\n    }\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/v1/profiles",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"v1",
+						"profiles"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update Profile",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"firstname\": \"Rini\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/v1/profiles/97507289-d3c1-4eea-8893-2cfdc1d02f0d",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"v1",
+						"profiles",
+						"97507289-d3c1-4eea-8893-2cfdc1d02f0d"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Profile",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{base_url}}/v1/profiles/beeae298-eb4d-4359-a839-3e76d6866708",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"v1",
+						"profiles",
+						"beeae298-eb4d-4359-a839-3e76d6866708"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Healtcheck",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/v1/healthcheck",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"v1",
+						"healthcheck"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

@@ -1,8 +1,0 @@
-fastapi
-uvicorn[standard]
-sqlmodel
-SQLAlchemy
-pydantic[email]
-pydantic_settings
-aiomysql
-cryptography

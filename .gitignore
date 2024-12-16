@@ -39,3 +39,4 @@ terraform.rc
 .DS_Store
 .vscode
 venv
+TEST.md
