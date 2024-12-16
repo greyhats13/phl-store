@@ -40,3 +40,4 @@ terraform.rc
 .vscode
 venv
 TEST.md
+.go-fiber
