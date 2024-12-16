@@ -7,22 +7,29 @@ image:
 
 serviceAccount:
   create: true
-  annotations:
-    iam.gke.io/gcp-service-account: phl-mstr-addon-otel-collector@phl-platform.iam.gserviceaccount.com
-  name: phl-mstr-addon-otel-collector
+  # annotations:
+  #   iam.gke.io/gcp-service-account: phl-dev-addon-otel-collector@phl-platform.iam.gserviceaccount.com
+  # name: phl-dev-addon-otel-collector
 
 alternateConfig:
   receivers:
-    otlp:
-      protocols:
-        grpc:
-        http:
+    # otlp:
+    #   protocols:
+    #     grpc:
+    #     http:
+    prometheus:
+      config:
+        scrape_configs:
+          - job_name: 'opentelemetry-collector'
+            static_configs:
+              - targets: ['opentelemetry-collector.opentelemetry-collector.svc.cluster.local:8888']
 
-  exporters:
-    googlecloud:
-      project: phl-platform
-      trace:
-        use_insecure: false
+
+  # exporters:
+  #   googlecloud:
+  #     project: phl-platform
+  #     trace:
+  #       use_insecure: false
 
   processors:
     batch: {}
@@ -35,10 +42,14 @@ alternateConfig:
     extensions:
       - health_check
     pipelines:
-      traces:
+      # traces:
+      #   receivers: [otlp]
+      #   processors: [batch]
+      #   exporters: [googlecloud]
+      metrics:
         receivers: [otlp]
         processors: [batch]
-        exporters: [googlecloud]
+        exporters: [prometheus]
 
 resources:
   limits:

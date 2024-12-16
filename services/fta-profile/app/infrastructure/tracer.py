@@ -35,3 +35,4 @@ def setup_tracer(app):
 
     # Instrument FastAPI app, exclude /v1/healthcheck
     FastAPIInstrumentor().instrument_app(app, excluded_urls="/v1/healthcheck")
+    
