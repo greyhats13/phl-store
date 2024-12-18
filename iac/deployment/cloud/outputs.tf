@@ -1,109 +1,109 @@
-# # KMS Outputs
-# output "main_key_id" {
-#   value = module.kms_main.key_id
-# }
+# KMS Outputs
+output "main_key_id" {
+  value = module.kms_main.key_id
+}
 
-# output "main_key_arn" {
-#   value = module.kms_main.key_arn
-# }
+output "main_key_arn" {
+  value = module.kms_main.key_arn
+}
 
-# # S3 Outputs
-# output "tfstate_bucket_id" {
-#   value = module.bucket_tfstate.s3_bucket_id
-# }
+# S3 Outputs
+output "tfstate_bucket_id" {
+  value = module.bucket_tfstate.s3_bucket_id
+}
 
-# output "tfstate_bucket_arn" {
-#   value = module.bucket_tfstate.s3_bucket_arn
-# }
+output "tfstate_bucket_arn" {
+  value = module.bucket_tfstate.s3_bucket_arn
+}
 
-# # VPC Outputs
+# VPC Outputs
 
-# # Route53 Outputs
-# output "route53_zone_arn" {
-#   value = module.zones_main.route53_zone_zone_arn
-# }
+# Route53 Outputs
+output "route53_zone_arn" {
+  value = module.zones_main.route53_zone_zone_arn
+}
 
-# # RDS Aurora Outputs
-# output "aurora_cluster_endpoint" {
-#   value = module.aurora_main.cluster_endpoint
-# }
+# RDS Aurora Outputs
+output "aurora_cluster_endpoint" {
+  value = module.aurora_main.cluster_endpoint
+}
 
-# output "aurora_cluster_reader_endpoint" {
-#   value = module.aurora_main.cluster_reader_endpoint
-# }
+output "aurora_cluster_reader_endpoint" {
+  value = module.aurora_main.cluster_reader_endpoint
+}
 
-# output "aurora_cluster_port" {
-#   value = module.aurora_main.cluster_port
-# }
+output "aurora_cluster_port" {
+  value = module.aurora_main.cluster_port
+}
 
-# output "aurora_cluster_username" {
-#   value = module.aurora_main.cluster_master_username
-# }
+output "aurora_cluster_username" {
+  value = module.aurora_main.cluster_master_username
+}
 
-# # EKS Outputs
-# output "eks_cluster_name" {
-#   value = module.eks_main.cluster_name
-# }
+# EKS Outputs
+output "eks_cluster_name" {
+  value = module.eks_main.cluster_name
+}
 
-# output "eks_cluster_endpoint" {
-#   value = module.eks_main.cluster_endpoint
-# }
+output "eks_cluster_endpoint" {
+  value = module.eks_main.cluster_endpoint
+}
 
-# output "eks_cluster_certificate_authority_data" {
-#   value = module.eks_main.cluster_certificate_authority_data
-# }
+output "eks_cluster_certificate_authority_data" {
+  value = module.eks_main.cluster_certificate_authority_data
+}
 
-# # Route 53
-# output "dns_name" {
-#   value = "${local.route53_domain_name}"
-# }
+# Route 53
+output "dns_name" {
+  value = "${local.route53_domain_name}"
+}
 
-# # EKS Karpenter
+# EKS Karpenter
 
-# # Cognito Outputs
-# output "cognito_user_pool_id" {
-#   value = module.cognito_pool.cognito_user_pool_id
-# }
+# Cognito Outputs
+output "cognito_user_pool_id" {
+  value = module.cognito_pool.cognito_user_pool_id
+}
 
-# output "cognito_user_pool_arn" {
-#   value = module.cognito_pool.cognito_user_pool_arn
-# }
+output "cognito_user_pool_arn" {
+  value = module.cognito_pool.cognito_user_pool_arn
+}
 
-# output "cognito_user_pool_client_id" {
-#   value = module.cognito_pool.cognito_user_pool_client_id
-# }
+output "cognito_user_pool_client_id" {
+  value = module.cognito_pool.cognito_user_pool_client_id
+}
 
-# output "cognito_user_pool_client_secret" {
-#   value     = module.cognito_pool.cognito_user_pool_client_secret
-#   sensitive = true
-# }
+output "cognito_user_pool_client_secret" {
+  value     = module.cognito_pool.cognito_user_pool_client_secret
+  sensitive = true
+}
 
-# output "cognito_user_pool_endpoint" {
-#   value = module.cognito_pool.cognito_user_pool_endpoint
-# }
+output "cognito_user_pool_endpoint" {
+  value = module.cognito_pool.cognito_user_pool_endpoint
+}
 
-# output "cognito_authrization_scopes" {
-#   value = module.cognito_pool.cognito_authrization_scopes
-# }
+output "cognito_authrization_scopes" {
+  value = module.cognito_pool.cognito_authrization_scopes
+}
 
-# # API Gateway Outputs
-# output "api_id" {
-#   value = module.api.api_id
-# }
+# API Gateway Outputs
+output "api_id" {
+  value = module.api.api_id
+}
 
-# output "api_endpoint" {
-#   value = module.api.api_endpoint
-# }
+output "api_endpoint" {
+  value = module.api.api_endpoint
+}
 
-# output "api_vpc_links" {
-#   value = module.api.vpc_links
-# }
+output "api_vpc_links" {
+  value = module.api.vpc_links
+}
 
-# output "api_authorizers" {
-#   value = module.api.authorizers
-# }
+output "api_authorizers" {
+  value = module.api.authorizers
+}
 
-# # Github OIDC Outputs
-# output "github_oidc_role_arn" {
-#   value = module.oidc_github.iam_role_arn
-# }
+# Github OIDC Outputs
+output "github_oidc_role_arn" {
+  value = module.oidc_github.iam_role_arn
+}
