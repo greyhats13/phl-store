@@ -20,6 +20,10 @@ terraform {
       source  = "hashicorp/kubernetes"
       version = "2.34.0"
     }
+    kubectl = {
+      source  = "gavinbunney/kubectl"
+      version = "1.18.0"
+    }
     helm = {
       source  = "hashicorp/helm"
       version = "2.16.1"
@@ -45,7 +49,7 @@ provider "aws" {
 
 provider "aws" {
   region = "us-east-1"
-  alias = "virginia"
+  alias  = "virginia"
   dynamic "assume_role" {
     for_each = local.is_ec2_environment ? [] : [1]
     content {
@@ -59,6 +63,13 @@ provider "kubernetes" {
   host                   = module.eks_main.cluster_endpoint
   cluster_ca_certificate = base64decode(module.eks_main.cluster_certificate_authority_data)
   token                  = data.aws_eks_cluster_auth.cluster.token
+}
+
+provider "kubectl" {
+  host                   = module.eks_main.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks_main.cluster_certificate_authority_data)
+  token                  = data.aws_eks_cluster_auth.cluster.token
+  load_config_file       = false
 }
 
 # Create Helm provider
