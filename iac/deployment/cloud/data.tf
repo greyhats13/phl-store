@@ -20,12 +20,12 @@ data "aws_ecrpublic_authorization_token" "token" {
   provider = aws.virginia
 }
 
-Get eks cluster token
+# Get eks cluster token
 data "aws_eks_cluster_auth" "cluster" {
   name = module.eks_main.cluster_name
 }
 
-Get AWS ALB DNS name
+# Get AWS ALB DNS name
 data "aws_lb" "alb" {
   name = "k8s-phldevaddoningres-009c2e8ab5"
 }
