@@ -141,10 +141,10 @@ The worker nodes in the managed node group use BottleRocket as the AMI. This is 
 
 The cluster has a managed node group for critical workloads that require high reliability. These nodes:
 
-- Run on On-Dem& instances to ensure stability during normal traffic conditions.
+- Run on On-Demand instances to ensure stability during normal traffic conditions.
 - Have a fixed size (2 nodes) to avoid disruption from frequent scaling events.
 
-For handling dynamic workloads, the cluster relies on Karpenter. Karpenter automatically provisions nodes based on dem&, offering rapid scaling & cost efficiency. This separation of critical & dynamic workloads ensures stability while maintaining flexibility.
+For handling dynamic workloads, the cluster relies on Karpenter. Karpenter automatically provisions nodes based on demand, offering rapid scaling & cost efficiency. This separation of critical & dynamic workloads ensures stability while maintaining flexibility.
 
 ### Storage & Volume Management
 
